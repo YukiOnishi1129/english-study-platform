@@ -9,20 +9,95 @@
 ### 【ユーザー・認証ドメイン】
 
 - **Account**: ユーザーアカウント情報
+  - id: string (UUID)
+  - email: string (一意制約)
+  - firstName: string
+  - lastName: string
+  - role: Role ("admin" | "user")
+  - provider: string (例: "google")
+  - providerAccountId: string (OAuth プロバイダー側のID)
+  - createdAt: Date
+  - updatedAt: Date
 
 ### 【教材ドメイン】
 
 - **Material**: 教材
+  - id: string (UUID)
+  - name: string
+  - description: string
+  - order: number
+  - createdAt: Date
+  - updatedAt: Date
+
 - **Chapter**: 章（階層ノード）
+  - id: string (UUID)
+  - materialId: string (FK)
+  - parentChapterId: string | null (FK, 自己参照)
+  - name: string
+  - order: number
+  - level: number (階層の深さ 0から)
+  - createdAt: Date
+  - updatedAt: Date
+
 - **Unit**: ユニット
+  - id: string (UUID)
+  - chapterId: string (FK)
+  - name: string
+  - order: number
+  - createdAt: Date
+  - updatedAt: Date
+
 - **Question**: 問題
+  - id: string (UUID)
+  - unitId: string (FK)
+  - japanese: string (問題文)
+  - hint: string | null
+  - explanation: string | null
+  - order: number
+  - createdAt: Date
+  - updatedAt: Date
+
 - **CorrectAnswer**: 正解
+  - id: string (UUID)
+  - questionId: string (FK)
+  - answerText: string
+  - order: number
+  - createdAt: Date
+  - updatedAt: Date
 
 ### 【学習記録ドメイン】
 
 - **UserAnswer**: ユーザーの個別解答記録
+  - id: string (UUID)
+  - userId: string (FK)
+  - questionId: string (FK)
+  - userAnswerText: string
+  - isCorrect: boolean
+  - isManuallyMarked: boolean (デフォルト: false)
+  - answeredAt: Date
+  - createdAt: Date
+  - updatedAt: Date
+
 - **QuestionStatistics**: 問題ごとの統計情報
+  - id: string (UUID)
+  - userId: string (FK)
+  - questionId: string (FK)
+  - totalAttempts: number (デフォルト: 0)
+  - correctCount: number (デフォルト: 0)
+  - incorrectCount: number (デフォルト: 0)
+  - lastAttemptedAt: Date | null
+  - createdAt: Date
+  - updatedAt: Date
+
 - **DailyStudyLog**: 日次学習ログ
+  - id: string (UUID)
+  - userId: string (FK)
+  - studyDate: Date (日付部分のみ)
+  - totalQuestions: number (デフォルト: 0)
+  - correctQuestions: number (デフォルト: 0)
+  - studyTimeMinutes: number (デフォルト: 0)
+  - createdAt: Date
+  - updatedAt: Date
 
 ---
 
