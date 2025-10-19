@@ -6,7 +6,7 @@
 		},
 		{
 			"name": "📕 DOCS",
-			"path": "./api/server",
+			"path": "./docs",
 		},
 		{
 			"name": "🇬🇧 WEB_CLIENT",
