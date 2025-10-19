@@ -7,20 +7,29 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "dotenv -e .env.local -- tsx src/lib/db/migrate.ts",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "drizzle-orm": "^0.44.6",
+    "next": "15.5.6",
+    "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.6"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@biomejs/biome": "2.2.0",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
+    "dotenv-cli": "^10.0.0",
+    "drizzle-kit": "^0.31.5",
     "tailwindcss": "^4",
-    "@biomejs/biome": "2.2.0"
+    "tsx": "^4.20.6",
+    "typescript": "^5"
   }
 }
