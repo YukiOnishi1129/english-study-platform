@@ -1,6 +1,6 @@
 # プロジェクト全体構成
 
-
+```
 project-root/
 ├── web/
 │   ├── client/          # 英語学習アプリ（一般ユーザー向け）
@@ -21,11 +21,13 @@ project-root/
 │
 ├── compose.yml          # Docker Compose（PostgreSQLコンテナ）
 └── README.md
+```
 
 
 
 ## 1. 英語学習アプリ（web/client）のディレクトリ構成
 
+```
 web/client/
 ├── src/
 │   ├── app/                      # Next.js App Router
@@ -275,11 +277,12 @@ web/client/
 ├── next.config.js
 ├── tsconfig.json
 ├── .env.local
-├── drizzle.config.ts
-
+└── drizzle.config.ts
+```
 
 ## 2. 管理画面アプリ（web/admin）のディレクトリ構成
 
+```
 web/admin/
 ├── src/
 │   ├── app/                      # Next.js App Router
@@ -479,13 +482,14 @@ web/admin/
 ├── next.config.js
 ├── tsconfig.json
 ├── .env.local
-├── drizzle.config.ts
-
+└── drizzle.config.ts
+```
 
 ## 3. 共通設定・環境変数
 
 ### web/client/.env.local
 
+```bash
 # Database
 DB_HOST=localhost
 DB_PORT=5432
@@ -500,10 +504,12 @@ NEXTAUTH_SECRET=your-secret-key-here
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
 
 
 ### web/admin/.env.local
 
+```bash
 # Database
 DB_HOST=localhost
 DB_PORT=5432
@@ -518,6 +524,7 @@ NEXTAUTH_SECRET=your-secret-key-here
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
 
 
 ## Claude Codeへの指示（web/client - 英語学習アプリ）
@@ -539,6 +546,7 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 ### ディレクトリ構成
 以下の構成に従ってプロジェクトを作成してください：
 
+```
 src/
 ├── app/                    # App Router（薄く保つ）
 │   ├── (auth)/
@@ -548,6 +556,7 @@ src/
 ├── features/               # ドメイン単位（auth, dashboard, materials, study, analytics）
 ├── shared/                 # 共通（components, lib, types）
 └── external/               # 外部アダプタ層（dto, handler, service, repository, db, client）
+```
 
 ### 設計原則
 1. app/は薄く保つ

@@ -14,9 +14,16 @@
 
 ユーザーアカウント情報（next-authのUserとAccountを統合）
 
-```
-カラム名型制約説明idUUIDPRIMARY KEYアカウントIDemailVARCHAR(255)NOT NULL, UNIQUEメールアドレスnameVARCHAR(255)NOT NULLユーザー名roleVARCHAR(20)NOT NULL, DEFAULT 'user'ロール (admin/user)providerVARCHAR(50)NOT NULL認証プロバイダー (google)provider_account_idVARCHAR(255)NOT NULLプロバイダーのアカウントIDcreated_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | アカウントID |
+| email | VARCHAR(255) | NOT NULL, UNIQUE | メールアドレス |
+| name | VARCHAR(255) | NOT NULL | ユーザー名 |
+| role | VARCHAR(20) | NOT NULL, DEFAULT 'user' | ロール (admin/user) |
+| provider | VARCHAR(50) | NOT NULL | 認証プロバイダー (google) |
+| provider_account_id | VARCHAR(255) | NOT NULL | プロバイダーのアカウントID |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
@@ -42,9 +49,14 @@
 
 教材の基本情報
 
-```
-カラム名型制約説明idUUIDPRIMARY KEY教材IDnameVARCHAR(255)NOT NULL教材名descriptionTEXTNULL説明orderINTEGERNOT NULL, DEFAULT 0表示順created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 教材ID |
+| name | VARCHAR(255) | NOT NULL | 教材名 |
+| description | TEXT | NULL | 説明 |
+| order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
@@ -56,9 +68,17 @@
 
 章（階層構造を持つ）
 
-```
-カラム名型制約説明idUUIDPRIMARY KEY章IDmaterial_idUUIDNOT NULL, FOREIGN KEY教材IDparent_chapter_idUUIDNULL, FOREIGN KEY親章ID（nullならルート）nameVARCHAR(255)NOT NULL章名descriptionTEXTNULL説明orderINTEGERNOT NULL, DEFAULT 0同じ親配下での表示順levelINTEGERNOT NULL階層の深さ (1, 2, 3...)created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 章ID |
+| material_id | UUID | NOT NULL, FOREIGN KEY | 教材ID |
+| parent_chapter_id | UUID | NULL, FOREIGN KEY | 親章ID（nullならルート） |
+| name | VARCHAR(255) | NOT NULL | 章名 |
+| description | TEXT | NULL | 説明 |
+| order | INTEGER | NOT NULL, DEFAULT 0 | 同じ親配下での表示順 |
+| level | INTEGER | NOT NULL | 階層の深さ (1, 2, 3...) |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
@@ -82,9 +102,15 @@
 
 ユニット（学習の最小単位）
 
-```
-カラム名型制約説明idUUIDPRIMARY KEYユニットIDchapter_idUUIDNOT NULL, FOREIGN KEY章IDnameVARCHAR(255)NOT NULLユニット名descriptionTEXTNULL説明orderINTEGERNOT NULL, DEFAULT 0表示順created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | ユニットID |
+| chapter_id | UUID | NOT NULL, FOREIGN KEY | 章ID |
+| name | VARCHAR(255) | NOT NULL | ユニット名 |
+| description | TEXT | NULL | 説明 |
+| order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
@@ -101,9 +127,16 @@
 
 問題
 
-```
-カラム名型制約説明idUUIDPRIMARY KEY問題IDunit_idUUIDNOT NULL, FOREIGN KEYユニットIDjapaneseTEXTNOT NULL日本語文hintTEXTNULLヒントexplanationTEXTNULL解説orderINTEGERNOT NULL, DEFAULT 0表示順created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 問題ID |
+| unit_id | UUID | NOT NULL, FOREIGN KEY | ユニットID |
+| japanese | TEXT | NOT NULL | 日本語文 |
+| hint | TEXT | NULL | ヒント |
+| explanation | TEXT | NULL | 解説 |
+| order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
@@ -120,9 +153,14 @@
 
 正解（複数登録可能）
 
-```
-カラム名型制約説明idUUIDPRIMARY KEY正解IDquestion_idUUIDNOT NULL, FOREIGN KEY問題IDanswer_textTEXTNOT NULL英語正解文orderINTEGERNOT NULL, DEFAULT 1表示順（優先順位）created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 正解ID |
+| question_id | UUID | NOT NULL, FOREIGN KEY | 問題ID |
+| answer_text | TEXT | NOT NULL | 英語正解文 |
+| order | INTEGER | NOT NULL, DEFAULT 1 | 表示順（優先順位） |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
@@ -146,9 +184,16 @@
 
 ユーザーの解答履歴
 
-```
-カラム名型制約説明idUUIDPRIMARY KEY解答IDuser_idUUIDNOT NULL, FOREIGN KEYユーザーIDquestion_idUUIDNOT NULL, FOREIGN KEY問題IDuser_answer_textTEXTNOT NULLユーザーが入力した英語is_correctBOOLEANNOT NULL正解/不正解is_manually_markedBOOLEANNOT NULL, DEFAULT FALSE手動で正解にしたかanswered_atTIMESTAMPNOT NULL解答日時created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 解答ID |
+| user_id | UUID | NOT NULL, FOREIGN KEY | ユーザーID |
+| question_id | UUID | NOT NULL, FOREIGN KEY | 問題ID |
+| user_answer_text | TEXT | NOT NULL | ユーザーが入力した英語 |
+| is_correct | BOOLEAN | NOT NULL | 正解/不正解 |
+| is_manually_marked | BOOLEAN | NOT NULL, DEFAULT FALSE | 手動で正解にしたか |
+| answered_at | TIMESTAMP | NOT NULL | 解答日時 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 
 **インデックス:**
 
@@ -168,9 +213,17 @@
 
 問題ごとの統計情報（ユーザーごと）
 
-```
-カラム名型制約説明idUUIDPRIMARY KEY統計IDuser_idUUIDNOT NULL, FOREIGN KEYユーザーIDquestion_idUUIDNOT NULL, FOREIGN KEY問題IDtotal_attemptsINTEGERNOT NULL, DEFAULT 0総解答回数correct_countINTEGERNOT NULL, DEFAULT 0正解回数incorrect_countINTEGERNOT NULL, DEFAULT 0不正解回数last_attempted_atTIMESTAMPNULL最終解答日時created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 統計ID |
+| user_id | UUID | NOT NULL, FOREIGN KEY | ユーザーID |
+| question_id | UUID | NOT NULL, FOREIGN KEY | 問題ID |
+| total_attempts | INTEGER | NOT NULL, DEFAULT 0 | 総解答回数 |
+| correct_count | INTEGER | NOT NULL, DEFAULT 0 | 正解回数 |
+| incorrect_count | INTEGER | NOT NULL, DEFAULT 0 | 不正解回数 |
+| last_attempted_at | TIMESTAMP | NULL | 最終解答日時 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
