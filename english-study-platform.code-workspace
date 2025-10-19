@@ -1,15 +1,19 @@
 {
 	"folders": [
 		{
-			"name": "Root",
+			"name": "🌍 ROOT",
 			"path": "./",
 		},
 		{
-			"name": "WEB_CLIENT",
+			"name": "📕 DOCS",
+			"path": "./api/server",
+		},
+		{
+			"name": "🇬🇧 WEB_CLIENT",
 			"path": "./web/client",
 		},
 		{
-			"name": "WEB_ADMIN",
+			"name": "⚙️ WEB_ADMIN",
 			"path": "./web/admin",
 		},
 	],
