@@ -197,9 +197,16 @@
 
 日次学習ログ
 
-```
-カラム名型制約説明idUUIDPRIMARY KEYログIDuser_idUUIDNOT NULL, FOREIGN KEYユーザーIDstudy_dateDATENOT NULL学習日total_questionsINTEGERNOT NULL, DEFAULT 0その日に解いた問題数correct_questionsINTEGERNOT NULL, DEFAULT 0正解数study_time_minutesINTEGERNOT NULL, DEFAULT 0学習時間（分）created_atTIMESTAMPNOT NULL, DEFAULT NOW()作成日時updated_atTIMESTAMPNOT NULL, DEFAULT NOW()更新日時
-```
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | ログID |
+| user_id | UUID | NOT NULL, FOREIGN KEY | ユーザー ID |
+| study_date | DATE | NOT NULL | 学習日 |
+| total_questions | INTEGER | NOT NULL, DEFAULT 0 | その日に解いた問題数 |
+| correct_questions | INTEGER | NOT NULL, DEFAULT 0 | 正解数 |
+| study_time_minutes | INTEGER | NOT NULL, DEFAULT 0 | 学習時間（分） |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 

@@ -1,4 +1,4 @@
-プロジェクト全体構成
+# プロジェクト全体構成
 
 
 project-root/
@@ -24,7 +24,7 @@ project-root/
 
 
 
-1. 英語学習アプリ（web/client）のディレクトリ構成
+## 1. 英語学習アプリ（web/client）のディレクトリ構成
 
 web/client/
 ├── src/
@@ -278,7 +278,7 @@ web/client/
 ├── drizzle.config.ts
 
 
-2. 管理画面アプリ（web/admin）のディレクトリ構成
+## 2. 管理画面アプリ（web/admin）のディレクトリ構成
 
 web/admin/
 ├── src/
@@ -482,9 +482,9 @@ web/admin/
 ├── drizzle.config.ts
 
 
-**4. 共通設定・環境変数**
+## 3. 共通設定・環境変数
 
-**web/client/.env.local**
+### web/client/.env.local
 
 # Database
 DB_HOST=localhost
@@ -502,7 +502,7 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 
-web/admin/.env.local
+### web/admin/.env.local
 
 # Database
 DB_HOST=localhost
@@ -520,12 +520,12 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 
-Claude Codeへの指示（web/client - 英語学習アプリ
+## Claude Codeへの指示（web/client - 英語学習アプリ）
 
 
 英語学習アプリ（web/client）を作成してください。
 
-## プロジェクト構成
+### プロジェクト構成
 - Next.js 15 App Router + TypeScript
 - Drizzle ORM + PostgreSQL（Neon本番、Docker Composeローカル）
 - TanStack Query v5
@@ -536,7 +536,7 @@ Claude Codeへの指示（web/client - 英語学習アプリ
 - Tailwind CSS
 - Zod（バリデーション）
 
-## ディレクトリ構成
+### ディレクトリ構成
 以下の構成に従ってプロジェクトを作成してください：
 
 src/
@@ -549,7 +549,7 @@ src/
 ├── shared/                 # 共通（components, lib, types）
 └── external/               # 外部アダプタ層（dto, handler, service, repository, db, client）
 
-## 設計原則
+### 設計原則
 1. app/は薄く保つ
    - ページはルーティングとパラメータ受け渡しのみ
    - データフェッチや描画ロジックはfeatures/配下のTemplateに委譲
@@ -573,7 +573,7 @@ src/
    - クライアント側は同じqueryKeyでuseQueryを使い、キャッシュを再利用
    - 静的データはTanStack Queryを使わずPromise.allで完結
 
-## 環境変数
+### 環境変数
 .env.local に以下を設定：
 - DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 - NEXTAUTH_URL, NEXTAUTH_SECRET
@@ -583,25 +583,25 @@ src/
 DB接続文字列は以下の形式で生成：
 postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
-## 実装する主要機能
-### 認証
+### 実装する主要機能
+#### 認証
 - (auth)ルートグループ: 未認証ユーザー向け（/login）
 - (user)ルートグループ: 認証済みユーザー向け
 - layoutでrequireAuth()を呼び、未認証は/loginへリダイレクト
 - next-auth v4でJWT戦略、session.user.roleを含める
 
-### ダッシュボード
+#### ダッシュボード
 - 学習統計サマリー（累計解答数、正答率、今日の学習数）
 - 学習カレンダー（ヒートマップ風）
 - 教材一覧
 - Server ComponentでprefetchしてHydrationBoundary
 
-### 教材 → 章 → UNIT → 問題
+#### 教材 → 章 → UNIT → 問題
 - 教材一覧 → 教材詳細（章一覧）→ 章詳細（UNIT一覧）→ UNIT詳細（問題リスト）
 - 「順番に学習」「ランダムに学習」ボタン
 - 階層構造はChapterの自己参照で実現
 
-### 学習画面
+#### 学習画面
 - 1問1答形式
 - 問題カード（日本語文、ヒントボタン、進捗表示）
 - 解答入力（テキスト入力、Enter送信）
@@ -610,11 +610,11 @@ postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 - 手動修正ボタン（不正解→正解に変更）
 - 次の問題へボタン
 
-### 学習分析
+#### 学習分析
 - よくある間違い一覧
 - 問題ごとの統計（正答率、解答回数）
 
-## データベーススキーマ（Drizzle ORM）
+### データベーススキーマ（Drizzle ORM）
 src/external/db/schema/ 配下に以下を作成：
 - accounts.ts: id, email, name, role, provider, provider_account_id
 - materials.ts: id, name, description, order
@@ -629,5 +629,5 @@ src/external/db/schema/ 配下に以下を作成：
 全テーブルはUUIDをPK、created_at/updated_atを持つ。
 外部キーとインデックスも適切に設定。
 
-## ポート
+### ポート
 localhost:3000

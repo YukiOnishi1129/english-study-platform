@@ -57,12 +57,12 @@
 
 ### AccuracyRate（正答率）
 
-- 値: 0.0〜1.0 または 0〜100%
-- ビジネスルール: 正答率の計算・表示形式
-- メソッド例:
-    - `calculate(correctCount, totalCount)`: 正答率を計算
-    - `toPercentage()`: パーセント表記に変換
-    - `isHigh()`: 高正答率かどうか（例: 80%以上）
+- **値**: 0.0〜1.0 または 0〜100%
+- **ビジネスルール**: 正答率の計算・表示形式
+- **メソッド例**:
+  - `calculate(correctCount, totalCount)`: 正答率を計算
+  - `toPercentage()`: パーセント表記に変換
+  - `isHigh()`: 高正答率かどうか（例: 80%以上）
 
 ### StudyDate（学習日）
 
