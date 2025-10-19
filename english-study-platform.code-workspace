@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "Root",
+			"path": "./",
+		},
+		{
+			"name": "WEB_CLIENT",
+			"path": "./web/client",
+		},
+		{
+			"name": "WEB_ADMIN",
+			"path": "./web/admin",
+		},
+	],
+}
