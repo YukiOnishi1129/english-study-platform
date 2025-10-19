@@ -6,7 +6,7 @@ const envSchema = z.object({
   DB_NAME: z.string(),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
-  NEXTAUTH_URL: z.string().url(),
+  NEXTAUTH_URL: z.url(),
   NEXTAUTH_SECRET: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
