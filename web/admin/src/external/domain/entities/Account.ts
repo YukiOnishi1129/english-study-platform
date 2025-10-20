@@ -8,6 +8,7 @@ export interface AccountParams {
   role: Role;
   provider: string;
   providerAccountId: string;
+  thumbnail?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -20,6 +21,7 @@ export class Account {
   readonly role: Role;
   readonly provider: string;
   readonly providerAccountId: string;
+  readonly thumbnail?: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
@@ -31,6 +33,7 @@ export class Account {
     this.role = params.role;
     this.provider = params.provider;
     this.providerAccountId = params.providerAccountId;
+    this.thumbnail = params.thumbnail;
     this.createdAt = params.createdAt || new Date();
     this.updatedAt = params.updatedAt || new Date();
   }
