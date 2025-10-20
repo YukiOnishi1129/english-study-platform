@@ -38,7 +38,7 @@ export type AccountResponse = z.infer<typeof AccountResponseSchema>;
 
 // ===== 変換関数 =====
 
-import type { Account } from "@/external/domain/entities/Account";
+import type { Account } from "@acme/shared/domain";
 
 export function toAccountResponse(account: Account): AccountResponse {
   return {

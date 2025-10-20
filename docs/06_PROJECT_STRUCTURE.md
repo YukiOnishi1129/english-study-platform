@@ -1,26 +1,52 @@
 # プロジェクト全体構成
 
+## Monorepo Architecture
+
+このプロジェクトは pnpm workspaces を使用したモノレポ構成になっています。
+
 ```
-project-root/
+english-study-platform/
+├── packages/                    # 共有パッケージ (@acme/shared)
+│   ├── src/
+│   │   ├── db/                 # データベース層
+│   │   │   ├── client.ts       # DB接続（PostgreSQL/Neon切替対応）
+│   │   │   ├── schema/         # Drizzle ORMスキーマ定義
+│   │   │   └── repositories/   # リポジトリ実装（DDD）
+│   │   └── domain/             # ドメイン層（DDD）
+│   │       ├── entities/       # ドメインエンティティ
+│   │       ├── repository/     # リポジトリインターフェース
+│   │       └── value-objects/  # 値オブジェクト
+│   ├── migrations/             # データベースマイグレーション
+│   ├── drizzle.config.ts
+│   ├── package.json
+│   └── tsconfig.json
+│
 ├── web/
-│   ├── client/          # 英語学習アプリ（一般ユーザー向け）
+│   ├── client/                 # 英語学習アプリ（一般ユーザー向け）
 │   │   ├── src/
 │   │   ├── package.json
 │   │   ├── next.config.js
 │   │   ├── tsconfig.json
-│   │   ├── .env.local
-│   │   └── drizzle.config.ts
+│   │   └── .env.local
 │   │
-│   └── admin/           # 管理画面アプリ（管理者向け）
+│   └── admin/                  # 管理画面アプリ（管理者向け）
 │       ├── src/
 │       ├── package.json
-│       ├── next.config.js
+│       ├── next.config.js  
 │       ├── tsconfig.json
-│       ├── .env.local
-│       └── drizzle.config.ts
+│       └── .env.local
 │
-├── compose.yml          # Docker Compose（PostgreSQLコンテナ）
-└── README.md
+├── .github/
+│   └── workflows/              # GitHub Actions CI/CD
+│       ├── admin-deploy.yml    # 管理画面デプロイ
+│       ├── client-deploy.yml   # クライアントデプロイ
+│       └── packages-ci.yml     # パッケージCI
+│
+├── docs/                       # プロジェクトドキュメント
+├── docker-compose.yml          # ローカル開発用PostgreSQL
+├── Makefile                    # 共通コマンド
+├── pnpm-workspace.yaml         # ワークスペース設定
+└── package.json                # ルートパッケージ設定
 ```
 
 
@@ -487,13 +513,54 @@ web/admin/
 
 ## 3. 共通設定・環境変数
 
-### web/client/.env.local
+### 共有パッケージ (packages/)
 
+@acme/shared パッケージとして、以下の2つのモジュールをエクスポートしています：
+
+```typescript
+// Database exports
+import { db, AccountRepositoryImpl, MaterialRepositoryImpl, ... } from "@acme/shared/db";
+
+// Domain exports  
+import { Account, Material, AccountRepository, ... } from "@acme/shared/domain";
+```
+
+#### Domain Entities
+- Account: ユーザーアカウント（Google OAuth対応）
+- Material: 教材
+- Chapter: 章（自己参照による階層構造）
+- Unit: ユニット
+- Question: 問題
+- CorrectAnswer: 正解
+
+#### Repository Pattern
+各エンティティに対して：
+- Repository Interface: `domain/repository/` に定義
+- Repository Implementation: `db/repositories/` にDrizzle ORM実装
+
+### 環境変数設定
+
+#### packages/.env (ローカル開発用)
 ```bash
-# Database
+# Database Configuration
+DB_DRIVER=local
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=english_learning
+DB_NAME=english_study_db
+DB_USER=postgres
+DB_PASSWORD=postgres
+```
+
+#### web/admin/.env.local
+```bash
+# Database (本番環境はNeon使用)
+DATABASE_URL=postgresql://...
+DB_DRIVER=neon  # or local
+
+# 個別環境変数（ローカル開発用）
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=english_study_db
 DB_USER=postgres
 DB_PASSWORD=postgres
 
@@ -502,28 +569,13 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-key-here
 
 # Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_ID=your-google-client-id
+GOOGLE_SECRET=your-google-client-secret
 ```
 
-
-### web/admin/.env.local
-
+#### web/client/.env.local
 ```bash
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=english_learning
-DB_USER=postgres
-DB_PASSWORD=postgres
-
-# NextAuth
-NEXTAUTH_URL=http://localhost:3001
-NEXTAUTH_SECRET=your-secret-key-here
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+# 同様の設定（ポートは3001など別のポートを使用）
 ```
 
 
