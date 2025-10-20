@@ -1,11 +1,11 @@
-import { redirect } from "next/navigation";
 import { verifyIdToken } from "@/external/handler/auth/auth-check.server";
 
 export default async function DashboardPage() {
   const account = await verifyIdToken();
 
+  // Account should always exist here due to layout authentication check
   if (!account) {
-    redirect("/login");
+    throw new Error("Authentication error: No account found");
   }
 
   return (

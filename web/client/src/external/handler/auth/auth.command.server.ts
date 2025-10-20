@@ -1,11 +1,12 @@
 import "server-only";
-import type { Account } from "@acme/shared/domain";
 import { cookies } from "next/headers";
+import { mapAccountToFeature } from "@/external/mapper/account.mapper";
 import {
   AccountService,
   type CreateAccountInput,
 } from "@/external/service/account/account.service";
 import { TokenVerificationService } from "@/external/service/auth/token-verification.service";
+import type { Account } from "@/features/account/types/account";
 import { updateIdTokenCookie } from "@/features/auth/servers/cookie.server";
 
 const accountService = new AccountService();
@@ -16,11 +17,12 @@ export async function createOrGetAccount(
   providerAccountId: string,
   createInput: CreateAccountInput,
 ): Promise<Account> {
-  return await accountService.createOrGet(
+  const domainAccount = await accountService.createOrGet(
     provider,
     providerAccountId,
     createInput,
   );
+  return mapAccountToFeature(domainAccount);
 }
 
 /**

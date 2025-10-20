@@ -10,7 +10,8 @@
     "lint:fix": "biome check --fix --unsafe",
     "format": "biome format --write",
     "format:check": "biome format",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typegen": "next typegen"
   },
   "dependencies": {
     "@acme/shared": "workspace:*",

@@ -1,8 +1,9 @@
 import "server-only";
-import type { Account } from "@acme/shared/domain";
 import { cookies } from "next/headers";
+import { mapAccountToFeature } from "@/external/mapper/account.mapper";
 import { AccountService } from "@/external/service/account/account.service";
 import { TokenVerificationService } from "@/external/service/auth/token-verification.service";
+import type { Account } from "@/features/account/types/account";
 
 const tokenVerificationService = new TokenVerificationService();
 
@@ -22,12 +23,12 @@ export async function verifyIdToken(): Promise<Account | null> {
 
     // Get account from database using the user ID from token
     const accountService = new AccountService();
-    const account = await accountService.findByProvider(
+    const domainAccount = await accountService.findByProvider(
       "google",
       payload.userId,
     );
 
-    return account;
+    return domainAccount ? mapAccountToFeature(domainAccount) : null;
   } catch (error) {
     console.error("Failed to verify token:", error);
     return null;

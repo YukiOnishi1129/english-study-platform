@@ -1,7 +1,8 @@
-import { cookies } from "next/headers";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { getAccountByProvider } from "@/external/handler/account/account.query.server";
+import { createOrGetAccount } from "@/external/handler/auth/auth.command.server";
+import { setAuthCookies } from "@/features/auth/servers/cookie.server";
 import type { GoogleProfile } from "@/features/auth/types/next-auth";
 
 export const authOptions: NextAuthOptions = {
@@ -40,10 +41,10 @@ export const authOptions: NextAuthOptions = {
 
       try {
         // Check if the account already exists
-        const existingAccount = await getAccountByProvider({
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-        });
+        const existingAccount = await getAccountByProvider(
+          account.provider,
+          account.providerAccountId,
+        );
 
         // If account doesn't exist, we'll create it later in the jwt callback
         // For now, just prepare the user data
@@ -55,7 +56,8 @@ export const authOptions: NextAuthOptions = {
           user.account = {
             id: existingAccount.id,
             email: existingAccount.email,
-            name: existingAccount.name,
+            firstName: existingAccount.firstName,
+            lastName: existingAccount.lastName,
             role: existingAccount.role,
             provider: existingAccount.provider,
             providerAccountId: existingAccount.providerAccountId,
@@ -90,43 +92,20 @@ export const authOptions: NextAuthOptions = {
       // First login (after signIn callback)
       if (account && user) {
         // Save Google Identity Platform tokens to cookies
-        const cookieStore = await cookies();
-
-        // Save ID token (HTTPOnly, Secure)
-        if (account.id_token) {
-          cookieStore.set("id_token", account.id_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7 days
-          });
-        }
-
-        // Save refresh token
-        if (account.refresh_token) {
-          cookieStore.set("refresh_token", account.refresh_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 30, // 30 days
-          });
+        if (account.id_token && account.refresh_token) {
+          await setAuthCookies(account.id_token, account.refresh_token);
         }
 
         // Create account if it doesn't exist
         if (user.account) {
-          const { createOrGetAccount } = await import(
-            "@/external/handler/auth/auth.command.server"
-          );
-
           const accountData = await createOrGetAccount(
             user.account.provider,
             user.account.providerAccountId,
             {
               email: user.account.email,
               name: user.account.name,
-              role: "user",
+              provider: user.account.provider,
+              providerAccountId: user.account.providerAccountId,
               thumbnail: user.account.thumbnail,
             },
           );
