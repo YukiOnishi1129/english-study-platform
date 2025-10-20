@@ -5,11 +5,11 @@ import type { AccountRepository } from "@/external/domain/repository-interfaces/
 export class AccountRepositoryImpl implements AccountRepository {
   async findById(id: string): Promise<Account | null> {
     const result = await accountsRepository.findById(id);
-    
+
     if (!result) {
       return null;
     }
-    
+
     return new Account({
       id: result.id,
       email: result.email,
@@ -26,11 +26,11 @@ export class AccountRepositoryImpl implements AccountRepository {
 
   async findByEmail(email: string): Promise<Account | null> {
     const result = await accountsRepository.findByEmail(email);
-    
+
     if (!result) {
       return null;
     }
-    
+
     return new Account({
       id: result.id,
       email: result.email,
@@ -49,12 +49,15 @@ export class AccountRepositoryImpl implements AccountRepository {
     provider: string,
     providerAccountId: string,
   ): Promise<Account | null> {
-    const result = await accountsRepository.findByProvider(provider, providerAccountId);
-    
+    const result = await accountsRepository.findByProvider(
+      provider,
+      providerAccountId,
+    );
+
     if (!result) {
       return null;
     }
-    
+
     return new Account({
       id: result.id,
       email: result.email,
