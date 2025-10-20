@@ -6,6 +6,7 @@ CREATE TABLE "accounts" (
 	"role" varchar(20) DEFAULT 'user' NOT NULL,
 	"provider" varchar(50) NOT NULL,
 	"provider_account_id" varchar(255) NOT NULL,
+	"thumbnail" varchar(500),
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "accounts_email_unique" UNIQUE("email")

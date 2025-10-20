@@ -1,52 +1,47 @@
-import { and, eq } from "drizzle-orm";
-import { db } from "@/external/client/db/client";
-import { accounts } from "@/external/client/db/schema";
-import { Account } from "@/external/domain/entities/Account";
+import { accountsRepository } from "@acme/shared/db";
+import { Account } from "@acme/shared/domain";
 import type { AccountRepository } from "@/external/domain/repository-interfaces/AccountRepository";
 
 export class AccountRepositoryImpl implements AccountRepository {
   async findById(id: string): Promise<Account | null> {
-    const result = await db.select().from(accounts).where(eq(accounts.id, id));
-
-    if (result.length === 0) {
+    const result = await accountsRepository.findById(id);
+    
+    if (!result) {
       return null;
     }
-
-    const row = result[0];
+    
     return new Account({
-      id: row.id,
-      email: row.email,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      role: row.role as "admin" | "user",
-      provider: row.provider,
-      providerAccountId: row.providerAccountId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      id: result.id,
+      email: result.email,
+      firstName: result.firstName,
+      lastName: result.lastName,
+      role: result.role,
+      provider: result.provider,
+      providerAccountId: result.providerAccountId,
+      thumbnail: result.thumbnail,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
     });
   }
 
   async findByEmail(email: string): Promise<Account | null> {
-    const result = await db
-      .select()
-      .from(accounts)
-      .where(eq(accounts.email, email));
-
-    if (result.length === 0) {
+    const result = await accountsRepository.findByEmail(email);
+    
+    if (!result) {
       return null;
     }
-
-    const row = result[0];
+    
     return new Account({
-      id: row.id,
-      email: row.email,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      role: row.role as "admin" | "user",
-      provider: row.provider,
-      providerAccountId: row.providerAccountId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      id: result.id,
+      email: result.email,
+      firstName: result.firstName,
+      lastName: result.lastName,
+      role: result.role,
+      provider: result.provider,
+      providerAccountId: result.providerAccountId,
+      thumbnail: result.thumbnail,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
     });
   }
 
@@ -54,65 +49,55 @@ export class AccountRepositoryImpl implements AccountRepository {
     provider: string,
     providerAccountId: string,
   ): Promise<Account | null> {
-    const result = await db
-      .select()
-      .from(accounts)
-      .where(
-        and(
-          eq(accounts.provider, provider),
-          eq(accounts.providerAccountId, providerAccountId),
-        ),
-      );
-
-    if (result.length === 0) {
+    const result = await accountsRepository.findByProvider(provider, providerAccountId);
+    
+    if (!result) {
       return null;
     }
-
-    const row = result[0];
+    
     return new Account({
-      id: row.id,
-      email: row.email,
-      firstName: row.firstName,
-      lastName: row.lastName,
-      role: row.role as "admin" | "user",
-      provider: row.provider,
-      providerAccountId: row.providerAccountId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
+      id: result.id,
+      email: result.email,
+      firstName: result.firstName,
+      lastName: result.lastName,
+      role: result.role,
+      provider: result.provider,
+      providerAccountId: result.providerAccountId,
+      thumbnail: result.thumbnail,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
     });
   }
 
   async save(account: Account): Promise<Account> {
-    const result = await db
-      .insert(accounts)
-      .values({
-        id: account.id,
-        email: account.email,
-        firstName: account.firstName,
-        lastName: account.lastName,
-        role: account.role,
-        provider: account.provider,
-        providerAccountId: account.providerAccountId,
-        createdAt: account.createdAt,
-        updatedAt: account.updatedAt,
-      })
-      .returning();
+    const result = await accountsRepository.create({
+      id: account.id,
+      email: account.email,
+      firstName: account.firstName,
+      lastName: account.lastName,
+      role: account.role,
+      provider: account.provider,
+      providerAccountId: account.providerAccountId,
+      thumbnail: account.thumbnail,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+    });
 
-    const savedRow = result[0];
     return new Account({
-      id: savedRow.id,
-      email: savedRow.email,
-      firstName: savedRow.firstName,
-      lastName: savedRow.lastName,
-      role: savedRow.role as "admin" | "user",
-      provider: savedRow.provider,
-      providerAccountId: savedRow.providerAccountId,
-      createdAt: savedRow.createdAt,
-      updatedAt: savedRow.updatedAt,
+      id: result.id,
+      email: result.email,
+      firstName: result.firstName,
+      lastName: result.lastName,
+      role: result.role,
+      provider: result.provider,
+      providerAccountId: result.providerAccountId,
+      thumbnail: result.thumbnail,
+      createdAt: result.createdAt,
+      updatedAt: result.updatedAt,
     });
   }
 
   async delete(id: string): Promise<void> {
-    await db.delete(accounts).where(eq(accounts.id, id));
+    await accountsRepository.delete(id);
   }
 }

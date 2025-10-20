@@ -1,4 +1,4 @@
-import { Account } from "@/external/domain/entities/Account";
+import { Account } from "@acme/shared/domain";
 import { AccountRepositoryImpl } from "@/external/repository/account.repository";
 
 export interface CreateAccountInput {

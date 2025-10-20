@@ -16,5 +16,9 @@
 			"name": "⚙️ WEB_ADMIN",
 			"path": "./web/admin",
 		},
+		{
+			"name": "🛠️ PACKAGES",
+			"path": "./packages",
+		},
 	],
 }

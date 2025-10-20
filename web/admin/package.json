@@ -8,18 +8,13 @@
     "start": "next start",
     "lint": "biome check",
     "lint:fix": "biome check --write",
-    "format": "biome format --write",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "dotenv -e .env.local -- tsx src/external/client/db/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "format": "biome format --write"
   },
   "dependencies": {
-    "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.6",
+    "@acme/shared": "workspace:*",
     "google-auth-library": "^10.4.1",
     "next": "15.5.6",
     "next-auth": "^4.24.11",
-    "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "^0.0.1",
@@ -31,10 +26,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv-cli": "^10.0.0",
-    "drizzle-kit": "^0.31.5",
     "tailwindcss": "^4",
-    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }
