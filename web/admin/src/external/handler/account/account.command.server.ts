@@ -1,20 +1,25 @@
 import "server-only";
-import type { Account } from "@/external/domain/entities/Account";
 import {
-  AccountService,
-  type CreateAccountInput,
-} from "@/external/service/account/account.service";
+  type AccountOutput,
+  type CreateOrGetAccountInput,
+  CreateOrGetAccountInputSchema,
+  toAccountOutput,
+} from "@/external/dto/account/types";
+import { AccountService } from "@/external/service/account/account.service";
 
 const accountService = new AccountService();
 
 export async function createOrGetAccount(
-  provider: string,
-  providerAccountId: string,
-  createInput: CreateAccountInput,
-): Promise<Account> {
-  return await accountService.findOrCreateAccount(
-    provider,
-    providerAccountId,
-    createInput,
+  input: CreateOrGetAccountInput,
+): Promise<AccountOutput> {
+  // 入力バリデーション
+  const validated = CreateOrGetAccountInputSchema.parse(input);
+
+  const account = await accountService.findOrCreateAccount(
+    validated.provider,
+    validated.providerAccountId,
+    validated.createInput,
   );
+
+  return toAccountOutput(account);
 }
