@@ -50,9 +50,7 @@ export class Account {
     return this.isAdmin();
   }
 
-  static create(
-    params: Omit<AccountParams, "id" | "createdAt" | "updatedAt">,
-  ): Account {
+  static create(params: Omit<AccountParams, "id" | "createdAt" | "updatedAt">): Account {
     return new Account(params);
   }
 }

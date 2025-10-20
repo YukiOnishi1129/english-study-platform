@@ -14,10 +14,9 @@ export const chapters = pgTable("chapters", {
   materialId: uuid("material_id")
     .notNull()
     .references(() => materials.id, { onDelete: "cascade" }),
-  parentChapterId: uuid("parent_chapter_id").references(
-    (): AnyPgColumn => chapters.id,
-    { onDelete: "cascade" },
-  ),
+  parentChapterId: uuid("parent_chapter_id").references((): AnyPgColumn => chapters.id, {
+    onDelete: "cascade",
+  }),
   name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
   order: integer("order").notNull().default(0),

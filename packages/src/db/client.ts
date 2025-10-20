@@ -1,6 +1,6 @@
-import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
-import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
+import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema/index.js";
 
@@ -33,10 +33,16 @@ function createDbConnection() {
 
   // ローカル環境の場合はpgドライバを使用
   if (config.DB_DRIVER === "local" || !config.DATABASE_URL) {
-    if (!config.DB_HOST || !config.DB_PORT || !config.DB_NAME || !config.DB_USER || !config.DB_PASSWORD) {
+    if (
+      !config.DB_HOST ||
+      !config.DB_PORT ||
+      !config.DB_NAME ||
+      !config.DB_USER ||
+      !config.DB_PASSWORD
+    ) {
       throw new Error("Database connection parameters are required");
     }
-    
+
     const pool = new Pool({
       host: config.DB_HOST,
       port: parseInt(config.DB_PORT),

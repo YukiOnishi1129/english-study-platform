@@ -11,6 +11,9 @@
   },
   "scripts": {
     "type-check": "tsc --noEmit",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:generate": "drizzle-kit generate",
@@ -22,6 +25,7 @@
     "pg": "^8.13.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
     "@types/node": "^20.14.10",
     "@types/pg": "^8.11.10",
     "dotenv": "^16.5.0",
