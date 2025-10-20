@@ -1,16 +1,15 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { checkAuthAndRefresh } from "@/features/auth/servers/auth-check.server";
 
 export default async function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const idToken = cookieStore.get("id_token");
+  const isAuthenticated = await checkAuthAndRefresh();
 
-  // If not authenticated, redirect to login
-  if (!idToken) {
+  // If not authenticated or token refresh failed, redirect to login
+  if (!isAuthenticated) {
     redirect("/login");
   }
 

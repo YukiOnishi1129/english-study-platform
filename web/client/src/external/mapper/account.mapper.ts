@@ -1,7 +1,9 @@
 import type { Account as DomainAccount } from "@acme/shared/domain";
 import type { Account as FeatureAccount } from "@/features/account/types/account";
 
-export function mapAccountToFeature(domainAccount: DomainAccount): FeatureAccount {
+export function mapAccountToFeature(
+  domainAccount: DomainAccount,
+): FeatureAccount {
   return {
     id: domainAccount.id,
     email: domainAccount.email,

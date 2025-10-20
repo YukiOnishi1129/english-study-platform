@@ -1,11 +1,10 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { checkAuthAndRefresh } from "@/features/auth/servers/auth-check.server";
 
 export default async function Home() {
-  const cookieStore = await cookies();
-  const idToken = cookieStore.get("id_token");
+  const isAuthenticated = await checkAuthAndRefresh();
 
-  if (idToken) {
+  if (isAuthenticated) {
     redirect("/dashboard");
   } else {
     redirect("/login");
