@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import type { Account } from "@/external/domain/entities/Account";
+import type { Account } from "@acme/shared/domain";
 import {
   AccountService,
   type CreateAccountInput,

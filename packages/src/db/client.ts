@@ -2,7 +2,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import * as schema from "./schema/index.js";
+import * as schema from "./schema";
 
 // 環境変数の型定義
 type DbConfig = {

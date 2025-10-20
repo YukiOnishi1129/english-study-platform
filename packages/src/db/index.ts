@@ -1,8 +1,8 @@
 // DB Client
 
-export type { Database } from "./client.js";
-export { db } from "./client.js";
+export type { Database } from "./client";
+export { db } from "./client";
 // Repositories
-export * from "./repositories/index.js";
+export * from "./repositories";
 // Schema
-export * from "./schema/index.js";
+export * from "./schema";

@@ -1,5 +1,5 @@
 import { Account } from "@acme/shared/domain";
-import { AccountRepositoryImpl } from "@/external/repository/account.repository";
+import { AccountRepositoryImpl } from "@acme/shared/db";
 
 export interface CreateAccountInput {
   email: string;
