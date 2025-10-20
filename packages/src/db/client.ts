@@ -22,11 +22,11 @@ const globalForDb = globalThis as unknown as {
 
 function createDbConnection() {
   const config: DbConfig = {
-    DB_HOST: process.env.DB_HOST!,
-    DB_PORT: process.env.DB_PORT!,
-    DB_NAME: process.env.DB_NAME!,
-    DB_USER: process.env.DB_USER!,
-    DB_PASSWORD: process.env.DB_PASSWORD!,
+    DB_HOST: process.env.DB_HOST || "",
+    DB_PORT: process.env.DB_PORT || "",
+    DB_NAME: process.env.DB_NAME || "",
+    DB_USER: process.env.DB_USER || "",
+    DB_PASSWORD: process.env.DB_PASSWORD || "",
     DB_DRIVER: process.env.DB_DRIVER as "local" | "neon" | undefined,
     DATABASE_URL: process.env.DATABASE_URL,
   };
@@ -45,7 +45,7 @@ function createDbConnection() {
 
     const pool = new Pool({
       host: config.DB_HOST,
-      port: parseInt(config.DB_PORT),
+      port: parseInt(config.DB_PORT, 10),
       database: config.DB_NAME,
       user: config.DB_USER,
       password: config.DB_PASSWORD,
