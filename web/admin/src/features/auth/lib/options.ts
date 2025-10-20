@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { createOrGetAccount } from "@/external/handler/account/account.command.server";
+import { getAccountByProvider } from "@/external/handler/account/account.query.server";
+import type { GoogleProfile } from "@/features/auth/types/next-auth";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -35,41 +36,44 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }): Promise<boolean> {
       if (account?.provider !== "google") return false;
 
       try {
-        // handlerを通じてアカウントを検索または作成
-        if (!user.account) {
-          console.error("User account is missing");
+        // handlerを通じて既存のアカウントを検索
+        const existingAccount = await getAccountByProvider({
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+        });
+
+        // アカウントが存在しない場合はログイン拒否（新規登録は許可しない）
+        if (!existingAccount) {
+          console.log("Account not found, registration not allowed");
           return false;
         }
 
-        const dbAccount = await createOrGetAccount({
-          provider: account.provider,
-          providerAccountId: account.providerAccountId,
-          createInput: {
-            email: user.account.email,
-            firstName: user.account.firstName,
-            lastName: user.account.lastName,
-            role: user.account.role,
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-          },
-        });
+        // roleがadminでない場合はログイン拒否
+        if (existingAccount.role !== "admin") {
+          console.log("Access denied: User is not an admin");
+          return false;
+        }
 
-        // ドメインオブジェクトをuserに設定（thumbnailも含めて完全なオブジェクト）
+        // Googleプロフィールからthumbnailを取得
+        // profileはGoogleProvider使用時は画像URLを含む
+        const thumbnail = (profile as GoogleProfile)?.picture;
+
+        // ドメインオブジェクトをuserに設定
         user.account = {
-          id: dbAccount.id,
-          email: dbAccount.email,
-          firstName: dbAccount.firstName,
-          lastName: dbAccount.lastName,
-          role: dbAccount.role,
-          provider: dbAccount.provider,
-          providerAccountId: dbAccount.providerAccountId,
-          thumbnail: user.account.thumbnail,
-          createdAt: dbAccount.createdAt,
-          updatedAt: dbAccount.updatedAt,
+          id: existingAccount.id,
+          email: existingAccount.email,
+          firstName: existingAccount.firstName,
+          lastName: existingAccount.lastName,
+          role: existingAccount.role,
+          provider: existingAccount.provider,
+          providerAccountId: existingAccount.providerAccountId,
+          thumbnail: thumbnail,
+          createdAt: existingAccount.createdAt,
+          updatedAt: existingAccount.updatedAt,
         };
 
         return true;
@@ -103,17 +107,6 @@ export const authOptions: NextAuthOptions = {
             sameSite: "lax",
             path: "/",
             maxAge: 60 * 60 * 24 * 30, // 30日間
-          });
-        }
-
-        // アクセストークンを保存（必要に応じて）
-        if (account.access_token) {
-          cookieStore.set("access_token", account.access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60, // 1時間
           });
         }
       }

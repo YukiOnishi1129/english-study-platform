@@ -49,16 +49,6 @@ export async function refreshAuthTokens(): Promise<void> {
         maxAge: 60 * 60 * 24 * 7, // 7日間
       });
     }
-
-    if (newTokens.accessToken) {
-      cookieStore.set("access_token", newTokens.accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60, // 1時間
-      });
-    }
   } catch (error) {
     console.error("Failed to refresh tokens:", error);
     throw error;

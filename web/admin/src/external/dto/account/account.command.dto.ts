@@ -1,17 +1,8 @@
 import { z } from "zod";
 
-// ===== Input DTOs =====
+// ===== Request DTOs =====
 
-export const GetAccountByProviderInputSchema = z.object({
-  provider: z.string().min(1),
-  providerAccountId: z.string().min(1),
-});
-
-export type GetAccountByProviderInput = z.infer<
-  typeof GetAccountByProviderInputSchema
->;
-
-export const CreateOrGetAccountInputSchema = z.object({
+export const CreateOrGetAccountRequestSchema = z.object({
   provider: z.string().min(1),
   providerAccountId: z.string().min(1),
   createInput: z.object({
@@ -24,15 +15,15 @@ export const CreateOrGetAccountInputSchema = z.object({
   }),
 });
 
-export type CreateOrGetAccountInput = z.infer<
-  typeof CreateOrGetAccountInputSchema
+export type CreateOrGetAccountRequest = z.infer<
+  typeof CreateOrGetAccountRequestSchema
 >;
 
-// ===== Output DTOs =====
+// ===== Response DTOs =====
 
-export const AccountOutputSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
+export const AccountResponseSchema = z.object({
+  id: z.uuid(),
+  email: z.email(),
   firstName: z.string(),
   lastName: z.string(),
   role: z.enum(["admin", "user"]),
@@ -43,13 +34,13 @@ export const AccountOutputSchema = z.object({
   updatedAt: z.date(),
 });
 
-export type AccountOutput = z.infer<typeof AccountOutputSchema>;
+export type AccountResponse = z.infer<typeof AccountResponseSchema>;
 
 // ===== 変換関数 =====
 
 import type { Account } from "@/external/domain/entities/Account";
 
-export function toAccountOutput(account: Account): AccountOutput {
+export function toAccountResponse(account: Account): AccountResponse {
   return {
     id: account.id,
     email: account.email,
@@ -58,6 +49,7 @@ export function toAccountOutput(account: Account): AccountOutput {
     role: account.role,
     provider: account.provider,
     providerAccountId: account.providerAccountId,
+    thumbnail: account.thumbnail,
     createdAt: account.createdAt,
     updatedAt: account.updatedAt,
   };

@@ -1,19 +1,19 @@
 import "server-only";
 import {
-  type AccountOutput,
-  type CreateOrGetAccountInput,
-  CreateOrGetAccountInputSchema,
-  toAccountOutput,
-} from "@/external/dto/account/types";
+  type AccountResponse,
+  type CreateOrGetAccountRequest,
+  CreateOrGetAccountRequestSchema,
+  toAccountResponse,
+} from "@/external/dto/account/account.command.dto";
 import { AccountService } from "@/external/service/account/account.service";
 
 const accountService = new AccountService();
 
 export async function createOrGetAccount(
-  input: CreateOrGetAccountInput,
-): Promise<AccountOutput> {
+  request: CreateOrGetAccountRequest,
+): Promise<AccountResponse> {
   // 入力バリデーション
-  const validated = CreateOrGetAccountInputSchema.parse(input);
+  const validated = CreateOrGetAccountRequestSchema.parse(request);
 
   const account = await accountService.findOrCreateAccount(
     validated.provider,
@@ -21,5 +21,5 @@ export async function createOrGetAccount(
     validated.createInput,
   );
 
-  return toAccountOutput(account);
+  return toAccountResponse(account);
 }
