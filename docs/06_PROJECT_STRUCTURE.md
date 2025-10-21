@@ -93,7 +93,9 @@ web/client/
 │   │   ├── auth/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   └── LoginPageTemplate.tsx
+│   │   │   │   │   └── LoginPageTemplate/
+│   │   │   │   │       ├── LoginPageTemplate.tsx
+│   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
 │   │   │   │       ├── LoginButton/
 │   │   │   │       │   ├── LoginButtonContainer.tsx
@@ -105,6 +107,8 @@ web/client/
 │   │   │   │           ├── LogoutButtonPresenter.tsx
 │   │   │   │           ├── useLogoutButton.ts
 │   │   │   │           └── index.ts
+│   │   │   ├── servers/
+│   │   │   │   └── auth-check.server.ts
 │   │   │   └── utils/
 │   │   │       └── requireAuth.ts
 │   │   │
@@ -349,7 +353,9 @@ web/admin/
 │   │   ├── auth/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   └── LoginPageTemplate.tsx
+│   │   │   │   │   └── LoginPageTemplate/
+│   │   │   │   │       ├── LoginPageTemplate.tsx
+│   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
 │   │   │   │       ├── LoginButton/
 │   │   │   │       │   ├── LoginButtonContainer.tsx
@@ -361,6 +367,8 @@ web/admin/
 │   │   │   │           ├── LogoutButtonPresenter.tsx
 │   │   │   │           ├── useLogoutButton.ts
 │   │   │   │           └── index.ts
+│   │   │   ├── servers/
+│   │   │   │   └── auth-check.server.ts
 │   │   │   └── utils/
 │   │   │       └── requireAdmin.ts
 │   │   │

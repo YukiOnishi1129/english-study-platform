@@ -54,4 +54,8 @@ export class AccountService {
       providerAccountId,
     );
   }
+
+  async findAccountByEmail(email: string): Promise<Account | null> {
+    return await this.accountRepository.findByEmail(email);
+  }
 }

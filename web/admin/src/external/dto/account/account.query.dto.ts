@@ -11,6 +11,14 @@ export type GetAccountByProviderRequest = z.infer<
   typeof GetAccountByProviderRequestSchema
 >;
 
+export const GetAccountByEmailRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+export type GetAccountByEmailRequest = z.infer<
+  typeof GetAccountByEmailRequestSchema
+>;
+
 // ===== Response DTOs =====
 
 export const AccountResponseSchema = z.object({

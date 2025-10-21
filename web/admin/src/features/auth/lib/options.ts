@@ -1,8 +1,31 @@
-import { cookies } from "next/headers";
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { getAccountByProvider } from "@/external/handler/account/account.query.server";
+import type { AccountResponse } from "@/external/dto/account/account.query.dto";
+import {
+  getAccountByEmail,
+  getAccountByProvider,
+} from "@/external/handler/account/account.query.server";
+import { refreshGoogleTokens } from "@/external/handler/auth/token.command.server";
+import type { Account } from "@/features/account/types/account";
 import type { GoogleProfile } from "@/features/auth/types/next-auth";
+
+function toFeatureAccount(
+  account: AccountResponse,
+  thumbnail?: string | null,
+): Account {
+  return {
+    id: account.id,
+    email: account.email,
+    firstName: account.firstName,
+    lastName: account.lastName,
+    role: account.role,
+    provider: account.provider,
+    providerAccountId: account.providerAccountId,
+    thumbnail: thumbnail ?? account.thumbnail,
+    createdAt: account.createdAt,
+    updatedAt: account.updatedAt,
+  };
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -40,41 +63,35 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider !== "google") return false;
 
       try {
-        // handlerを通じて既存のアカウントを検索
-        const existingAccount = await getAccountByProvider({
+        let existingAccount = await getAccountByProvider({
           provider: account.provider,
           providerAccountId: account.providerAccountId,
         });
 
-        // アカウントが存在しない場合はログイン拒否（新規登録は許可しない）
         if (!existingAccount) {
-          console.log("Account not found, registration not allowed");
-          return false;
+          const googleProfile = profile as GoogleProfile;
+          if (googleProfile.email) {
+            existingAccount = await getAccountByEmail({
+              email: googleProfile.email,
+            });
+          }
+
+          if (!existingAccount) {
+            console.log("Account not found, registration not allowed");
+            return false;
+          }
         }
 
-        // roleがadminでない場合はログイン拒否
+        console.log("Existing account found:", existingAccount);
+
         if (existingAccount.role !== "admin") {
           console.log("Access denied: User is not an admin");
           return false;
         }
 
-        // Googleプロフィールからthumbnailを取得
-        // profileはGoogleProvider使用時は画像URLを含む
         const thumbnail = (profile as GoogleProfile)?.picture;
 
-        // ドメインオブジェクトをuserに設定
-        user.account = {
-          id: existingAccount.id,
-          email: existingAccount.email,
-          firstName: existingAccount.firstName,
-          lastName: existingAccount.lastName,
-          role: existingAccount.role,
-          provider: existingAccount.provider,
-          providerAccountId: existingAccount.providerAccountId,
-          thumbnail: thumbnail,
-          createdAt: existingAccount.createdAt,
-          updatedAt: existingAccount.updatedAt,
-        };
+        user.account = toFeatureAccount(existingAccount, thumbnail);
 
         return true;
       } catch (error) {
@@ -83,46 +100,68 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, user, account }) {
-      // 初回ログイン時（signInコールバックの後）
-      if (account && user) {
-        // Google Identity PlatformのトークンをCookieに保存
-        const cookieStore = await cookies();
-
-        // IDトークンを保存（HTTPOnly, Secure）
-        if (account.id_token) {
-          cookieStore.set("id_token", account.id_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 7, // 7日間
-          });
-        }
-
-        // リフレッシュトークンを保存
-        if (account.refresh_token) {
-          cookieStore.set("refresh_token", account.refresh_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 60 * 60 * 24 * 30, // 30日間
-          });
-        }
-      }
-
       if (user?.account) {
-        // accountオブジェクトをtokenに保存
         token.account = user.account;
       }
 
-      return token;
+      if (account) {
+        token.accessToken = account.access_token ?? token.accessToken;
+        token.refreshToken = account.refresh_token ?? token.refreshToken;
+        token.idToken = account.id_token ?? token.idToken;
+        token.accessTokenExpires = account.expires_at
+          ? account.expires_at * 1000
+          : Date.now() + 1000 * 60 * 60;
+        token.error = undefined;
+        return token;
+      }
+
+      if (
+        token.accessToken &&
+        typeof token.accessTokenExpires === "number" &&
+        token.accessTokenExpires > Date.now() + 60_000
+      ) {
+        return token;
+      }
+
+      if (!token.refreshToken) {
+        return {
+          ...token,
+          accessToken: undefined,
+          idToken: undefined,
+          error: "RefreshTokenMissing",
+        };
+      }
+
+      try {
+        const refreshed = await refreshGoogleTokens(token.refreshToken);
+
+        return {
+          ...token,
+          accessToken: refreshed.accessToken ?? token.accessToken,
+          idToken: refreshed.idToken ?? token.idToken,
+          accessTokenExpires:
+            refreshed.accessTokenExpires ?? Date.now() + 1000 * 60 * 60,
+          error: undefined,
+        };
+      } catch (error) {
+        console.error("Error refreshing access token:", error);
+        return {
+          ...token,
+          accessToken: undefined,
+          idToken: undefined,
+          error: "RefreshAccessTokenError",
+        };
+      }
     },
     async session({ session, token }) {
       if (token.account) {
-        // JWTトークンからaccountオブジェクトをセッションに設定
-        session.account = token.account;
+        session.account = token.account as Account;
       }
+
+      if (token.error) {
+        session.error = token.error;
+      }
+
       return session;
     },
   },
