@@ -6,7 +6,7 @@ import {
   type MaterialCsvHierarchy,
   type MaterialCsvRow,
   parseMaterialCsv,
-} from "@/features/materials/lib/parse-material-csv";
+} from "@/features/materials/lib/parseMaterialCsv";
 
 interface ParseState {
   status: "idle" | "parsing" | "success" | "error";
@@ -273,6 +273,7 @@ export function MaterialCsvImporter() {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr className="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  <th className="px-3 py-3">#</th>
                   <th className="px-4 py-3">教材名</th>
                   <th className="px-4 py-3">章名</th>
                   <th className="px-4 py-3">UNIT名</th>
@@ -283,11 +284,14 @@ export function MaterialCsvImporter() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                {parseState.rows.map((row) => (
+                {parseState.rows.map((row, rowIndex) => (
                   <tr
                     key={`${row.materialTitle}-${row.chapterTitle}-${row.unitTitle}-${row.questionJapanese}`}
                     className="align-top"
                   >
+                    <td className="px-3 py-3 text-xs font-semibold text-gray-500">
+                      {rowIndex + 1}
+                    </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {row.materialTitle}
                     </td>

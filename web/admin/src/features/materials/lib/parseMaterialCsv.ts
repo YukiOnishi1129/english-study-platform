@@ -32,18 +32,14 @@ export interface ParseMaterialCsvResult {
   errors: string[];
 }
 
-const HEADER_MAP: Record<string, keyof MaterialCsvRow | "answer2" | "answer3"> =
-  {
-    教材名: "materialTitle",
-    章名: "chapterTitle",
-    UNIT名: "unitTitle",
-    日本語: "questionJapanese",
-    英語正解1: "correctAnswers",
-    英語正解2: "answer2",
-    英語正解3: "answer3",
-    ヒント: "hint",
-    解説: "explanation",
-  };
+const HEADER_MAP: Record<string, keyof MaterialCsvRow> = {
+  教材名: "materialTitle",
+  章名: "chapterTitle",
+  UNIT名: "unitTitle",
+  日本語: "questionJapanese",
+  ヒント: "hint",
+  解説: "explanation",
+};
 
 const REQUIRED_HEADERS = [
   "教材名",
@@ -150,25 +146,27 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
 
   const headerCells = splitCsvLine(lines[0]).map((cell) => cell.trim());
 
-  const headerIndexMap = new Map<
-    keyof typeof HEADER_MAP | "answer2" | "answer3",
-    number
-  >();
+  const headerIndexMap = new Map<keyof typeof HEADER_MAP, number>();
+  const answerHeaderEntries: Array<{ index: number; order: number }> = [];
+  const answerHeaderPattern = /^英語正解(\d+)$/;
+
   headerCells.forEach((cell, index) => {
     const normalized = cell.replace(/\s+/g, "");
-    if (HEADER_MAP[normalized as keyof typeof HEADER_MAP]) {
-      headerIndexMap.set(
-        HEADER_MAP[normalized as keyof typeof HEADER_MAP],
-        index,
-      );
+    const mappedKey = HEADER_MAP[normalized as keyof typeof HEADER_MAP];
+    if (mappedKey) {
+      headerIndexMap.set(mappedKey, index);
+      return;
     }
-    if (normalized === "英語正解2") {
-      headerIndexMap.set("answer2", index);
-    }
-    if (normalized === "英語正解3") {
-      headerIndexMap.set("answer3", index);
+
+    if (answerHeaderPattern.test(normalized)) {
+      const [, order] = normalized.match(answerHeaderPattern) ?? [];
+      answerHeaderEntries.push({ index, order: Number(order) || 0 });
     }
   });
+
+  const answerHeaderIndices = answerHeaderEntries
+    .sort((a, b) => a.order - b.order)
+    .map((entry) => entry.index);
 
   const headerSet = new Set(
     headerCells.map((cell) => cell.replace(/\s+/g, "")),
@@ -181,6 +179,11 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
     return { rows: [], hierarchy: [], errors };
   }
 
+  if (answerHeaderIndices.length === 0) {
+    errors.push("英語正解の列が見つかりません。最低でも英語正解1を含めてください。");
+    return { rows: [], hierarchy: [], errors };
+  }
+
   const rows: MaterialCsvRow[] = [];
 
   for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
@@ -190,25 +193,25 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
       continue;
     }
 
-    const getCell = (header: keyof MaterialCsvRow | "answer2" | "answer3") => {
+    const getCell = (header: keyof MaterialCsvRow) => {
       const index = headerIndexMap.get(header);
-      return typeof index === "number" ? (cells[index]?.trim() ?? "") : "";
+      return typeof index === "number" ? cells[index]?.trim() ?? "" : "";
     };
 
     const materialTitle = getCell("materialTitle");
     const chapterTitle = getCell("chapterTitle");
     const unitTitle = getCell("unitTitle");
     const questionJapanese = getCell("questionJapanese");
-    const answer1 = getCell("correctAnswers");
-    const answer2 = getCell("answer2");
-    const answer3 = getCell("answer3");
+    const answers = answerHeaderIndices
+      .map((answerIndex) => cells[answerIndex]?.trim() ?? "")
+      .filter((value) => value);
 
     if (
       !materialTitle ||
       !chapterTitle ||
       !unitTitle ||
       !questionJapanese ||
-      !answer1
+      answers.length === 0
     ) {
       errors.push(`${lineIndex + 1}行目に必須項目の抜けがあります。`);
       continue;
@@ -216,7 +219,6 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
 
     const hint = getCell("hint") || undefined;
     const explanation = getCell("explanation") || undefined;
-    const answers = [answer1, answer2, answer3].filter((value) => value);
 
     rows.push({
       materialTitle,
