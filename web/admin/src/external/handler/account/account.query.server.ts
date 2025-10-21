@@ -2,8 +2,8 @@ import "server-only";
 import {
   type AccountResponse,
   type GetAccountByEmailRequest,
-  type GetAccountByProviderRequest,
   GetAccountByEmailRequestSchema,
+  type GetAccountByProviderRequest,
   GetAccountByProviderRequestSchema,
   toAccountResponse,
 } from "@/external/dto/account/account.query.dto";
