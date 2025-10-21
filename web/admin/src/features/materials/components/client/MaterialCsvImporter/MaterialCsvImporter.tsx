@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type MaterialCsvHierarchy,
   type MaterialCsvRow,
@@ -21,6 +21,8 @@ const INITIAL_STATE: ParseState = {
   hierarchy: [],
   errors: [],
 };
+
+const PAGE_SIZE = 50;
 
 function formatCounts(hierarchy: MaterialCsvHierarchy[]) {
   const materialCount = hierarchy.length;
@@ -43,12 +45,44 @@ function formatCounts(hierarchy: MaterialCsvHierarchy[]) {
 
 export function MaterialCsvImporter() {
   const [parseState, setParseState] = useState<ParseState>(INITIAL_STATE);
+  const [page, setPage] = useState(1);
+
+  const totalPages = useMemo(() => {
+    if (parseState.rows.length === 0) {
+      return 1;
+    }
+    return Math.ceil(parseState.rows.length / PAGE_SIZE);
+  }, [parseState.rows.length]);
+
+  useEffect(() => {
+    if (parseState.status !== "success") {
+      setPage(1);
+      return;
+    }
+
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [parseState.status, page, totalPages]);
+
+  const startIndex = parseState.status === "success" ? (page - 1) * PAGE_SIZE : 0;
+  const endIndex = parseState.status === "success"
+    ? Math.min(parseState.rows.length, startIndex + PAGE_SIZE)
+    : 0;
+
+  const paginatedRows = useMemo(() => {
+    if (parseState.status !== "success") {
+      return [] as MaterialCsvRow[];
+    }
+    return parseState.rows.slice(startIndex, endIndex);
+  }, [parseState.status, parseState.rows, startIndex, endIndex]);
 
   const handleFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) {
         setParseState(INITIAL_STATE);
+        setPage(1);
         return;
       }
 
@@ -67,6 +101,7 @@ export function MaterialCsvImporter() {
               hierarchy: [],
               errors: result.errors,
             });
+            setPage(1);
           } else {
             setParseState({
               status: "success",
@@ -74,6 +109,7 @@ export function MaterialCsvImporter() {
               hierarchy: result.hierarchy,
               errors: [],
             });
+            setPage(1);
           }
         } catch (error) {
           setParseState({
@@ -86,6 +122,7 @@ export function MaterialCsvImporter() {
                 : "CSVファイルの解析中に予期しないエラーが発生しました。",
             ],
           });
+          setPage(1);
         }
       };
       reader.onerror = () => {
@@ -97,6 +134,7 @@ export function MaterialCsvImporter() {
             "ファイルの読み込みに失敗しました。もう一度お試しください。",
           ],
         });
+        setPage(1);
       };
 
       reader.readAsText(file, "utf-8");
@@ -284,13 +322,13 @@ export function MaterialCsvImporter() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                {parseState.rows.map((row, rowIndex) => (
+                {paginatedRows.map((row, rowIndex) => (
                   <tr
                     key={`${row.materialTitle}-${row.chapterTitle}-${row.unitTitle}-${row.questionJapanese}`}
                     className="align-top"
                   >
                     <td className="px-3 py-3 text-xs font-semibold text-gray-500">
-                      {rowIndex + 1}
+                      {startIndex + rowIndex + 1}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
                       {row.materialTitle}
@@ -325,6 +363,34 @@ export function MaterialCsvImporter() {
                 ))}
               </tbody>
             </table>
+            {parseState.rows.length > PAGE_SIZE ? (
+              <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                <p>
+                  表示中: <span className="font-semibold text-gray-800">{startIndex + 1}〜{endIndex}</span> / {parseState.rows.length} 行
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                    disabled={page === 1}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    前へ
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    {page} / {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={page >= totalPages}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    次へ
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
