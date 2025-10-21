@@ -1,9 +1,30 @@
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { getAccountByProvider } from "@/external/handler/account/account.query.server";
-import { createOrGetAccount } from "@/external/handler/auth/auth.command.server";
-import { setAuthCookies } from "@/features/auth/servers/cookie.server";
+import { createOrGetAccount } from "@/external/handler/account/account.command.server";
+import { TokenVerificationService } from "@/external/service/auth/token-verification.service";
+import type { Account } from "@/features/account/types/account";
 import type { GoogleProfile } from "@/features/auth/types/next-auth";
+
+const tokenVerificationService = new TokenVerificationService();
+
+async function refreshGoogleTokens(refreshToken: string): Promise<{
+  accessToken?: string | null;
+  idToken?: string | null;
+  accessTokenExpires?: number | null;
+}> {
+  const refreshed = await tokenVerificationService.refreshTokens(refreshToken);
+
+  return {
+    accessToken: refreshed.accessToken,
+    idToken: refreshed.idToken,
+    accessTokenExpires: refreshed.expiryDate,
+  };
+}
+
+function buildProfileName(profile: GoogleProfile): string {
+  if (profile.name) return profile.name;
+  return `${profile.given_name || ""} ${profile.family_name || ""}`.trim();
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -20,68 +41,31 @@ export const authOptions: NextAuthOptions = {
       profile(profile) {
         return {
           id: profile.sub,
-          account: {
-            id: profile.sub,
-            email: profile.email,
-            name: `${profile.given_name || ""} ${profile.family_name || ""}`.trim(),
-            role: "user" as const,
-            provider: "google",
-            providerAccountId: profile.sub,
-            thumbnail: profile.picture,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
         };
       },
     }),
   ],
   callbacks: {
     async signIn({ user, account, profile }): Promise<boolean> {
-      if (account?.provider !== "google") return false;
+      if (!account || account.provider !== "google") return false;
 
       try {
-        // Check if the account already exists
-        const existingAccount = await getAccountByProvider(
+        const googleProfile = profile as GoogleProfile;
+        const fullName = buildProfileName(googleProfile);
+
+        const accountData = await createOrGetAccount(
           account.provider,
           account.providerAccountId,
-        );
-
-        // If account doesn't exist, we'll create it later in the jwt callback
-        // For now, just prepare the user data
-        const thumbnail = (profile as GoogleProfile)?.picture;
-        const googleProfile = profile as GoogleProfile;
-
-        if (existingAccount) {
-          // Use existing account data
-          user.account = {
-            id: existingAccount.id,
-            email: existingAccount.email,
-            firstName: existingAccount.firstName,
-            lastName: existingAccount.lastName,
-            role: existingAccount.role,
-            provider: existingAccount.provider,
-            providerAccountId: existingAccount.providerAccountId,
-            thumbnail: thumbnail || existingAccount.thumbnail,
-            createdAt: existingAccount.createdAt,
-            updatedAt: existingAccount.updatedAt,
-          };
-        } else {
-          // Prepare data for new account
-          user.account = {
-            id: account.providerAccountId,
+          {
             email: googleProfile.email,
-            name:
-              `${googleProfile.given_name || ""} ${googleProfile.family_name || ""}`.trim() ||
-              googleProfile.name,
-            role: "user",
+            name: fullName,
             provider: account.provider,
             providerAccountId: account.providerAccountId,
-            thumbnail: thumbnail,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        }
+            thumbnail: googleProfile.picture,
+          },
+        );
 
+        user.account = accountData;
         return true;
       } catch (error) {
         console.error("Error during sign in:", error);
@@ -89,47 +73,68 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, user, account }) {
-      // First login (after signIn callback)
-      if (account && user) {
-        // Save Google Identity Platform tokens to cookies
-        if (account.id_token && account.refresh_token) {
-          await setAuthCookies(account.id_token, account.refresh_token);
-        }
-
-        // Create account if it doesn't exist
-        if (user.account) {
-          const accountData = await createOrGetAccount(
-            user.account.provider,
-            user.account.providerAccountId,
-            {
-              email: user.account.email,
-              name: user.account.name,
-              provider: user.account.provider,
-              providerAccountId: user.account.providerAccountId,
-              thumbnail: user.account.thumbnail,
-            },
-          );
-
-          user.account = {
-            ...accountData,
-            createdAt: accountData.createdAt,
-            updatedAt: accountData.updatedAt,
-          };
-        }
-      }
-
       if (user?.account) {
-        // Save account object to token
-        token.account = user.account;
+        token.account = user.account as Account;
       }
 
-      return token;
+      if (account) {
+        token.accessToken = account.access_token ?? token.accessToken;
+        token.refreshToken = account.refresh_token ?? token.refreshToken;
+        token.idToken = account.id_token ?? token.idToken;
+        token.accessTokenExpires = account.expires_at
+          ? account.expires_at * 1000
+          : Date.now() + 1000 * 60 * 60;
+        token.error = undefined;
+        return token;
+      }
+
+      if (
+        token.accessToken &&
+        typeof token.accessTokenExpires === "number" &&
+        token.accessTokenExpires > Date.now() + 60_000
+      ) {
+        return token;
+      }
+
+      if (!token.refreshToken) {
+        return {
+          ...token,
+          accessToken: undefined,
+          idToken: undefined,
+          error: "RefreshTokenMissing",
+        };
+      }
+
+      try {
+        const refreshed = await refreshGoogleTokens(token.refreshToken);
+
+        return {
+          ...token,
+          accessToken: refreshed.accessToken ?? token.accessToken,
+          idToken: refreshed.idToken ?? token.idToken,
+          accessTokenExpires:
+            refreshed.accessTokenExpires ?? Date.now() + 1000 * 60 * 60,
+          error: undefined,
+        };
+      } catch (error) {
+        console.error("Error refreshing access token:", error);
+        return {
+          ...token,
+          accessToken: undefined,
+          idToken: undefined,
+          error: "RefreshAccessTokenError",
+        };
+      }
     },
     async session({ session, token }) {
       if (token.account) {
-        // Set account object from JWT token to session
-        session.account = token.account;
+        session.account = token.account as Account;
       }
+
+      if (token.error) {
+        session.error = token.error;
+      }
+
       return session;
     },
   },

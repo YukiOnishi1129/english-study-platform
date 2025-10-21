@@ -1,8 +1,9 @@
+import { signIn } from "next-auth/react";
 import { useCallback } from "react";
 
 export function useLoginButton() {
   const handleGoogleLogin = useCallback(() => {
-    window.location.href = "/api/auth/google";
+    signIn("google", { callbackUrl: "/dashboard" });
   }, []);
 
   return {

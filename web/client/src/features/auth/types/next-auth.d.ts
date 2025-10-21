@@ -1,8 +1,9 @@
-import type { Account } from "@/features/auth/types/account";
+import type { Account } from "@/features/account/types/account";
 
 declare module "next-auth" {
   interface Session {
     account?: Account;
+    error?: "RefreshTokenMissing" | "RefreshAccessTokenError";
   }
 
   interface User {
@@ -14,6 +15,11 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     account?: Account;
+    accessToken?: string;
+    refreshToken?: string;
+    accessTokenExpires?: number;
+    idToken?: string;
+    error?: "RefreshTokenMissing" | "RefreshAccessTokenError";
   }
 }
 
