@@ -1,6 +1,8 @@
 import "server-only";
 import {
   type AccountResponse,
+  type GetAccountByEmailRequest,
+  GetAccountByEmailRequestSchema,
   type GetAccountByProviderRequest,
   GetAccountByProviderRequestSchema,
   toAccountResponse,
@@ -19,6 +21,16 @@ export async function getAccountByProvider(
     validated.provider,
     validated.providerAccountId,
   );
+
+  return account ? toAccountResponse(account) : null;
+}
+
+export async function getAccountByEmail(
+  request: GetAccountByEmailRequest,
+): Promise<AccountResponse | null> {
+  const validated = GetAccountByEmailRequestSchema.parse(request);
+
+  const account = await accountService.findAccountByEmail(validated.email);
 
   return account ? toAccountResponse(account) : null;
 }
