@@ -95,8 +95,15 @@ web/client/
 │   │   │   │   ├── server/
 │   │   │   │   │   └── LoginPageTemplate.tsx
 │   │   │   │   └── client/
-│   │   │   │       └── LoginButton/
-│   │   │   │           ├── LoginButtonPresenter.tsx
+│   │   │   │       ├── LoginButton/
+│   │   │   │       │   ├── LoginButtonContainer.tsx
+│   │   │   │       │   ├── LoginButtonPresenter.tsx
+│   │   │   │       │   ├── useLoginButton.ts
+│   │   │   │       │   └── index.ts
+│   │   │   │       └── LogoutButton/
+│   │   │   │           ├── LogoutButtonContainer.tsx
+│   │   │   │           ├── LogoutButtonPresenter.tsx
+│   │   │   │           ├── useLogoutButton.ts
 │   │   │   │           └── index.ts
 │   │   │   └── utils/
 │   │   │       └── requireAuth.ts
@@ -344,8 +351,15 @@ web/admin/
 │   │   │   │   ├── server/
 │   │   │   │   │   └── LoginPageTemplate.tsx
 │   │   │   │   └── client/
-│   │   │   │       └── LoginButton/
-│   │   │   │           ├── LoginButtonPresenter.tsx
+│   │   │   │       ├── LoginButton/
+│   │   │   │       │   ├── LoginButtonContainer.tsx
+│   │   │   │       │   ├── LoginButtonPresenter.tsx
+│   │   │   │       │   ├── useLoginButton.ts
+│   │   │   │       │   └── index.ts
+│   │   │   │       └── LogoutButton/
+│   │   │   │           ├── LogoutButtonContainer.tsx
+│   │   │   │           ├── LogoutButtonPresenter.tsx
+│   │   │   │           ├── useLogoutButton.ts
 │   │   │   │           └── index.ts
 │   │   │   └── utils/
 │   │   │       └── requireAdmin.ts

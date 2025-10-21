@@ -1,0 +1,81 @@
+name: Web Client CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "web/client/**"
+      - ".github/workflows/web-client-ci.yml"
+      - "packages/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "web/client/**"
+      - ".github/workflows/web-client-ci.yml"
+      - "packages/**"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: "9"
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: web/client
+
+      # - name: Format check
+      #   run: pnpm format:check
+      #   working-directory: web/client
+
+      # - name: Type check
+      #   run: pnpm typecheck
+      #   working-directory: web/client
+
+      - name: Build
+        run: pnpm build
+        working-directory: web/client
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/test
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          GOOGLE_CLIENT_ID: test-client-id
+          GOOGLE_CLIENT_SECRET: test-client-secret
+
+      # Add test step when tests are implemented
+      # - name: Test
+      #   run: pnpm test
+      #   working-directory: web/client
