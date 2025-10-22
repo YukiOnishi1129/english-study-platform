@@ -1,6 +1,6 @@
 import { Question as DomainQuestion, type QuestionRepository } from "@acme/shared/domain";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { eq } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "../client";
 import { questions } from "../schema/questions";
 
@@ -94,5 +94,31 @@ export class QuestionRepositoryImpl implements QuestionRepository {
 
   async delete(id: string): Promise<void> {
     await db.delete(questions).where(eq(questions.id, id));
+  }
+
+  async countByUnitIds(unitIds: string[]): Promise<Record<string, number>> {
+    if (unitIds.length === 0) {
+      return {};
+    }
+
+    const counts = await db
+      .select({
+        unitId: questions.unitId,
+        count: sql<number>`count(*)`.as("count"),
+      })
+      .from(questions)
+      .where(inArray(questions.unitId, unitIds))
+      .groupBy(questions.unitId);
+
+    const map: Record<string, number> = {};
+    counts.forEach((row) => {
+      map[row.unitId] = Number(row.count);
+    });
+    unitIds.forEach((id) => {
+      if (map[id] === undefined) {
+        map[id] = 0;
+      }
+    });
+    return map;
   }
 }

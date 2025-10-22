@@ -5,6 +5,7 @@ export interface MaterialUnitSummaryDto {
   order: number;
   createdAt: string;
   updatedAt: string;
+  questionCount: number;
 }
 
 export interface MaterialChapterSummaryDto {

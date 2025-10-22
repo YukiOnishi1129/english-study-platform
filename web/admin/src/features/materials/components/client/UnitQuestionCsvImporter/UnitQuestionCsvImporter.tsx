@@ -178,9 +178,12 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
         return;
       }
 
+      const created = typeof data?.createdCount === "number" ? data.createdCount : 0;
+      const updated = typeof data?.updatedCount === "number" ? data.updatedCount : 0;
+      const summaryMessage = `CSVの取り込みが完了しました。（新規 ${created} 件 / 更新 ${updated} 件）`;
       setImportStatus({
         status: "success",
-        message: data?.message ?? "CSVの取り込みが完了しました。",
+        message: data?.message ?? summaryMessage,
       });
       setParseState(INITIAL_STATE);
       setPage(1);

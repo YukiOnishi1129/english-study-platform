@@ -63,7 +63,7 @@ function mapChapterBase(
   };
 }
 
-function mapUnit(unit: Unit): MaterialUnitSummaryDto {
+function mapUnit(unit: Unit, questionCount = 0): MaterialUnitSummaryDto {
   return {
     id: unit.id,
     name: unit.name,
@@ -71,6 +71,7 @@ function mapUnit(unit: Unit): MaterialUnitSummaryDto {
     order: unit.order,
     createdAt: serialize(unit.createdAt),
     updatedAt: serialize(unit.updatedAt),
+    questionCount,
   };
 }
 
@@ -110,9 +111,14 @@ export class MaterialService {
             const units = await this.unitRepository.findByChapterId(
               chapterEntity.id,
             );
+            const counts = await this.questionRepository.countByUnitIds(
+              units.map((unit) => unit.id),
+            );
             const dto: MaterialChapterSummaryDto = {
               ...mapChapterBase(chapterEntity),
-              units: units.map(mapUnit),
+              units: units.map((unit) =>
+                mapUnit(unit, counts[unit.id] ?? 0),
+              ),
               children: [],
             };
             chapterMap.set(dto.id, dto);
