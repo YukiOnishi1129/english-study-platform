@@ -88,4 +88,8 @@ export class CorrectAnswerRepositoryImpl implements CorrectAnswerRepository {
   async delete(id: string): Promise<void> {
     await db.delete(correctAnswers).where(eq(correctAnswers.id, id));
   }
+
+  async deleteByQuestionId(questionId: string): Promise<void> {
+    await db.delete(correctAnswers).where(eq(correctAnswers.questionId, questionId));
+  }
 }

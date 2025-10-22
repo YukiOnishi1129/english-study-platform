@@ -13,6 +13,12 @@ const DESCRIPTION_SCHEMA = z
   .optional()
   .transform((value) => (value && value.length > 0 ? value : undefined));
 
+const OPTIONAL_TEXT_SCHEMA = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value && value.length > 0 ? value : undefined));
+
 export const CreateMaterialRequestSchema = z.object({
   name: NAME_SCHEMA,
   description: DESCRIPTION_SCHEMA,
@@ -55,3 +61,29 @@ export const UpdateUnitOrdersRequestSchema = z.object({
 export type UpdateUnitOrdersRequest = z.infer<
   typeof UpdateUnitOrdersRequestSchema
 >;
+
+const ImportUnitQuestionRowSchema = z.object({
+  relatedId: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
+  order: z.number().int().positive().optional(),
+  japanese: z.string().trim().min(1, "日本語を入力してください。"),
+  hint: OPTIONAL_TEXT_SCHEMA,
+  explanation: OPTIONAL_TEXT_SCHEMA,
+  correctAnswers: z
+    .array(z.string().trim().min(1, "英語正解は1文字以上で入力してください。"))
+    .min(1, "英語の正解を1つ以上入力してください。"),
+});
+
+export const ImportUnitQuestionsRequestSchema = z.object({
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+  rows: z.array(ImportUnitQuestionRowSchema).min(1, "取り込む行がありません。"),
+});
+
+export type ImportUnitQuestionsRequest = z.infer<
+  typeof ImportUnitQuestionsRequestSchema
+>;
+export type ImportUnitQuestionRow = z.infer<typeof ImportUnitQuestionRowSchema>;

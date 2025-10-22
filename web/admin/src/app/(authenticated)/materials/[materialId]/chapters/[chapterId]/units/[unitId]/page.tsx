@@ -156,6 +156,9 @@ export default async function UnitDetailPage(props: PageProps) {
         </header>
 
         <UnitQuestionCsvImporter
+          materialId={props.params.materialId}
+          chapterId={props.params.chapterId}
+          unitId={props.params.unitId}
           unitName={detail.unit.name}
           existingQuestionCount={questionCount}
         />

@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   parseUnitQuestionCsv,
   type UnitQuestionCsvRow,
@@ -26,13 +27,21 @@ const TEMPLATE_CSV = `関連ID,並び順,日本語,ヒント,解説,英語正解
 `.trim();
 
 interface UnitQuestionCsvImporterProps {
+  materialId: string;
+  chapterId: string;
+  unitId: string;
   unitName: string;
   existingQuestionCount: number;
 }
 
 export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
+  const router = useRouter();
   const [parseState, setParseState] = useState<ParseState>(INITIAL_STATE);
   const [page, setPage] = useState(1);
+  const [importStatus, setImportStatus] = useState<{
+    status: "idle" | "loading" | "success" | "error";
+    message?: string;
+  }>({ status: "idle" });
 
   const totalPages = useMemo(() => {
     if (parseState.rows.length === 0) {
@@ -77,6 +86,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
       if (!file) {
         setParseState(INITIAL_STATE);
         setPage(1);
+        setImportStatus({ status: "idle" });
         return;
       }
 
@@ -91,9 +101,11 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
           if (result.errors.length > 0) {
             setParseState({ status: "error", rows: [], errors: result.errors });
             setPage(1);
+            setImportStatus({ status: "idle" });
           } else {
             setParseState({ status: "success", rows: result.rows, errors: [] });
             setPage(1);
+            setImportStatus({ status: "idle" });
           }
         } catch (error) {
           setParseState({
@@ -106,6 +118,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
             ],
           });
           setPage(1);
+          setImportStatus({ status: "idle" });
         }
       };
       reader.onerror = () => {
@@ -117,12 +130,79 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
           ],
         });
         setPage(1);
+        setImportStatus({ status: "idle" });
       };
 
       reader.readAsText(file, "utf-8");
     },
     [],
   );
+
+  useEffect(() => {
+    if (parseState.status !== "success") {
+      setImportStatus({ status: "idle" });
+    }
+  }, [parseState.status]);
+
+  const handleImport = useCallback(async () => {
+    if (parseState.status !== "success" || parseState.rows.length === 0) {
+      return;
+    }
+
+    setImportStatus({ status: "loading" });
+
+    try {
+      const response = await fetch(
+        `/api/materials/${props.materialId}/chapters/${props.chapterId}/units/${props.unitId}/import`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rows: parseState.rows.map((row) => ({
+              relatedId: row.questionId ?? undefined,
+              order:
+                typeof row.order === "number" && Number.isFinite(row.order)
+                  ? row.order
+                  : undefined,
+              japanese: row.japanese,
+              hint: row.hint ?? undefined,
+              explanation: row.explanation ?? undefined,
+              correctAnswers: row.correctAnswers,
+            })),
+          }),
+        },
+      );
+
+      const data = await response.json();
+      if (!response.ok) {
+        setImportStatus({
+          status: "error",
+          message: data?.message ?? "取り込みに失敗しました。",
+        });
+        return;
+      }
+
+      setImportStatus({
+        status: "success",
+        message: data?.message ?? "CSVの取り込みが完了しました。",
+      });
+      router.refresh();
+    } catch (error) {
+      setImportStatus({
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "CSVの取り込みに失敗しました。",
+      });
+    }
+  }, [parseState, props.materialId, props.chapterId, props.unitId, router]);
+
+  const canImport =
+    parseState.status === "success" && parseState.rows.length > 0;
+  const isImporting = importStatus.status === "loading";
 
   return (
     <section className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -233,6 +313,37 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
               </dd>
             </div>
           </dl>
+
+          <div className="space-y-2 rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-700">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-semibold">
+                プレビューした内容をDBへ取り込みます。
+              </p>
+              <button
+                type="button"
+                onClick={handleImport}
+                disabled={!canImport || isImporting}
+                className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
+              >
+                {isImporting ? "取り込み中..." : "取り込みを実行"}
+              </button>
+            </div>
+            {importStatus.status === "success" ? (
+              <p className="text-xs text-emerald-700">
+                {importStatus.message ?? "取り込みが完了しました。"}
+              </p>
+            ) : null}
+            {importStatus.status === "error" ? (
+              <p className="text-xs text-red-700">
+                {importStatus.message ?? "取り込みに失敗しました。"}
+              </p>
+            ) : null}
+            {importStatus.status === "idle" ? (
+              <p className="text-xs text-indigo-600">
+                実行すると既存の正解は上書きされます。内容を確認してから実行してください。
+              </p>
+            ) : null}
+          </div>
 
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">

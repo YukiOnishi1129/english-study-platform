@@ -5,11 +5,18 @@ import {
   QuestionRepositoryImpl,
   UnitRepositoryImpl,
 } from "@acme/shared/db";
-import { Chapter, Material, Unit } from "@acme/shared/domain";
+import {
+  Chapter,
+  CorrectAnswer,
+  Material,
+  Question,
+  Unit,
+} from "@acme/shared/domain";
 import type {
   CreateChapterRequest,
   CreateMaterialRequest,
   CreateUnitRequest,
+  ImportUnitQuestionsRequest,
   UpdateUnitOrdersRequest,
   UpdateUnitRequest,
 } from "@/external/dto/material/material.command.dto";
@@ -360,6 +367,131 @@ export class MaterialService {
     }));
 
     await this.unitRepository.updateOrders(chapter.id, updates);
+  }
+
+  async importUnitQuestions(payload: ImportUnitQuestionsRequest): Promise<{
+    createdCount: number;
+    updatedCount: number;
+  }> {
+    const unit = await this.unitRepository.findById(payload.unitId);
+    if (!unit) {
+      throw new Error("指定されたUNITが見つかりません。");
+    }
+
+    const existingQuestions = await this.questionRepository.findByUnitId(
+      unit.id,
+    );
+    const existingQuestionMap = new Map(
+      existingQuestions.map((question) => [question.id, question]),
+    );
+
+    const usedOrders = new Set<number>();
+    let maxOrder = 0;
+    existingQuestions.forEach((question) => {
+      usedOrders.add(question.order);
+      if (question.order > maxOrder) {
+        maxOrder = question.order;
+      }
+    });
+    let nextOrderCandidate = maxOrder + 1;
+    if (nextOrderCandidate < 1) {
+      nextOrderCandidate = 1;
+    }
+
+    const reserveOrder = (desired?: number): number => {
+      let order =
+        typeof desired === "number" && Number.isFinite(desired) && desired > 0
+          ? Math.trunc(desired)
+          : undefined;
+      if (!order || order <= 0) {
+        order = nextOrderCandidate > 0 ? nextOrderCandidate : 1;
+      }
+
+      while (usedOrders.has(order)) {
+        order += 1;
+      }
+
+      usedOrders.add(order);
+      if (order >= nextOrderCandidate) {
+        nextOrderCandidate = order + 1;
+      }
+
+      return order;
+    };
+
+    let createdCount = 0;
+    let updatedCount = 0;
+
+    for (const row of payload.rows) {
+      const answers = row.correctAnswers
+        .map((answer) => answer.trim())
+        .filter((answer) => answer.length > 0);
+
+      if (answers.length === 0) {
+        throw new Error("英語正解が空の行があります。");
+      }
+
+      if (row.relatedId) {
+        const existing = existingQuestionMap.get(row.relatedId);
+        if (!existing) {
+          throw new Error(
+            `関連ID「${row.relatedId}」の問題が見つかりません。先に既存の問題IDを確認してください。`,
+          );
+        }
+
+        usedOrders.delete(existing.order);
+        const finalOrder = reserveOrder(row.order ?? existing.order);
+
+        const updatedQuestion = new Question({
+          id: existing.id,
+          unitId: existing.unitId,
+          japanese: row.japanese,
+          hint: row.hint ?? undefined,
+          explanation: row.explanation ?? undefined,
+          order: finalOrder,
+          createdAt: existing.createdAt,
+          updatedAt: new Date(),
+        });
+
+        await this.questionRepository.save(updatedQuestion);
+        await this.correctAnswerRepository.deleteByQuestionId(existing.id);
+        for (const [index, answerText] of answers.entries()) {
+          const answer = CorrectAnswer.create({
+            questionId: existing.id,
+            answerText,
+            order: index + 1,
+          });
+          await this.correctAnswerRepository.save(answer);
+        }
+
+        existingQuestionMap.set(existing.id, updatedQuestion);
+        updatedCount += 1;
+        continue;
+      }
+
+      const finalOrder = reserveOrder(row.order);
+      const newQuestion = Question.create({
+        unitId: unit.id,
+        japanese: row.japanese,
+        hint: row.hint ?? undefined,
+        explanation: row.explanation ?? undefined,
+        order: finalOrder,
+      });
+
+      const savedQuestion = await this.questionRepository.save(newQuestion);
+      for (const [index, answerText] of answers.entries()) {
+        const answer = CorrectAnswer.create({
+          questionId: savedQuestion.id,
+          answerText,
+          order: index + 1,
+        });
+        await this.correctAnswerRepository.save(answer);
+      }
+
+      createdCount += 1;
+    }
+
+    return { createdCount, updatedCount };
   }
 
   private async buildChapterPath(

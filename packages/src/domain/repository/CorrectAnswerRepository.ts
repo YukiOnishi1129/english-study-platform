@@ -5,4 +5,5 @@ export interface CorrectAnswerRepository {
   findByQuestionId(questionId: string): Promise<CorrectAnswer[]>;
   save(correctAnswer: CorrectAnswer): Promise<CorrectAnswer>;
   delete(id: string): Promise<void>;
+  deleteByQuestionId(questionId: string): Promise<void>;
 }
