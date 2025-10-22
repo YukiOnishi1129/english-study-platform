@@ -22,18 +22,18 @@ export default async function DashboardPage() {
         <article className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">
-              CSVインポート
+              教材・UNIT管理
             </h2>
             <p className="mt-2 text-gray-600">
-              教材、章、UNIT、問題をCSVから一括で取り込みます。インポート前にプレビューで内容を確認できます。
+              教材の階層を確認し、各UNITの画面から問題をCSVでインポートできます。新しい問題管理フローをこちらから試せます。
             </p>
           </div>
           <div className="mt-6">
             <Link
-              href="/materials/import"
+              href="/materials"
               className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
             >
-              CSVインポート画面へ
+              教材管理へ
             </Link>
           </div>
         </article>
@@ -47,7 +47,12 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="mt-6">
-            <p className="text-sm text-gray-500">近日公開予定</p>
+            <Link
+              href="/materials/import"
+              className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+            >
+              旧CSVプレビューを見る
+            </Link>
           </div>
         </article>
       </section>

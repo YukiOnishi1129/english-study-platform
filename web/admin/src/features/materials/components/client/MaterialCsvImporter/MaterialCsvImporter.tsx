@@ -65,10 +65,12 @@ export function MaterialCsvImporter() {
     }
   }, [parseState.status, page, totalPages]);
 
-  const startIndex = parseState.status === "success" ? (page - 1) * PAGE_SIZE : 0;
-  const endIndex = parseState.status === "success"
-    ? Math.min(parseState.rows.length, startIndex + PAGE_SIZE)
-    : 0;
+  const startIndex =
+    parseState.status === "success" ? (page - 1) * PAGE_SIZE : 0;
+  const endIndex =
+    parseState.status === "success"
+      ? Math.min(parseState.rows.length, startIndex + PAGE_SIZE)
+      : 0;
 
   const paginatedRows = useMemo(() => {
     if (parseState.status !== "success") {
@@ -366,7 +368,11 @@ export function MaterialCsvImporter() {
             {parseState.rows.length > PAGE_SIZE ? (
               <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 <p>
-                  表示中: <span className="font-semibold text-gray-800">{startIndex + 1}〜{endIndex}</span> / {parseState.rows.length} 行
+                  表示中:{" "}
+                  <span className="font-semibold text-gray-800">
+                    {startIndex + 1}〜{endIndex}
+                  </span>{" "}
+                  / {parseState.rows.length} 行
                 </p>
                 <div className="flex items-center gap-2">
                   <button
@@ -382,7 +388,9 @@ export function MaterialCsvImporter() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                    onClick={() =>
+                      setPage((prev) => Math.min(totalPages, prev + 1))
+                    }
                     disabled={page >= totalPages}
                     className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >

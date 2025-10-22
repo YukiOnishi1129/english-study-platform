@@ -180,7 +180,9 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
   }
 
   if (answerHeaderIndices.length === 0) {
-    errors.push("英語正解の列が見つかりません。最低でも英語正解1を含めてください。");
+    errors.push(
+      "英語正解の列が見つかりません。最低でも英語正解1を含めてください。",
+    );
     return { rows: [], hierarchy: [], errors };
   }
 
@@ -195,7 +197,7 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
 
     const getCell = (header: keyof MaterialCsvRow) => {
       const index = headerIndexMap.get(header);
-      return typeof index === "number" ? cells[index]?.trim() ?? "" : "";
+      return typeof index === "number" ? (cells[index]?.trim() ?? "") : "";
     };
 
     const materialTitle = getCell("materialTitle");
