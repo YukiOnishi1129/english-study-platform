@@ -10,6 +10,7 @@ import type {
   CreateChapterRequest,
   CreateMaterialRequest,
   CreateUnitRequest,
+  UpdateUnitOrdersRequest,
 } from "@/external/dto/material/material.command.dto";
 import type {
   MaterialChapterSummaryDto,
@@ -304,6 +305,38 @@ export class MaterialService {
 
     const saved = await this.unitRepository.save(unit);
     return mapUnit(saved);
+  }
+
+  async updateUnitOrders(payload: UpdateUnitOrdersRequest): Promise<void> {
+    const chapter = await this.chapterRepository.findById(payload.chapterId);
+    if (!chapter) {
+      throw new Error("指定された章が見つかりません。");
+    }
+
+    const existingUnits = await this.unitRepository.findByChapterId(chapter.id);
+
+    if (existingUnits.length !== payload.orderedUnitIds.length) {
+      throw new Error("並び替え対象のUNIT数が一致しません。");
+    }
+
+    const existingIds = new Set(existingUnits.map((unit) => unit.id));
+    for (const unitId of payload.orderedUnitIds) {
+      if (!existingIds.has(unitId)) {
+        throw new Error("指定されたUNITが章に含まれていません。");
+      }
+    }
+
+    const uniqueCheck = new Set(payload.orderedUnitIds);
+    if (uniqueCheck.size !== payload.orderedUnitIds.length) {
+      throw new Error("UNIT IDが重複しています。");
+    }
+
+    const updates = payload.orderedUnitIds.map((id, index) => ({
+      id,
+      order: index + 1,
+    }));
+
+    await this.unitRepository.updateOrders(chapter.id, updates);
   }
 
   private async buildChapterPath(

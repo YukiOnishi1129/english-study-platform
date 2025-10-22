@@ -9,12 +9,15 @@ import type {
 import {
   createChapter,
   createUnit,
+  updateUnitOrders,
 } from "@/external/handler/material/material.command.server";
 import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
 import { ChapterCreateForm } from "@/features/materials/components/client/ChapterCreateForm";
+import { ChapterUnitList } from "@/features/materials/components/client/ChapterUnitList";
 import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import { toUnitDetailPath } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
+import type { ReorderUnitsActionPayload } from "@/features/materials/types/reorderUnitsAction";
 
 export const dynamic = "force-dynamic";
 
@@ -133,6 +136,35 @@ async function handleCreateUnit(
   }
 }
 
+async function handleReorderUnits(
+  payload: ReorderUnitsActionPayload,
+): Promise<FormState> {
+  "use server";
+
+  try {
+    await updateUnitOrders({
+      chapterId: payload.chapterId,
+      orderedUnitIds: payload.orderedUnitIds,
+    });
+
+    revalidatePath("/materials");
+    revalidatePath(`/materials/${payload.materialId}`);
+
+    return {
+      status: "success",
+      message: "UNITの並び順を更新しました。",
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "UNITの並び順を更新できませんでした。",
+    };
+  }
+}
+
 function renderChapter(
   chapter: MaterialChapterSummaryDto,
   material: MaterialHierarchyItemDto,
@@ -163,30 +195,13 @@ function renderChapter(
           ) : null}
         </header>
 
-        <div className="mt-3 space-y-2">
-          {chapter.units.length === 0 ? (
-            <p className="rounded border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-xs text-gray-500">
-              UNITが登録されていません。
-            </p>
-          ) : (
-            <ul className="flex flex-wrap gap-2">
-              {chapter.units
-                .sort((a, b) => a.order - b.order)
-                .map((unit) => (
-                  <li key={unit.id}>
-                    <Link
-                      href={`/materials/${material.id}/chapters/${chapter.id}/units/${unit.id}`}
-                      className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 py-1 text-xs font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50"
-                    >
-                      <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
-                        UNIT
-                      </span>
-                      {unit.name}
-                    </Link>
-                  </li>
-                ))}
-            </ul>
-          )}
+        <div className="mt-3">
+          <ChapterUnitList
+            materialId={material.id}
+            chapterId={chapter.id}
+            units={chapter.units}
+            onReorder={handleReorderUnits}
+          />
         </div>
 
         <details className="mt-4 rounded-md border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-xs text-gray-600">

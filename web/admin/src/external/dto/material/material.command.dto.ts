@@ -38,3 +38,13 @@ export const CreateUnitRequestSchema = z.object({
   description: DESCRIPTION_SCHEMA,
 });
 export type CreateUnitRequest = z.infer<typeof CreateUnitRequestSchema>;
+
+export const UpdateUnitOrdersRequestSchema = z.object({
+  chapterId: z.string().min(1, "chapterIdが指定されていません。"),
+  orderedUnitIds: z
+    .array(z.string().min(1, "unitIdが指定されていません。"))
+    .min(1, "並び替えるUNITを1件以上指定してください。"),
+});
+export type UpdateUnitOrdersRequest = z.infer<
+  typeof UpdateUnitOrdersRequestSchema
+>;
