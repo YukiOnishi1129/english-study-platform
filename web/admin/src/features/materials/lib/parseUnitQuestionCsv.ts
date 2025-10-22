@@ -14,7 +14,8 @@ export interface ParseUnitQuestionCsvResult {
   errors: string[];
 }
 
-const HEADER_MAP: Record<string, keyof UnitQuestionCsvRow> = {
+const HEADER_ALIASES: Record<string, keyof UnitQuestionCsvRow> = {
+  関連ID: "questionId",
   問題ID: "questionId",
   日本語: "japanese",
   ヒント: "hint",
@@ -22,7 +23,7 @@ const HEADER_MAP: Record<string, keyof UnitQuestionCsvRow> = {
   並び順: "order",
 };
 
-const REQUIRED_HEADERS = ["日本語", "英語正解1"] as const;
+const REQUIRED_HEADERS = ["日本語"] as const;
 
 function splitCsvLine(line: string): RawCsvRow {
   const cells: string[] = [];
@@ -80,15 +81,21 @@ export function parseUnitQuestionCsv(
 
   const headerCells = splitCsvLine(lines[0]).map((cell) => cell.trim());
 
-  const headerIndexMap = new Map<keyof typeof HEADER_MAP, number>();
+  const headerIndexMap = new Map<keyof UnitQuestionCsvRow, number>();
   const answerHeaderDetails: Array<{ index: number; order: number }> = [];
   const answerHeaderPattern = /^英語正解(\d+)$/;
+  let singleAnswerIndex: number | null = null;
 
   headerCells.forEach((cell, index) => {
     const normalized = normalizeHeader(cell);
-    const mappedKey = HEADER_MAP[normalized as keyof typeof HEADER_MAP];
+    const mappedKey = HEADER_ALIASES[normalized as keyof typeof HEADER_ALIASES];
     if (mappedKey) {
       headerIndexMap.set(mappedKey, index);
+      return;
+    }
+
+    if (normalized === "英語正解") {
+      singleAnswerIndex = index;
       return;
     }
 
@@ -115,9 +122,9 @@ export function parseUnitQuestionCsv(
     return { rows: [], errors };
   }
 
-  if (answerHeaderIndices.length === 0) {
+  if (answerHeaderIndices.length === 0 && singleAnswerIndex === null) {
     errors.push(
-      "英語正解の列が見つかりません。最低でも英語正解1を含めてください。",
+      "英語正解の列が見つかりません。英語正解1（または旧フォーマットの英語正解）を含めてください。",
     );
     return { rows: [], errors };
   }
@@ -161,11 +168,37 @@ export function parseUnitQuestionCsv(
       order = parsed;
     }
 
-    const correctAnswers = answerHeaderIndices
+    const multiColumnAnswers = answerHeaderIndices
       .map((index) => cells[index]?.trim() ?? "")
       .filter((answer) => answer.length > 0);
 
-    if (correctAnswers.length === 0) {
+    const combinedColumnAnswers =
+      singleAnswerIndex !== null
+        ? (() => {
+            const raw = cells[singleAnswerIndex]?.trim() ?? "";
+            if (!raw) {
+              return [] as string[];
+            }
+            return raw
+              .split(/\s*\|\|\s*/u)
+              .map((answer) => answer.trim())
+              .filter((answer) => answer.length > 0);
+          })()
+        : [];
+
+    const mergedAnswers = [
+      ...multiColumnAnswers,
+      ...combinedColumnAnswers,
+    ].filter((answer) => answer.length > 0);
+
+    const uniqueAnswers: string[] = [];
+    mergedAnswers.forEach((answer) => {
+      if (!uniqueAnswers.includes(answer)) {
+        uniqueAnswers.push(answer);
+      }
+    });
+
+    if (uniqueAnswers.length === 0) {
       errors.push(
         `行${rowNumber}: 英語正解の列がすべて空です。少なくとも1つ入力してください。`,
       );
@@ -178,7 +211,7 @@ export function parseUnitQuestionCsv(
       hint,
       explanation,
       order,
-      correctAnswers,
+      correctAnswers: uniqueAnswers,
     });
   }
 

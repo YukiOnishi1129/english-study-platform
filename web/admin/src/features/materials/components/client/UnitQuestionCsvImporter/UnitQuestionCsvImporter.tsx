@@ -21,8 +21,8 @@ const INITIAL_STATE: ParseState = {
 
 const PAGE_SIZE = 25;
 
-const TEMPLATE_CSV = `問題ID,日本語,英語正解1,英語正解2,ヒント,解説,並び順
-,サンプルの日本語文,Sample answer,,ヒント例,解説例,1
+const TEMPLATE_CSV = `関連ID,並び順,日本語,ヒント,解説,英語正解1,英語正解2
+,1,サンプルの日本語文,ヒント例,解説例,Sample answer A,Sample answer B
 `.trim();
 
 interface UnitQuestionCsvImporterProps {
@@ -134,7 +134,8 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
             </h3>
             <p className="text-sm text-gray-600">
               UNIT「{props.unitName}」の問題をCSVから一括で追加・更新します。
-              既存の問題を更新する場合は「問題ID」を入力してください。
+              既存の問題を更新する場合は「関連ID」（旧:
+              問題ID）を入力してください。
             </p>
           </div>
           <a
@@ -146,8 +147,10 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
           </a>
         </div>
         <div className="rounded-md bg-slate-50 px-4 py-3 text-xs text-slate-600">
-          必須列: 日本語, 英語正解1。任意: 問題ID, 英語正解2〜, ヒント, 解説,
-          並び順。 問題IDを空欄にすると新規追加として扱われます。
+          必須列: 日本語, 英語正解1。任意: 関連ID, 並び順, ヒント, 解説,
+          英語正解2〜。 英語正解の列は `英語正解1`, `英語正解2`, ...
+          と連番で追加してください。
+          関連IDを空欄にすると新規追加として扱われます。
         </div>
       </header>
 
@@ -236,7 +239,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
               <thead className="bg-gray-50">
                 <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">問題ID</th>
+                  <th className="px-4 py-3">関連ID</th>
                   <th className="px-4 py-3">日本語</th>
                   <th className="px-4 py-3">英語正解</th>
                   <th className="px-4 py-3">ヒント</th>
