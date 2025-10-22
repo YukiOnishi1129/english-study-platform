@@ -154,18 +154,13 @@ async function handleReorderUnits(payload: {
   }
 }
 
-interface ChapterDetailPageProps {
-  params: {
-    chapterId: string;
-  };
-}
-
-export async function generateMetadata(
-  props: ChapterDetailPageProps,
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/chapters/[chapterId]">): Promise<Metadata> {
   try {
+    const { chapterId } = await params;
     const detail = await getChapterDetail({
-      chapterId: props.params.chapterId,
+      chapterId,
     });
     return {
       title: `${detail.chapter.name} | ${detail.material.name} - English Study Admin`,
@@ -175,9 +170,12 @@ export async function generateMetadata(
   }
 }
 
-export default async function ChapterDetailPage(props: ChapterDetailPageProps) {
+export default async function ChapterDetailPage({
+  params,
+}: PageProps<"/chapters/[chapterId]">) {
+  const { chapterId } = await params;
   const detail = await getChapterDetail({
-    chapterId: props.params.chapterId,
+    chapterId,
   }).catch(() => null);
 
   if (!detail) {

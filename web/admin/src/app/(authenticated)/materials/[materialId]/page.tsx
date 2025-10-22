@@ -245,17 +245,12 @@ function renderChapter(
   );
 }
 
-interface MaterialDetailPageProps {
-  params: {
-    materialId: string;
-  };
-}
-
-export default async function MaterialDetailPage(
-  props: MaterialDetailPageProps,
-) {
+export default async function MaterialDetailPage({
+  params,
+}: PageProps<"/materials/[materialId]">) {
+  const { materialId } = await params;
   const material = await getMaterialHierarchyById({
-    materialId: props.params.materialId,
+    materialId,
   });
 
   if (!material) {

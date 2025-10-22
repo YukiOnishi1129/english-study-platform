@@ -9,15 +9,12 @@ import {
   toUnitEditPath,
 } from "@/features/materials/lib/paths";
 
-interface PageProps {
-  params: {
-    unitId: string;
-  };
-}
-
-export async function generateMetadata(props: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps<"/units/[unitId]">): Promise<Metadata> {
+  const { unitId } = await params;
   try {
-    const detail = await getUnitDetail({ unitId: props.params.unitId });
+    const detail = await getUnitDetail({ unitId });
     return {
       title: `${detail.unit.name} | ${detail.material.name} - English Study Admin`,
       description: `${detail.material.name} / ${detail.unit.name} の問題管理ページ`,
@@ -27,10 +24,11 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
   }
 }
 
-export default async function UnitDetailPage(props: PageProps) {
-  const detail = await getUnitDetail({ unitId: props.params.unitId }).catch(
-    () => null,
-  );
+export default async function UnitDetailPage({
+  params,
+}: PageProps<"/units/[unitId]">) {
+  const { unitId } = await params;
+  const detail = await getUnitDetail({ unitId }).catch(() => null);
 
   if (!detail) {
     notFound();

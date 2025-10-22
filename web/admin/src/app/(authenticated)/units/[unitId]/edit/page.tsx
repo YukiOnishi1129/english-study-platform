@@ -71,14 +71,10 @@ async function handleUpdateUnit(
   }
 }
 
-interface UnitEditPageProps {
-  params: {
-    unitId: string;
-  };
-}
-
-export default async function UnitEditPage(props: UnitEditPageProps) {
-  const unitId = props.params.unitId;
+export default async function UnitEditPage({
+  params,
+}: PageProps<"/units/[unitId]/edit">) {
+  const { unitId } = await params;
   const detail = await getUnitDetail({ unitId }).catch(() => null);
 
   if (!detail) {
