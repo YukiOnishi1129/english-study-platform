@@ -116,9 +116,7 @@ export class MaterialService {
             );
             const dto: MaterialChapterSummaryDto = {
               ...mapChapterBase(chapterEntity),
-              units: units.map((unit) =>
-                mapUnit(unit, counts[unit.id] ?? 0),
-              ),
+              units: units.map((unit) => mapUnit(unit, counts[unit.id] ?? 0)),
               children: [],
             };
             chapterMap.set(dto.id, dto);
