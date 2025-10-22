@@ -18,6 +18,7 @@ export interface MaterialChapterSummaryDto {
   createdAt: string;
   updatedAt: string;
   units: MaterialUnitSummaryDto[];
+  children: MaterialChapterSummaryDto[];
 }
 
 export interface MaterialHierarchyItemDto {

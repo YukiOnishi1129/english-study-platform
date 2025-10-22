@@ -1,0 +1,113 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState, useMemo } from "react";
+import { useFormStatus } from "react-dom";
+import type { FormState } from "@/features/materials/types/formState";
+import { initialFormState } from "@/features/materials/types/formState";
+
+interface ChapterCreateFormProps {
+  action: (state: FormState, formData: FormData) => Promise<FormState>;
+  materialId: string;
+  parentChapterId?: string;
+  parentChapterName?: string;
+}
+
+function SubmitButton() {
+  const status = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={status.pending}
+      className="inline-flex items-center justify-center rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-sky-300"
+    >
+      {status.pending ? "追加中..." : "章を追加"}
+    </button>
+  );
+}
+
+export function ChapterCreateForm(props: ChapterCreateFormProps) {
+  const [state, formAction] = useActionState(props.action, initialFormState);
+
+  const contextLabel = useMemo(() => {
+    if (props.parentChapterId && props.parentChapterName) {
+      return `「${props.parentChapterName}」の下に章を追加`;
+    }
+    return "新しい章を追加";
+  }, [props.parentChapterId, props.parentChapterName]);
+
+  return (
+    <div className="space-y-2 rounded-md border border-sky-200 bg-sky-50/60 p-4 text-sm text-gray-700">
+      <p className="text-xs font-semibold text-sky-700">{contextLabel}</p>
+      <form action={formAction} className="space-y-2">
+        <input type="hidden" name="materialId" value={props.materialId} />
+        {props.parentChapterId ? (
+          <input
+            type="hidden"
+            name="parentChapterId"
+            value={props.parentChapterId}
+          />
+        ) : (
+          <input type="hidden" name="parentChapterId" value="" />
+        )}
+        <div className="space-y-1">
+          <label
+            htmlFor={`chapter-name-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            className="text-xs font-medium text-gray-800"
+          >
+            章の名称 <span className="text-red-500">*</span>
+          </label>
+          <input
+            id={`chapter-name-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            name="name"
+            type="text"
+            required
+            maxLength={120}
+            placeholder="例: 第1章 あいさつ"
+            className="w-full rounded-md border border-sky-200 bg-white px-3 py-1.5 text-xs text-gray-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+          />
+        </div>
+        <div className="space-y-1">
+          <label
+            htmlFor={`chapter-desc-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            className="text-xs font-medium text-gray-800"
+          >
+            説明
+          </label>
+          <textarea
+            id={`chapter-desc-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            name="description"
+            rows={2}
+            maxLength={500}
+            placeholder="章の補足説明（任意）"
+            className="w-full rounded-md border border-sky-200 bg-white px-3 py-1.5 text-xs text-gray-900 shadow-sm focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          {state.status === "success" ? (
+            <span className="text-xs text-emerald-600">章を追加しました。</span>
+          ) : state.status === "error" ? (
+            <span className="text-xs text-red-600">
+              {state.message ?? "追加に失敗しました。"}
+            </span>
+          ) : (
+            <span className="text-[11px] text-sky-600">
+              必要なら後から階層を編集できます。
+            </span>
+          )}
+          <SubmitButton />
+        </div>
+      </form>
+      {state.redirect ? (
+        <p className="text-[11px] text-indigo-600">
+          <Link
+            href={state.redirect}
+            className="underline-offset-2 hover:underline"
+          >
+            詳細ページを開く
+          </Link>
+        </p>
+      ) : null}
+    </div>
+  );
+}
