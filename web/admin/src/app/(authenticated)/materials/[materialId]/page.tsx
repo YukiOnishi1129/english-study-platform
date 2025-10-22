@@ -172,9 +172,14 @@ function renderChapter(
 ) {
   const indentClass = depth > 0 ? "pl-4 border-l border-gray-200" : "";
   const childChapters = [...chapter.children].sort((a, b) => a.order - b.order);
+  const anchorId = `chapter-${chapter.id}`;
 
   return (
-    <div key={chapter.id} className={`space-y-3 ${indentClass}`.trim()}>
+    <div
+      key={chapter.id}
+      className={`space-y-3 ${indentClass}`.trim()}
+      id={anchorId}
+    >
       <article className="rounded-md border border-gray-200 bg-white px-4 py-3 shadow-sm">
         <header className="flex flex-col gap-1">
           <div className="flex items-center justify-between">

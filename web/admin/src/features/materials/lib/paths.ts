@@ -11,3 +11,11 @@ export function toUnitDetailPath(
 ): FormRedirect {
   return `/materials/${materialId}/chapters/${chapterId}/units/${unitId}`;
 }
+
+export function toUnitEditPath(
+  materialId: string,
+  chapterId: string,
+  unitId: string,
+): FormRedirect {
+  return `/materials/${materialId}/chapters/${chapterId}/units/${unitId}/edit`;
+}

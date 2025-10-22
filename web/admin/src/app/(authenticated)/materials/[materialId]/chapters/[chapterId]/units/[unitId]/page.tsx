@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import type { UnitDetailDto } from "@/external/dto/material/material.query.dto";
 import { getUnitDetail } from "@/external/handler/material/material.query.server";
 import { UnitQuestionCsvImporter } from "@/features/materials/components/client/UnitQuestionCsvImporter";
+import {
+  toMaterialDetailPath,
+  toUnitEditPath,
+} from "@/features/materials/lib/paths";
 
 interface PageProps {
   params: {
@@ -47,14 +51,24 @@ export default async function UnitDetailPage(props: PageProps) {
               教材一覧
             </Link>
           </li>
-          <li>›</li>
-          <li>
-            <span>{detail.material.name}</span>
+          <li className="flex items-center gap-2">
+            <span>›</span>
+            <Link
+              href={toMaterialDetailPath(props.params.materialId)}
+              className="text-indigo-600 underline-offset-2 hover:underline"
+            >
+              {detail.material.name}
+            </Link>
           </li>
           {detail.chapterPath.map((chapter) => (
             <li key={chapter.id} className="flex items-center gap-2">
               <span>›</span>
-              <span>{chapter.name}</span>
+              <Link
+                href={`${toMaterialDetailPath(props.params.materialId)}#chapter-${chapter.id}`}
+                className="text-indigo-600 underline-offset-2 hover:underline"
+              >
+                {chapter.name}
+              </Link>
             </li>
           ))}
           <li className="flex items-center gap-2">
@@ -66,13 +80,27 @@ export default async function UnitDetailPage(props: PageProps) {
         </ol>
       </nav>
 
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">{detail.unit.name}</h1>
-        <p className="text-sm text-gray-600">
-          {detail.material.name} の{" "}
-          {detail.chapterPath.map((chapter) => chapter.name).join(" / ")}{" "}
-          配下のUNITです。
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {detail.unit.name}
+          </h1>
+          <p className="text-sm text-gray-600">
+            {detail.material.name} の{" "}
+            {detail.chapterPath.map((chapter) => chapter.name).join(" / ")}{" "}
+            配下のUNITです。
+          </p>
+        </div>
+        <Link
+          href={toUnitEditPath(
+            props.params.materialId,
+            props.params.chapterId,
+            props.params.unitId,
+          )}
+          className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
+        >
+          UNIT情報を編集
+        </Link>
       </header>
 
       <section className="grid gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm md:grid-cols-4">

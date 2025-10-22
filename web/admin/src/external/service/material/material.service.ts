@@ -11,6 +11,7 @@ import type {
   CreateMaterialRequest,
   CreateUnitRequest,
   UpdateUnitOrdersRequest,
+  UpdateUnitRequest,
 } from "@/external/dto/material/material.command.dto";
 import type {
   MaterialChapterSummaryDto,
@@ -304,6 +305,28 @@ export class MaterialService {
     });
 
     const saved = await this.unitRepository.save(unit);
+    return mapUnit(saved);
+  }
+
+  async updateUnit(
+    payload: UpdateUnitRequest,
+  ): Promise<MaterialUnitSummaryDto> {
+    const existing = await this.unitRepository.findById(payload.unitId);
+    if (!existing) {
+      throw new Error("指定されたUNITが見つかりません。");
+    }
+
+    const updatedUnit = new Unit({
+      id: existing.id,
+      chapterId: existing.chapterId,
+      name: payload.name,
+      description: payload.description ?? undefined,
+      order: existing.order,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    });
+
+    const saved = await this.unitRepository.save(updatedUnit);
     return mapUnit(saved);
   }
 

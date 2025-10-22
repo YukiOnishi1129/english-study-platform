@@ -5,12 +5,14 @@ import type {
   CreateMaterialRequest,
   CreateUnitRequest,
   UpdateUnitOrdersRequest,
+  UpdateUnitRequest,
 } from "@/external/dto/material/material.command.dto";
 import {
   CreateChapterRequestSchema,
   CreateMaterialRequestSchema,
   CreateUnitRequestSchema,
   UpdateUnitOrdersRequestSchema,
+  UpdateUnitRequestSchema,
 } from "@/external/dto/material/material.command.dto";
 import type {
   MaterialChapterSummaryDto,
@@ -40,6 +42,13 @@ export async function createUnit(
 ): Promise<MaterialUnitSummaryDto> {
   const payload = CreateUnitRequestSchema.parse(request);
   return materialService.createUnit(payload);
+}
+
+export async function updateUnit(
+  request: UpdateUnitRequest,
+): Promise<MaterialUnitSummaryDto> {
+  const payload = UpdateUnitRequestSchema.parse(request);
+  return materialService.updateUnit(payload);
 }
 
 export async function updateUnitOrders(
