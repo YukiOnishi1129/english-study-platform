@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import {
@@ -7,16 +8,23 @@ import {
 } from "@/external/dto/material/material.command.dto";
 import { importUnitQuestions } from "@/external/handler/material/material.command.server";
 import { authOptions } from "@/features/auth/lib/options";
+import {
+  toChapterDetailPath,
+  toMaterialDetailPath,
+  toUnitDetailPath,
+} from "@/features/materials/lib/paths";
 
-interface RouteContext {
-  params: {
-    materialId: string;
-    chapterId: string;
-    unitId: string;
-  };
-}
-
-export async function POST(req: Request, context: RouteContext) {
+export async function POST(
+  request: NextRequest,
+  context: {
+    params: Promise<{
+      materialId: string;
+      chapterId: string;
+      unitId: string;
+    }>;
+  },
+) {
+  const params = await context.params;
   const session = await getServerSession(authOptions);
   if (!session?.account || session.account.role !== "admin" || session.error) {
     return NextResponse.json(
@@ -27,10 +35,10 @@ export async function POST(req: Request, context: RouteContext) {
 
   let payload: ImportUnitQuestionsRequest;
   try {
-    const body = await req.json();
+    const body = await request.json();
     const parsed = ImportUnitQuestionsRequestSchema.safeParse({
       ...body,
-      unitId: context.params.unitId,
+      unitId: params.unitId,
     });
     if (!parsed.success) {
       const message =
@@ -54,10 +62,9 @@ export async function POST(req: Request, context: RouteContext) {
     const result = await importUnitQuestions(payload);
 
     revalidatePath("/materials");
-    revalidatePath(`/materials/${context.params.materialId}`);
-    revalidatePath(
-      `/materials/${context.params.materialId}/chapters/${context.params.chapterId}/units/${context.params.unitId}`,
-    );
+    revalidatePath(toMaterialDetailPath(params.materialId));
+    revalidatePath(toChapterDetailPath(params.chapterId));
+    revalidatePath(toUnitDetailPath(params.unitId));
 
     return NextResponse.json({
       message: "CSVの内容を取り込みました。",

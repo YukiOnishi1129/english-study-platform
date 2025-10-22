@@ -89,3 +89,15 @@ export interface UnitDetailDto {
   unit: UnitDetailUnitDto;
   questions: UnitDetailQuestionDto[];
 }
+
+export interface ChapterBreadcrumbItemDto {
+  id: string;
+  name: string;
+  level: number;
+}
+
+export interface ChapterDetailDto {
+  material: UnitDetailMaterialDto;
+  chapter: MaterialChapterSummaryDto;
+  ancestors: ChapterBreadcrumbItemDto[];
+}

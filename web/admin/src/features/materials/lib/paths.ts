@@ -4,18 +4,14 @@ export function toMaterialDetailPath(materialId: string): FormRedirect {
   return `/materials/${materialId}`;
 }
 
-export function toUnitDetailPath(
-  materialId: string,
-  chapterId: string,
-  unitId: string,
-): FormRedirect {
-  return `/materials/${materialId}/chapters/${chapterId}/units/${unitId}`;
+export function toChapterDetailPath(chapterId: string): FormRedirect {
+  return `/chapters/${chapterId}`;
 }
 
-export function toUnitEditPath(
-  materialId: string,
-  chapterId: string,
-  unitId: string,
-): FormRedirect {
-  return `/materials/${materialId}/chapters/${chapterId}/units/${unitId}/edit`;
+export function toUnitDetailPath(unitId: string): FormRedirect {
+  return `/units/${unitId}`;
+}
+
+export function toUnitEditPath(unitId: string): FormRedirect {
+  return `/units/${unitId}/edit`;
 }

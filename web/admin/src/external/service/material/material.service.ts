@@ -21,6 +21,8 @@ import type {
   UpdateUnitRequest,
 } from "@/external/dto/material/material.command.dto";
 import type {
+  ChapterBreadcrumbItemDto,
+  ChapterDetailDto,
   MaterialChapterSummaryDto,
   MaterialHierarchyItemDto,
   MaterialUnitSummaryDto,
@@ -151,6 +153,66 @@ export class MaterialService {
   ): Promise<MaterialHierarchyItemDto | null> {
     const materials = await this.getMaterialsHierarchy();
     return materials.find((material) => material.id === materialId) ?? null;
+  }
+
+  async getChapterDetail(chapterId: string): Promise<ChapterDetailDto> {
+    const chapterEntity = await this.chapterRepository.findById(chapterId);
+    if (!chapterEntity) {
+      throw new Error("Chapter not found");
+    }
+
+    const materialEntity = await this.materialRepository.findById(
+      chapterEntity.materialId,
+    );
+    if (!materialEntity) {
+      throw new Error("Material not found");
+    }
+
+    const [units, childChapters] = await Promise.all([
+      this.unitRepository.findByChapterId(chapterEntity.id),
+      this.chapterRepository.findByParentId(chapterEntity.id),
+    ]);
+
+    const unitCounts = await this.questionRepository.countByUnitIds(
+      units.map((unit) => unit.id),
+    );
+
+    const chapterDto: MaterialChapterSummaryDto = {
+      ...mapChapterBase(chapterEntity),
+      units: units.map((unit) => mapUnit(unit, unitCounts[unit.id] ?? 0)),
+      children: await Promise.all(
+        childChapters.map(async (child) => {
+          const childUnits = await this.unitRepository.findByChapterId(
+            child.id,
+          );
+          const childCounts = await this.questionRepository.countByUnitIds(
+            childUnits.map((unit) => unit.id),
+          );
+          return {
+            ...mapChapterBase(child),
+            units: childUnits.map((unit) =>
+              mapUnit(unit, childCounts[unit.id] ?? 0),
+            ),
+            children: [],
+          } satisfies MaterialChapterSummaryDto;
+        }),
+      ),
+    } satisfies MaterialChapterSummaryDto;
+
+    const path = await this.buildChapterPath(chapterEntity);
+    const ancestors: ChapterBreadcrumbItemDto[] = path
+      .filter((item) => item.id !== chapterEntity.id)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        level: item.level,
+      }));
+
+    return {
+      material: mapMaterialBase(materialEntity),
+      chapter: chapterDto,
+      ancestors,
+    } satisfies ChapterDetailDto;
   }
 
   async getUnitDetail(unitId: string): Promise<UnitDetailDto> {

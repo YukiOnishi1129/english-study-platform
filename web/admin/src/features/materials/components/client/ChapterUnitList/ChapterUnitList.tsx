@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { toUnitDetailPath } from "@/features/materials/lib/paths";
 import type {
   ReorderUnitsAction,
   ReorderUnitsActionPayload,
@@ -230,7 +231,7 @@ export function ChapterUnitList(props: ChapterUnitListProps) {
                 </div>
                 <div className="flex flex-1 flex-col">
                   <Link
-                    href={`/materials/${materialId}/chapters/${chapterId}/units/${unit.id}`}
+                    href={toUnitDetailPath(unit.id)}
                     className="text-sm font-medium text-indigo-700 underline-offset-2 transition hover:text-indigo-900 hover:underline"
                   >
                     {unit.name}

@@ -33,6 +33,12 @@ export async function AuthenticatedLayoutWrapper({
             ダッシュボード
           </Link>
           <Link
+            href="/materials"
+            className="rounded-md px-3 py-2 hover:bg-indigo-50 hover:text-indigo-600"
+          >
+            教材一覧
+          </Link>
+          <Link
             href="/materials/import"
             className="rounded-md px-3 py-2 hover:bg-indigo-50 hover:text-indigo-600"
           >

@@ -15,7 +15,11 @@ import { getMaterialHierarchyById } from "@/external/handler/material/material.q
 import { ChapterCreateForm } from "@/features/materials/components/client/ChapterCreateForm";
 import { ChapterUnitList } from "@/features/materials/components/client/ChapterUnitList";
 import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
-import { toUnitDetailPath } from "@/features/materials/lib/paths";
+import {
+  toChapterDetailPath,
+  toMaterialDetailPath,
+  toUnitDetailPath,
+} from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
 import type { ReorderUnitsActionPayload } from "@/features/materials/types/reorderUnitsAction";
 
@@ -62,7 +66,10 @@ async function handleCreateChapter(
 
     revalidatePath("/materials");
     if (materialIdValue) {
-      revalidatePath(`/materials/${materialIdValue}`);
+      revalidatePath(toMaterialDetailPath(materialIdValue));
+    }
+    if (typeof parentChapterId === "string" && parentChapterId.length > 0) {
+      revalidatePath(toChapterDetailPath(parentChapterId));
     }
 
     return { status: "success" };
@@ -103,22 +110,19 @@ async function handleCreateUnit(
       description: typeof description === "string" ? description : undefined,
     });
 
-    if (materialId.length > 0 && chapterId.length > 0) {
-      revalidatePath(
-        `/materials/${materialId}/chapters/${chapterId}/units/${unit.id}`,
-      );
+    if (materialId.length > 0) {
+      revalidatePath(toMaterialDetailPath(materialId));
+    }
+    if (chapterId.length > 0) {
+      revalidatePath(toChapterDetailPath(chapterId));
     }
     revalidatePath("/materials");
-    if (materialId.length > 0) {
-      revalidatePath(`/materials/${materialId}`);
-    }
+
+    revalidatePath(toUnitDetailPath(unit.id));
 
     return {
       status: "success",
-      redirect:
-        materialId.length > 0 && chapterId.length > 0
-          ? toUnitDetailPath(materialId, chapterId, unit.id)
-          : undefined,
+      redirect: toUnitDetailPath(unit.id),
     };
   } catch (error) {
     if (error instanceof ZodError) {
@@ -148,7 +152,8 @@ async function handleReorderUnits(
     });
 
     revalidatePath("/materials");
-    revalidatePath(`/materials/${payload.materialId}`);
+    revalidatePath(toMaterialDetailPath(payload.materialId));
+    revalidatePath(toChapterDetailPath(payload.chapterId));
 
     return {
       status: "success",
@@ -189,7 +194,12 @@ function renderChapter(
                   Lv.{chapter.level}
                 </span>
               ) : null}
-              {chapter.name}
+              <Link
+                href={toChapterDetailPath(chapter.id)}
+                className="underline-offset-2 hover:underline"
+              >
+                {chapter.name}
+              </Link>
             </h3>
             <span className="text-xs text-gray-500">
               {chapter.units.length} UNIT

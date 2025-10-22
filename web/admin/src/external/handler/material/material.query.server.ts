@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 import type {
+  ChapterDetailDto,
   MaterialHierarchyItemDto,
   UnitDetailDto,
 } from "@/external/dto/material/material.query.dto";
@@ -15,6 +16,10 @@ const UnitDetailRequestSchema = z.object({
 
 const MaterialDetailRequestSchema = z.object({
   materialId: z.string().min(1, "materialId is required"),
+});
+
+const ChapterDetailRequestSchema = z.object({
+  chapterId: z.string().min(1, "chapterId is required"),
 });
 
 export async function getMaterialsHierarchy(): Promise<
@@ -35,4 +40,11 @@ export async function getUnitDetail(request: {
 }): Promise<UnitDetailDto> {
   const { unitId } = UnitDetailRequestSchema.parse(request);
   return materialService.getUnitDetail(unitId);
+}
+
+export async function getChapterDetail(request: {
+  chapterId: string;
+}): Promise<ChapterDetailDto> {
+  const { chapterId } = ChapterDetailRequestSchema.parse(request);
+  return materialService.getChapterDetail(chapterId);
 }
