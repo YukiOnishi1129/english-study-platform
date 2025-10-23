@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { importUnitQuestionsAction } from "@/features/materials/actions/importUnitQuestionsAction";
 import {
   parseUnitQuestionCsv,
   type UnitQuestionCsvRow,
@@ -146,46 +147,37 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
     setImportStatus({ status: "loading" });
 
     try {
-      const response = await fetch(
-        `/api/materials/${props.materialId}/chapters/${props.chapterId}/units/${props.unitId}/import`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            rows: parseState.rows.map((row) => ({
-              relatedId: row.questionId ?? undefined,
-              order:
-                typeof row.order === "number" && Number.isFinite(row.order)
-                  ? row.order
-                  : undefined,
-              japanese: row.japanese,
-              hint: row.hint ?? undefined,
-              explanation: row.explanation ?? undefined,
-              correctAnswers: row.correctAnswers,
-            })),
-          }),
-        },
-      );
+      const result = await importUnitQuestionsAction({
+        materialId: props.materialId,
+        chapterId: props.chapterId,
+        unitId: props.unitId,
+        rows: parseState.rows.map((row) => ({
+          relatedId: row.questionId ?? undefined,
+          order:
+            typeof row.order === "number" && Number.isFinite(row.order)
+              ? row.order
+              : undefined,
+          japanese: row.japanese,
+          hint: row.hint ?? undefined,
+          explanation: row.explanation ?? undefined,
+          correctAnswers: row.correctAnswers,
+        })),
+      });
 
-      const data = await response.json();
-      if (!response.ok) {
+      if (!result.success) {
         setImportStatus({
           status: "error",
-          message: data?.message ?? "取り込みに失敗しました。",
+          message: result.message ?? "取り込みに失敗しました。",
         });
         return;
       }
 
-      const created =
-        typeof data?.createdCount === "number" ? data.createdCount : 0;
-      const updated =
-        typeof data?.updatedCount === "number" ? data.updatedCount : 0;
+      const created = result.createdCount ?? 0;
+      const updated = result.updatedCount ?? 0;
       const summaryMessage = `CSVの取り込みが完了しました。（新規 ${created} 件 / 更新 ${updated} 件）`;
       setImportStatus({
         status: "success",
-        message: data?.message ?? summaryMessage,
+        message: summaryMessage,
       });
       setParseState(INITIAL_STATE);
       setPage(1);

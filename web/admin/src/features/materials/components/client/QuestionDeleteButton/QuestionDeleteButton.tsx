@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { deleteQuestionAction } from "@/features/materials/actions/deleteQuestionAction";
 import { toUnitDetailPath } from "@/features/materials/lib/paths";
 
 interface QuestionDeleteButtonProps {
@@ -28,21 +29,16 @@ export function QuestionDeleteButton(props: QuestionDeleteButtonProps) {
 
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/questions/${props.questionId}`, {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ unitId: props.unitId }),
+        const result = await deleteQuestionAction({
+          questionId: props.questionId,
         });
 
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data?.message ?? "問題の削除に失敗しました。");
+        if (!result.success) {
+          throw new Error(result.message ?? "問題の削除に失敗しました。");
         }
 
         setSuccessMessage("問題を削除しました。");
-        router.push(toUnitDetailPath(props.unitId));
+        router.push(toUnitDetailPath(result.unitId));
         router.refresh();
       } catch (error) {
         setErrorMessage(
