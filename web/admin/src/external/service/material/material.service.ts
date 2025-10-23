@@ -18,6 +18,7 @@ import type {
   CreateUnitRequest,
   DeleteQuestionRequest,
   ImportUnitQuestionsRequest,
+  UpdateQuestionOrdersRequest,
   UpdateQuestionRequest,
   UpdateUnitOrdersRequest,
   UpdateUnitRequest,
@@ -672,6 +673,46 @@ export class MaterialService {
     );
 
     return this.getQuestionDetail(existing.id);
+  }
+  async updateQuestionOrders(
+    payload: UpdateQuestionOrdersRequest,
+  ): Promise<void> {
+    const questions = await this.questionRepository.findByUnitId(
+      payload.unitId,
+    );
+
+    if (questions.length !== payload.orderedQuestionIds.length) {
+      throw new Error("並び替え対象の問題数が一致しません。");
+    }
+
+    const questionMap = new Map(questions.map((item) => [item.id, item]));
+
+    payload.orderedQuestionIds.forEach((questionId) => {
+      if (!questionMap.has(questionId)) {
+        throw new Error("指定された問題がUNITに含まれていません。");
+      }
+    });
+
+    const updates = payload.orderedQuestionIds.map((questionId, index) => {
+      const existing = questionMap.get(questionId);
+      if (!existing) {
+        throw new Error("指定された問題がUNITに含まれていません。");
+      }
+      return new Question({
+        id: existing.id,
+        unitId: existing.unitId,
+        japanese: existing.japanese,
+        hint: existing.hint ?? undefined,
+        explanation: existing.explanation ?? undefined,
+        order: index + 1,
+        createdAt: existing.createdAt,
+        updatedAt: new Date(),
+      });
+    });
+
+    await Promise.all(
+      updates.map((question) => this.questionRepository.save(question)),
+    );
   }
 
   async deleteQuestion(payload: DeleteQuestionRequest): Promise<void> {

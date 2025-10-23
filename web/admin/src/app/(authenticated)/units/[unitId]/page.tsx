@@ -1,15 +1,55 @@
 import type { Metadata } from "next";
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { updateQuestionOrders } from "@/external/handler/material/material.command.server";
 import { getUnitDetail } from "@/external/handler/material/material.query.server";
+import { QuestionReorderTable } from "@/features/materials/components/client/QuestionReorderTable";
 import { UnitQuestionCsvImporter } from "@/features/materials/components/client/UnitQuestionCsvImporter";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
-  toQuestionDetailPath,
-  toQuestionEditPath,
+  toUnitDetailPath,
   toUnitEditPath,
 } from "@/features/materials/lib/paths";
+
+type ReorderResult = { success: boolean; message?: string };
+
+async function reorderUnitQuestionsAction(data: {
+  unitId: string;
+  materialId: string;
+  chapterIds: string[];
+  orderedQuestionIds: string[];
+}): Promise<ReorderResult> {
+  "use server";
+
+  try {
+    await updateQuestionOrders({
+      unitId: data.unitId,
+      orderedQuestionIds: data.orderedQuestionIds,
+    });
+
+    revalidatePath("/materials");
+    revalidatePath(toMaterialDetailPath(data.materialId));
+
+    const uniqueChapterIds = Array.from(new Set(data.chapterIds));
+    for (const chapterId of uniqueChapterIds) {
+      revalidatePath(toChapterDetailPath(chapterId));
+    }
+
+    revalidatePath(toUnitDetailPath(data.unitId));
+
+    return { success: true, message: "問題の並び順を更新しました。" };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "問題の並び順更新に失敗しました。",
+    };
+  }
+}
 
 export async function generateMetadata({
   params,
@@ -175,69 +215,20 @@ export default async function UnitDetailPage({
             登録済みの問題はありません。CSVインポートまたは手動登録（準備中）で追加してください。
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">日本語</th>
-                  <th className="px-4 py-3">英語正解</th>
-                  <th className="px-4 py-3">ヒント</th>
-                  <th className="px-4 py-3">解説</th>
-                  <th className="px-4 py-3">最終更新</th>
-                  <th className="px-4 py-3">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                {detail.questions.map((question) => (
-                  <tr key={question.id} className="align-top">
-                    <td className="px-4 py-3 text-xs font-semibold text-gray-500">
-                      {question.order}
-                    </td>
-                    <td className="px-4 py-3 whitespace-pre-wrap text-gray-900">
-                      {question.japanese}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ul className="list-disc space-y-1 pl-5">
-                        {question.correctAnswers.map((answer) => (
-                          <li key={answer.id}>{answer.answerText}</li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td className="px-4 py-3 whitespace-pre-wrap text-gray-600">
-                      {question.hint ?? (
-                        <span className="text-xs text-gray-400">―</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-pre-wrap text-gray-600">
-                      {question.explanation ?? (
-                        <span className="text-xs text-gray-400">―</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {new Date(question.updatedAt).toLocaleString("ja-JP")}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={toQuestionDetailPath(question.id)}
-                          className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
-                        >
-                          詳細
-                        </Link>
-                        <Link
-                          href={toQuestionEditPath(question.id)}
-                          className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
-                        >
-                          編集
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <QuestionReorderTable
+            questions={detail.questions.map((question) => ({
+              id: question.id,
+              japanese: question.japanese,
+              updatedAt: question.updatedAt,
+              order: question.order,
+            }))}
+            serverActionArgs={{
+              unitId: detail.unit.id,
+              materialId: detail.material.id,
+              chapterIds: detail.chapterPath.map((chapter) => chapter.id),
+            }}
+            reorderUnitQuestionsAction={reorderUnitQuestionsAction}
+          />
         )}
       </section>
     </main>

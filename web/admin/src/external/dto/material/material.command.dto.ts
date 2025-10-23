@@ -108,3 +108,14 @@ export const DeleteQuestionRequestSchema = z.object({
 });
 
 export type DeleteQuestionRequest = z.infer<typeof DeleteQuestionRequestSchema>;
+
+export const UpdateQuestionOrdersRequestSchema = z.object({
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+  orderedQuestionIds: z
+    .array(z.string().min(1, "questionIdが指定されていません。"))
+    .min(1, "並び替える問題を1件以上指定してください。"),
+});
+
+export type UpdateQuestionOrdersRequest = z.infer<
+  typeof UpdateQuestionOrdersRequestSchema
+>;
