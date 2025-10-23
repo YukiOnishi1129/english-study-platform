@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toChapterDetailPath } from "@/features/materials/lib/paths";
+import { Button } from "@/shared/components/ui/button";
+import { DeleteConfirmDialog } from "@/shared/components/ui/delete-confirm-dialog";
 
 interface UnitDeleteButtonProps {
   unitId: string;
@@ -19,19 +21,11 @@ interface UnitDeleteButtonProps {
 export function UnitDeleteButton(props: UnitDeleteButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleDelete = () => {
-    const confirmed = window.confirm(
-      `UNIT「${props.unitName}」を削除しますか？\nこの操作は元に戻せません。配下の問題と正解もすべて削除されます。`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
+  const handleConfirm = () => {
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     startTransition(async () => {
       try {
@@ -46,7 +40,7 @@ export function UnitDeleteButton(props: UnitDeleteButtonProps) {
           return;
         }
 
-        setSuccessMessage(result.message ?? "UNITを削除しました。");
+        setIsDialogOpen(false);
         router.push(toChapterDetailPath(props.chapterId));
         router.refresh();
       } catch (error) {
@@ -66,21 +60,39 @@ export function UnitDeleteButton(props: UnitDeleteButtonProps) {
             配下の問題・正解もすべて削除されます。履歴を保持したい場合は削除を行わず非表示の運用をご検討ください。
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-red-300"
-        >
-          {isPending ? "削除中..." : "UNITを削除"}
-        </button>
+        <DeleteConfirmDialog
+          trigger={
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="text-xs"
+            >
+              UNITを削除
+            </Button>
+          }
+          title={`UNIT「${props.unitName}」を削除しますか？`}
+          description="この操作は元に戻せません。UNIT配下の問題と正解もすべて削除されます。"
+          confirmLabel="削除する"
+          confirmPendingLabel="削除中..."
+          cancelLabel="キャンセル"
+          isPending={isPending}
+          errorMessage={errorMessage}
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setErrorMessage(null);
+            }
+            setIsDialogOpen(open);
+          }}
+          onConfirm={() => {
+            if (isPending) {
+              return;
+            }
+            handleConfirm();
+          }}
+        />
       </div>
-      {errorMessage ? (
-        <p className="text-xs text-red-700">{errorMessage}</p>
-      ) : null}
-      {successMessage ? (
-        <p className="text-xs text-emerald-700">{successMessage}</p>
-      ) : null}
       <p className="text-xs text-gray-600">
         UNITを残したまま問題を削除したい場合は、問題詳細の削除機能をご利用ください。
       </p>
