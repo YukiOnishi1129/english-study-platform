@@ -1,7 +1,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { DeleteConfirmDialog } from "@/shared/components/ui/delete-confirm-dialog";
 
-export interface MaterialDeleteButtonPresenterProps {
+interface MaterialDeleteButtonPresenterProps {
   materialName: string;
   supportingText: string;
   isDialogOpen: boolean;

@@ -3,7 +3,7 @@
 import { MaterialDeleteButtonPresenter } from "./MaterialDeleteButtonPresenter";
 import { useMaterialDeleteButton } from "./useMaterialDeleteButton";
 
-interface MaterialDeleteButtonContainerProps {
+export interface MaterialDeleteButtonContainerProps {
   materialId: string;
   materialName: string;
   deleteMaterialAction: (payload: {
