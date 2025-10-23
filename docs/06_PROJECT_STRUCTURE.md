@@ -93,6 +93,9 @@ web/client/
 │   │   ├── auth/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
+│   │   │   │   │   ├── AuthRedirectPageTemplate/
+│   │   │   │   │   │   ├── AuthRedirectPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
 │   │   │   │   │   └── LoginPageTemplate/
 │   │   │   │   │       ├── LoginPageTemplate.tsx
 │   │   │   │   │       └── index.ts
@@ -115,7 +118,9 @@ web/client/
 │   │   ├── dashboard/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   └── DashboardPageTemplate.tsx
+│   │   │   │   │   └── DashboardPageTemplate/
+│   │   │   │   │       ├── DashboardPageTemplate.tsx
+│   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
 │   │   │   │       ├── StatsSummary/
 │   │   │   │       │   ├── StatsSummaryContainer.tsx
@@ -139,10 +144,18 @@ web/client/
 │   │   ├── materials/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   ├── MaterialListPageTemplate.tsx
-│   │   │   │   │   ├── MaterialDetailPageTemplate.tsx
-│   │   │   │   │   ├── ChapterDetailPageTemplate.tsx
-│   │   │   │   │   └── UnitDetailPageTemplate.tsx
+│   │   │   │   │   ├── MaterialListPageTemplate/
+│   │   │   │   │   │   ├── MaterialListPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── MaterialDetailPageTemplate/
+│   │   │   │   │   │   ├── MaterialDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── ChapterDetailPageTemplate/
+│   │   │   │   │   │   ├── ChapterDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── UnitDetailPageTemplate/
+│   │   │   │   │       ├── UnitDetailPageTemplate.tsx
+│   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
 │   │   │   │       ├── MaterialCard/
 │   │   │   │       │   ├── MaterialCardPresenter.tsx
@@ -637,9 +650,11 @@ src/
    - ページはルーティングとパラメータ受け渡しのみ
    - データフェッチや描画ロジックはfeatures/配下のTemplateに委譲
    - PageProps型を使用して型安全にパラメータを受け取る
+   - layoutではLayoutPropsを利用し、`import`は不要
 
 2. features/はドメイン単位
    - 各feature配下: components/server, components/client, queries
+   - Pageテンプレートは `components/server/<Name>PageTemplate/<Name>PageTemplate.tsx` + `index.ts` の2ファイル構成で配置
    - clientコンポーネント: Container → Presenter → Hook の3層構造
    - Containerはロジック集約、Presenterは純粋な描画、HookはTanStack Query
 

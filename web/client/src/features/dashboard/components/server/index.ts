@@ -1,0 +1,1 @@
+export { DashboardPageTemplate } from "./DashboardPageTemplate";

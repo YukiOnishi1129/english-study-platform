@@ -1,4 +1,4 @@
-import { LoginButtonContainer } from "../client/LoginButton";
+import { LoginButtonContainer } from "@/features/auth/components/client/LoginButton";
 
 export function LoginPageTemplate() {
   return (
