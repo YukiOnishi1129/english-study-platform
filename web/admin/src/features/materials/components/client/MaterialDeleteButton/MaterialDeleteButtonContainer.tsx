@@ -11,7 +11,9 @@ export interface MaterialDeleteButtonContainerProps {
   }) => Promise<{ success: boolean; message?: string }>;
 }
 
-export function MaterialDeleteButton(props: MaterialDeleteButtonContainerProps) {
+export function MaterialDeleteButton(
+  props: MaterialDeleteButtonContainerProps,
+) {
   const state = useMaterialDeleteButton(props);
 
   return (

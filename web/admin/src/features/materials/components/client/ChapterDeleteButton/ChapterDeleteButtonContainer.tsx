@@ -1,8 +1,8 @@
 "use client";
 
+import type { FormRedirect } from "@/features/materials/types/formState";
 import { ChapterDeleteButtonPresenter } from "./ChapterDeleteButtonPresenter";
 import { useChapterDeleteButton } from "./useChapterDeleteButton";
-import type { FormRedirect } from "@/features/materials/types/formState";
 
 export interface ChapterDeleteButtonContainerProps {
   chapterId: string;

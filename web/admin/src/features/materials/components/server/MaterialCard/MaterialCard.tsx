@@ -3,7 +3,6 @@ import type {
   MaterialChapterSummaryDto,
   MaterialHierarchyItemDto,
 } from "@/external/dto/material/material.query.dto";
-import { getMaterialsHierarchy } from "@/external/handler/material/material.query.server";
 
 function countChapters(chapters: MaterialChapterSummaryDto[]): number {
   return chapters.reduce(
@@ -20,7 +19,11 @@ function countUnits(chapters: MaterialChapterSummaryDto[]): number {
   );
 }
 
-function MaterialCard(props: { material: MaterialHierarchyItemDto }) {
+interface MaterialCardProps {
+  material: MaterialHierarchyItemDto;
+}
+
+export function MaterialCard(props: MaterialCardProps) {
   const { material } = props;
   const totalChapters = countChapters(material.chapters);
   const totalUnits = countUnits(material.chapters);
@@ -80,53 +83,5 @@ function MaterialCard(props: { material: MaterialHierarchyItemDto }) {
         </Link>
       </div>
     </article>
-  );
-}
-
-export async function MaterialListPageTemplate() {
-  const materials = await getMaterialsHierarchy();
-
-  return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-12">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">教材一覧</h1>
-          <p className="text-sm text-gray-600">
-            教材の概要を確認し、詳細ページから章やUNITの管理・問題CSVインポートを行います。
-          </p>
-        </div>
-        <Link
-          href="/materials/create"
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
-        >
-          新しい教材を作成
-        </Link>
-      </header>
-
-      {materials.length === 0 ? (
-        <section className="flex flex-col items-center justify-center gap-6 rounded-lg border border-dashed border-gray-300 bg-white p-12 text-center text-gray-600">
-          <div>
-            <p className="text-base font-medium text-gray-700">
-              まだ教材が登録されていません。
-            </p>
-            <p className="mt-2 text-sm">
-              まず教材を作成し、その後、章やUNITを追加して構成を整えましょう。
-            </p>
-          </div>
-          <Link
-            href="/materials/create"
-            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
-          >
-            教材を作成する
-          </Link>
-        </section>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2">
-          {materials.map((material) => (
-            <MaterialCard key={material.id} material={material} />
-          ))}
-        </div>
-      )}
-    </main>
   );
 }

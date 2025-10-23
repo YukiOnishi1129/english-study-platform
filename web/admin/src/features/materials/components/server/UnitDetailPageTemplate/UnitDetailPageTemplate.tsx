@@ -1,6 +1,6 @@
+import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import {
   deleteUnit,
   updateQuestionOrders,
@@ -146,8 +146,8 @@ export async function UnitDetailPageTemplate(
             {detail.unit.name}
           </h1>
           <p className="text-sm text-gray-600">
-            {detail.material.name} の {" "}
-            {detail.chapterPath.map((chapter) => chapter.name).join(" / ")} {" "}
+            {detail.material.name} の{" "}
+            {detail.chapterPath.map((chapter) => chapter.name).join(" / ")}{" "}
             配下のUNITです。
           </p>
         </div>
@@ -217,7 +217,9 @@ export async function UnitDetailPageTemplate(
           unitId={detail.unit.id}
           unitName={detail.unit.name}
           materialId={detail.material.id}
-          chapterId={detail.chapterPath[detail.chapterPath.length - 1]?.id ?? ""}
+          chapterId={
+            detail.chapterPath[detail.chapterPath.length - 1]?.id ?? ""
+          }
           deleteUnitAction={deleteUnitAction}
         />
       </section>

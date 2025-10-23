@@ -106,9 +106,9 @@ interface QuestionEditPageTemplateProps {
 export async function QuestionEditPageTemplate(
   props: QuestionEditPageTemplateProps,
 ) {
-  const detail = await getQuestionDetail({ questionId: props.questionId }).catch(
-    () => null,
-  );
+  const detail = await getQuestionDetail({
+    questionId: props.questionId,
+  }).catch(() => null);
 
   if (!detail) {
     notFound();
@@ -156,8 +156,8 @@ export async function QuestionEditPageTemplate(
 
       <section className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-600">
         <p>
-          親階層: {detail.material.name} / {" "}
-          {detail.chapterPath.map((chapter) => chapter.name).join(" / ")} / {" "}
+          親階層: {detail.material.name} /{" "}
+          {detail.chapterPath.map((chapter) => chapter.name).join(" / ")} /{" "}
           {detail.unit.name}
         </p>
         <div className="mt-2 flex flex-wrap gap-2">

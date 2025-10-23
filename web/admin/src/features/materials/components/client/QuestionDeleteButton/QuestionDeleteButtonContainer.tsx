@@ -8,7 +8,9 @@ export interface QuestionDeleteButtonContainerProps {
   unitId: string;
 }
 
-export function QuestionDeleteButton(props: QuestionDeleteButtonContainerProps) {
+export function QuestionDeleteButton(
+  props: QuestionDeleteButtonContainerProps,
+) {
   const state = useQuestionDeleteButton(props);
 
   return (

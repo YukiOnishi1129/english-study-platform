@@ -89,8 +89,7 @@ async function handleCreateUnit(
   const description = formData.get("description");
 
   const chapterId = typeof chapterIdEntry === "string" ? chapterIdEntry : "";
-  const materialId =
-    typeof materialIdEntry === "string" ? materialIdEntry : "";
+  const materialId = typeof materialIdEntry === "string" ? materialIdEntry : "";
 
   try {
     const unit = await createUnit({

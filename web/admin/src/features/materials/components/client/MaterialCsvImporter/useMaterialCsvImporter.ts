@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type MaterialCsvHierarchy,
   type MaterialCsvRow,
@@ -132,9 +132,7 @@ export function useMaterialCsvImporter(): MaterialCsvImporterPresenterProps {
         status: "error",
         rows: [],
         hierarchy: [],
-        errors: [
-          "ファイルの読み込みに失敗しました。もう一度お試しください。",
-        ],
+        errors: ["ファイルの読み込みに失敗しました。もう一度お試しください。"],
       });
       setPage(1);
     };

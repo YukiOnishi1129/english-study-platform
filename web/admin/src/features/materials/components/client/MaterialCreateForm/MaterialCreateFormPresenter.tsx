@@ -1,13 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FormState } from "@/features/materials/types/formState";
-import { initialFormState } from "@/features/materials/types/formState";
 
-interface MaterialCreateFormProps {
-  action: (state: FormState, formData: FormData) => Promise<FormState>;
+interface MaterialCreateFormPresenterProps {
+  formAction: (formData: FormData) => void;
+  state: FormState;
 }
 
 function SubmitButton() {
@@ -23,8 +20,10 @@ function SubmitButton() {
   );
 }
 
-export function MaterialCreateForm(props: MaterialCreateFormProps) {
-  const [state, formAction] = useActionState(props.action, initialFormState);
+export function MaterialCreateFormPresenter(
+  props: MaterialCreateFormPresenterProps,
+) {
+  const { formAction, state } = props;
 
   return (
     <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-6 shadow-sm">

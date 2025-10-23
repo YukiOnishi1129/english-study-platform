@@ -54,7 +54,9 @@ export function MaterialCsvImporterPresenter(
     <section className="flex flex-col gap-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold text-gray-900">CSVインポート</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            CSVインポート
+          </h1>
           <p className="text-sm text-gray-600">
             教材・章・UNIT・問題を含むCSVファイルをアップロードすると、内容をそのままプレビュー表示します。
           </p>
@@ -91,8 +93,8 @@ export function MaterialCsvImporterPresenter(
           />
 
           <p className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            CSV形式（UTF-8）。列名: 教材名 / 章名 / UNIT名 / 日本語 / 英語正解1-3 /
-            ヒント / 解説
+            CSV形式（UTF-8）。列名: 教材名 / 章名 / UNIT名 / 日本語 /
+            英語正解1-3 / ヒント / 解説
           </p>
         </div>
       </div>
@@ -167,7 +169,7 @@ export function MaterialCsvImporterPresenter(
                   <summary className="cursor-pointer text-sm font-semibold text-gray-900">
                     {material.materialTitle}{" "}
                     <span className="ml-2 text-xs font-normal text-gray-600">
-                      {material.chapters.length}章 / {" "}
+                      {material.chapters.length}章 /{" "}
                       {material.chapters.reduce(
                         (acc, chapter) => acc + chapter.units.length,
                         0,

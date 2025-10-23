@@ -117,7 +117,9 @@ export async function QuestionDetailPageTemplate(
             <h3 className="text-sm font-semibold text-gray-800">ヒント</h3>
             <p className="whitespace-pre-wrap text-sm text-gray-600">
               {detail.question.hint ?? (
-                <span className="text-xs text-gray-400">登録されていません</span>
+                <span className="text-xs text-gray-400">
+                  登録されていません
+                </span>
               )}
             </p>
           </div>
@@ -125,7 +127,9 @@ export async function QuestionDetailPageTemplate(
             <h3 className="text-sm font-semibold text-gray-800">解説</h3>
             <p className="whitespace-pre-wrap text-sm text-gray-600">
               {detail.question.explanation ?? (
-                <span className="text-xs text-gray-400">登録されていません</span>
+                <span className="text-xs text-gray-400">
+                  登録されていません
+                </span>
               )}
             </p>
           </div>
@@ -135,7 +139,9 @@ export async function QuestionDetailPageTemplate(
             <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               並び順
             </h4>
-            <p className="mt-1 text-sm text-gray-700">#{detail.question.order}</p>
+            <p className="mt-1 text-sm text-gray-700">
+              #{detail.question.order}
+            </p>
           </div>
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
