@@ -1,0 +1,1 @@
+export { QuestionEditPageTemplate } from "./QuestionEditPageTemplate";

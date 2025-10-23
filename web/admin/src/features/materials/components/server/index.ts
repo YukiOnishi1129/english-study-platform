@@ -1,0 +1,11 @@
+export { MaterialListPageTemplate } from "./MaterialListPageTemplate";
+export { MaterialCreatePageTemplate } from "./MaterialCreatePageTemplate";
+export { MaterialImportPageTemplate } from "./MaterialImportPageTemplate";
+export { MaterialDetailPageTemplate } from "./MaterialDetailPageTemplate";
+export { MaterialEditPageTemplate } from "./MaterialEditPageTemplate";
+export { ChapterDetailPageTemplate } from "./ChapterDetailPageTemplate";
+export { ChapterEditPageTemplate } from "./ChapterEditPageTemplate";
+export { UnitDetailPageTemplate } from "./UnitDetailPageTemplate";
+export { UnitEditPageTemplate } from "./UnitEditPageTemplate";
+export { QuestionDetailPageTemplate } from "./QuestionDetailPageTemplate";
+export { QuestionEditPageTemplate } from "./QuestionEditPageTemplate";

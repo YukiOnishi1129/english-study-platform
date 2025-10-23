@@ -1,0 +1,1 @@
+export { UnitDetailPageTemplate } from "./UnitDetailPageTemplate";
