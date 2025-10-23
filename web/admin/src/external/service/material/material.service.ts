@@ -16,7 +16,9 @@ import type {
   CreateChapterRequest,
   CreateMaterialRequest,
   CreateUnitRequest,
+  DeleteQuestionRequest,
   ImportUnitQuestionsRequest,
+  UpdateQuestionRequest,
   UpdateUnitOrdersRequest,
   UpdateUnitRequest,
 } from "@/external/dto/material/material.command.dto";
@@ -26,6 +28,7 @@ import type {
   MaterialChapterSummaryDto,
   MaterialHierarchyItemDto,
   MaterialUnitSummaryDto,
+  QuestionDetailDto,
   UnitDetailChapterDto,
   UnitDetailCorrectAnswerDto,
   UnitDetailDto,
@@ -283,6 +286,72 @@ export class MaterialService {
       unit: unitDto,
       questions: questionsWithAnswers.sort((a, b) => a.order - b.order),
     };
+  }
+
+  async getQuestionDetail(questionId: string): Promise<QuestionDetailDto> {
+    const question = await this.questionRepository.findById(questionId);
+    if (!question) {
+      throw new Error("Question not found");
+    }
+
+    const unit = await this.unitRepository.findById(question.unitId);
+    if (!unit) {
+      throw new Error("Unit not found");
+    }
+
+    const chapter = await this.chapterRepository.findById(unit.chapterId);
+    if (!chapter) {
+      throw new Error("Chapter not found");
+    }
+
+    const material = await this.materialRepository.findById(chapter.materialId);
+    if (!material) {
+      throw new Error("Material not found");
+    }
+
+    const chapterPath = await this.buildChapterPath(chapter);
+    const answers = await this.correctAnswerRepository.findByQuestionId(
+      question.id,
+    );
+
+    const answerDtos: UnitDetailCorrectAnswerDto[] = answers
+      .map((answer) => ({
+        id: answer.id,
+        answerText: answer.answerText,
+        order: answer.order,
+        createdAt: serialize(answer.createdAt),
+        updatedAt: serialize(answer.updatedAt),
+      }))
+      .sort((a, b) => a.order - b.order);
+
+    const questionDto: UnitDetailQuestionDto = {
+      id: question.id,
+      unitId: question.unitId,
+      japanese: question.japanese,
+      hint: question.hint ?? null,
+      explanation: question.explanation ?? null,
+      order: question.order,
+      createdAt: serialize(question.createdAt),
+      updatedAt: serialize(question.updatedAt),
+      correctAnswers: answerDtos,
+    };
+
+    const unitDto: UnitDetailUnitDto = {
+      id: unit.id,
+      chapterId: unit.chapterId,
+      name: unit.name,
+      description: unit.description ?? null,
+      order: unit.order,
+      createdAt: serialize(unit.createdAt),
+      updatedAt: serialize(unit.updatedAt),
+    };
+
+    return {
+      material: mapMaterialBase(material),
+      chapterPath,
+      unit: unitDto,
+      question: questionDto,
+    } satisfies QuestionDetailDto;
   }
 
   async createMaterial(
@@ -558,6 +627,65 @@ export class MaterialService {
     }
 
     return { createdCount, updatedCount };
+  }
+
+  async updateQuestion(
+    payload: UpdateQuestionRequest,
+  ): Promise<QuestionDetailDto> {
+    const existing = await this.questionRepository.findById(payload.questionId);
+    if (!existing) {
+      throw new Error("指定された問題が見つかりません。");
+    }
+
+    if (existing.unitId !== payload.unitId) {
+      throw new Error("unitIdが一致しません。再度読み込み直してください。");
+    }
+
+    const order =
+      typeof payload.order === "number" && payload.order > 0
+        ? payload.order
+        : existing.order;
+
+    const updatedQuestion = new Question({
+      id: existing.id,
+      unitId: existing.unitId,
+      japanese: payload.japanese,
+      hint: payload.hint ?? undefined,
+      explanation: payload.explanation ?? undefined,
+      order,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    });
+
+    await this.questionRepository.save(updatedQuestion);
+
+    await this.correctAnswerRepository.deleteByQuestionId(existing.id);
+    await Promise.all(
+      payload.correctAnswers.map(async (answerText, index) => {
+        const answer = CorrectAnswer.create({
+          questionId: existing.id,
+          answerText,
+          order: index + 1,
+        });
+        await this.correctAnswerRepository.save(answer);
+      }),
+    );
+
+    return this.getQuestionDetail(existing.id);
+  }
+
+  async deleteQuestion(payload: DeleteQuestionRequest): Promise<void> {
+    const question = await this.questionRepository.findById(payload.questionId);
+    if (!question) {
+      throw new Error("指定された問題が見つかりません。");
+    }
+
+    if (question.unitId !== payload.unitId) {
+      throw new Error("unitIdが一致しません。再度読み込み直してください。");
+    }
+
+    await this.correctAnswerRepository.deleteByQuestionId(question.id);
+    await this.questionRepository.delete(question.id);
   }
 
   private async buildChapterPath(

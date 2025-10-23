@@ -4,6 +4,7 @@ import { z } from "zod";
 import type {
   ChapterDetailDto,
   MaterialHierarchyItemDto,
+  QuestionDetailDto,
   UnitDetailDto,
 } from "@/external/dto/material/material.query.dto";
 import { MaterialService } from "@/external/service/material/material.service";
@@ -20,6 +21,10 @@ const MaterialDetailRequestSchema = z.object({
 
 const ChapterDetailRequestSchema = z.object({
   chapterId: z.string().min(1, "chapterId is required"),
+});
+
+const QuestionDetailRequestSchema = z.object({
+  questionId: z.string().min(1, "questionId is required"),
 });
 
 export async function getMaterialsHierarchy(): Promise<
@@ -47,4 +52,11 @@ export async function getChapterDetail(request: {
 }): Promise<ChapterDetailDto> {
   const { chapterId } = ChapterDetailRequestSchema.parse(request);
   return materialService.getChapterDetail(chapterId);
+}
+
+export async function getQuestionDetail(request: {
+  questionId: string;
+}): Promise<QuestionDetailDto> {
+  const { questionId } = QuestionDetailRequestSchema.parse(request);
+  return materialService.getQuestionDetail(questionId);
 }

@@ -4,7 +4,9 @@ export type FormRedirect =
   | `/materials/${string}`
   | `/chapters/${string}`
   | `/units/${string}`
-  | `/units/${string}/edit`;
+  | `/units/${string}/edit`
+  | `/questions/${string}`
+  | `/questions/${string}/edit`;
 
 export interface FormState {
   status: FormStatus;

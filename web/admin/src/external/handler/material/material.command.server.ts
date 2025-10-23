@@ -4,7 +4,9 @@ import type {
   CreateChapterRequest,
   CreateMaterialRequest,
   CreateUnitRequest,
+  DeleteQuestionRequest,
   ImportUnitQuestionsRequest,
+  UpdateQuestionRequest,
   UpdateUnitOrdersRequest,
   UpdateUnitRequest,
 } from "@/external/dto/material/material.command.dto";
@@ -12,7 +14,9 @@ import {
   CreateChapterRequestSchema,
   CreateMaterialRequestSchema,
   CreateUnitRequestSchema,
+  DeleteQuestionRequestSchema,
   ImportUnitQuestionsRequestSchema,
+  UpdateQuestionRequestSchema,
   UpdateUnitOrdersRequestSchema,
   UpdateUnitRequestSchema,
 } from "@/external/dto/material/material.command.dto";
@@ -63,4 +67,14 @@ export async function updateUnitOrders(
 export async function importUnitQuestions(request: ImportUnitQuestionsRequest) {
   const payload = ImportUnitQuestionsRequestSchema.parse(request);
   return materialService.importUnitQuestions(payload);
+}
+
+export async function updateQuestion(request: UpdateQuestionRequest) {
+  const payload = UpdateQuestionRequestSchema.parse(request);
+  return materialService.updateQuestion(payload);
+}
+
+export async function deleteQuestion(request: DeleteQuestionRequest) {
+  const payload = DeleteQuestionRequestSchema.parse(request);
+  await materialService.deleteQuestion(payload);
 }

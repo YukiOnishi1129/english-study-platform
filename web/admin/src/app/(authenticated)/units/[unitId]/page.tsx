@@ -6,6 +6,8 @@ import { UnitQuestionCsvImporter } from "@/features/materials/components/client/
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
+  toQuestionDetailPath,
+  toQuestionEditPath,
   toUnitEditPath,
 } from "@/features/materials/lib/paths";
 
@@ -183,6 +185,7 @@ export default async function UnitDetailPage({
                   <th className="px-4 py-3">ヒント</th>
                   <th className="px-4 py-3">解説</th>
                   <th className="px-4 py-3">最終更新</th>
+                  <th className="px-4 py-3">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
@@ -213,6 +216,22 @@ export default async function UnitDetailPage({
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {new Date(question.updatedAt).toLocaleString("ja-JP")}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={toQuestionDetailPath(question.id)}
+                          className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
+                        >
+                          詳細
+                        </Link>
+                        <Link
+                          href={toQuestionEditPath(question.id)}
+                          className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
+                        >
+                          編集
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -15,3 +15,11 @@ export function toUnitDetailPath(unitId: string): FormRedirect {
 export function toUnitEditPath(unitId: string): FormRedirect {
   return `/units/${unitId}/edit`;
 }
+
+export function toQuestionDetailPath(questionId: string): FormRedirect {
+  return `/questions/${questionId}`;
+}
+
+export function toQuestionEditPath(questionId: string): FormRedirect {
+  return `/questions/${questionId}/edit`;
+}

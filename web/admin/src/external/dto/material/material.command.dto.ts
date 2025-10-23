@@ -87,3 +87,24 @@ export type ImportUnitQuestionsRequest = z.infer<
   typeof ImportUnitQuestionsRequestSchema
 >;
 export type ImportUnitQuestionRow = z.infer<typeof ImportUnitQuestionRowSchema>;
+
+export const UpdateQuestionRequestSchema = z.object({
+  questionId: z.string().min(1, "questionIdが指定されていません。"),
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+  japanese: z.string().trim().min(1, "日本語を入力してください。"),
+  hint: OPTIONAL_TEXT_SCHEMA,
+  explanation: OPTIONAL_TEXT_SCHEMA,
+  order: z.number().int().positive().optional(),
+  correctAnswers: z
+    .array(z.string().trim().min(1, "英語正解は1文字以上で入力してください。"))
+    .min(1, "英語の正解を1つ以上入力してください。"),
+});
+
+export type UpdateQuestionRequest = z.infer<typeof UpdateQuestionRequestSchema>;
+
+export const DeleteQuestionRequestSchema = z.object({
+  questionId: z.string().min(1, "questionIdが指定されていません。"),
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+});
+
+export type DeleteQuestionRequest = z.infer<typeof DeleteQuestionRequestSchema>;
