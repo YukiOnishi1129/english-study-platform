@@ -1,5 +1,14 @@
 import { z } from "zod";
-import type { MaterialChapterSummaryDto } from "@/external/dto/material/material.query.dto";
+import type {
+  MaterialChapterSummaryDto,
+  MaterialHierarchyItemDto,
+  QuestionDetailDto,
+  UnitDetailChapterDto,
+  UnitDetailCorrectAnswerDto,
+  UnitDetailMaterialDto,
+  UnitDetailQuestionDto,
+  UnitDetailUnitDto,
+} from "@/external/dto/material/material.query.dto";
 
 const materialUnitSummarySchema = z.object({
   id: z.string(),
@@ -27,7 +36,7 @@ const chapterSummarySchema: z.ZodType<MaterialChapterSummaryDto> = z.lazy(() =>
   }),
 );
 
-const materialHierarchySchema = z.object({
+const materialHierarchySchema: z.ZodType<MaterialHierarchyItemDto> = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
@@ -41,4 +50,71 @@ export const materialHierarchyListSchema = z.array(materialHierarchySchema);
 
 export function ensureMaterialHierarchyList(data: unknown) {
   return materialHierarchyListSchema.parse(data);
+}
+
+export function ensureMaterialHierarchy(data: unknown) {
+  return materialHierarchySchema.parse(data);
+}
+
+const unitDetailMaterialSchema: z.ZodType<UnitDetailMaterialDto> = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  order: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+const unitDetailChapterSchema: z.ZodType<UnitDetailChapterDto> = z.object({
+  id: z.string(),
+  materialId: z.string(),
+  parentChapterId: z.string().nullable(),
+  name: z.string(),
+  description: z.string().nullable(),
+  level: z.number(),
+  order: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+const unitDetailCorrectAnswerSchema: z.ZodType<UnitDetailCorrectAnswerDto> =
+  z.object({
+    id: z.string(),
+    answerText: z.string(),
+    order: z.number(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  });
+
+const unitDetailQuestionSchema: z.ZodType<UnitDetailQuestionDto> = z.object({
+  id: z.string(),
+  unitId: z.string(),
+  japanese: z.string(),
+  hint: z.string().nullable(),
+  explanation: z.string().nullable(),
+  order: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  correctAnswers: z.array(unitDetailCorrectAnswerSchema),
+});
+
+const unitDetailUnitSchema: z.ZodType<UnitDetailUnitDto> = z.object({
+  id: z.string(),
+  chapterId: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  order: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+const questionDetailSchema: z.ZodType<QuestionDetailDto> = z.object({
+  material: unitDetailMaterialSchema,
+  chapterPath: z.array(unitDetailChapterSchema),
+  unit: unitDetailUnitSchema,
+  question: unitDetailQuestionSchema,
+});
+
+export function ensureQuestionDetail(data: unknown) {
+  return questionDetailSchema.parse(data);
 }

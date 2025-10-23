@@ -6,3 +6,9 @@ export const materialKeys = {
   unitDetail: (unitId: string) =>
     [...materialKeys.all, { entity: "unitDetail", unitId }] as const,
 };
+
+export const questionKeys = {
+  all: [{ scope: "questions" }] as const,
+  detail: (questionId: string) =>
+    [...questionKeys.all, { entity: "detail", questionId }] as const,
+};
