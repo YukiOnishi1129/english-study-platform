@@ -8,6 +8,10 @@ export function toChapterDetailPath(chapterId: string): FormRedirect {
   return `/chapters/${chapterId}`;
 }
 
+export function toChapterEditPath(chapterId: string): FormRedirect {
+  return `/chapters/${chapterId}/edit`;
+}
+
 export function toUnitDetailPath(unitId: string): FormRedirect {
   return `/units/${unitId}`;
 }

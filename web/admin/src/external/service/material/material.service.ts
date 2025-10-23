@@ -20,6 +20,7 @@ import type {
   DeleteQuestionRequest,
   DeleteUnitRequest,
   ImportUnitQuestionsRequest,
+  UpdateChapterRequest,
   UpdateQuestionOrdersRequest,
   UpdateQuestionRequest,
   UpdateUnitOrdersRequest,
@@ -428,6 +429,27 @@ export class MaterialService {
       units: [],
       children: [],
     };
+  }
+
+  async updateChapter(payload: UpdateChapterRequest): Promise<void> {
+    const existing = await this.chapterRepository.findById(payload.chapterId);
+    if (!existing) {
+      throw new Error("指定された章が見つかりません。");
+    }
+
+    const updatedChapter = new Chapter({
+      id: existing.id,
+      materialId: existing.materialId,
+      parentChapterId: existing.parentChapterId ?? undefined,
+      name: payload.name,
+      description: payload.description ?? undefined,
+      order: existing.order,
+      level: existing.level,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    });
+
+    await this.chapterRepository.save(updatedChapter);
   }
 
   async createUnit(

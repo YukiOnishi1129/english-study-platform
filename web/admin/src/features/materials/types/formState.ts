@@ -3,6 +3,7 @@ export type FormStatus = "idle" | "success" | "error";
 export type FormRedirect =
   | `/materials/${string}`
   | `/chapters/${string}`
+  | `/chapters/${string}/edit`
   | `/units/${string}`
   | `/units/${string}/edit`
   | `/questions/${string}`

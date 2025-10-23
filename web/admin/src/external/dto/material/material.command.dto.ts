@@ -52,6 +52,14 @@ export const UpdateUnitRequestSchema = z.object({
 });
 export type UpdateUnitRequest = z.infer<typeof UpdateUnitRequestSchema>;
 
+export const UpdateChapterRequestSchema = z.object({
+  chapterId: z.string().min(1, "chapterIdが指定されていません。"),
+  name: NAME_SCHEMA,
+  description: DESCRIPTION_SCHEMA,
+});
+
+export type UpdateChapterRequest = z.infer<typeof UpdateChapterRequestSchema>;
+
 export const UpdateUnitOrdersRequestSchema = z.object({
   chapterId: z.string().min(1, "chapterIdが指定されていません。"),
   orderedUnitIds: z

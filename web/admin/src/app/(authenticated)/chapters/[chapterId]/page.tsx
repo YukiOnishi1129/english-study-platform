@@ -16,6 +16,7 @@ import { ChapterUnitList } from "@/features/materials/components/client/ChapterU
 import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import {
   toChapterDetailPath,
+  toChapterEditPath,
   toMaterialDetailPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
@@ -23,6 +24,7 @@ import type {
   FormRedirect,
   FormState,
 } from "@/features/materials/types/formState";
+import { Button } from "@/shared/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -277,13 +279,18 @@ export default async function ChapterDetailPage({
         </ol>
       </nav>
 
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {detail.chapter.name}
-        </h1>
-        <p className="text-sm text-gray-600">
-          {detail.chapter.description ?? "説明は登録されていません。"}
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {detail.chapter.name}
+          </h1>
+          <p className="text-sm text-gray-600">
+            {detail.chapter.description ?? "説明は登録されていません。"}
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href={toChapterEditPath(detail.chapter.id)}>章情報を編集</Link>
+        </Button>
       </header>
 
       <section className="space-y-4">
