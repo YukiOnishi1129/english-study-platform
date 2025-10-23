@@ -10,6 +10,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,48 +89,36 @@ export function DeleteConfirmDialog(props: DeleteConfirmDialogProps) {
   return (
     <AlertDialog open={currentOpen} onOpenChange={handleOpenChange}>
       <AlertDialogTrigger asChild>{triggerElement}</AlertDialogTrigger>
-      <AlertDialogContent
-        className={
-          contentClassName ??
-          "fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
-        }
-      >
-        <div className="w-full max-w-md rounded-lg border border-red-200 bg-white p-6 shadow-xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-lg font-semibold text-red-700">
-              {title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="mt-2 text-sm text-gray-600">
-              {description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {errorMessage ? (
-            <p className="mt-3 text-sm text-red-600">{errorMessage}</p>
-          ) : null}
-          <AlertDialogFooter
-            className={
-              footerClassName ??
-              "mt-6 flex flex-col-reverse gap-2 text-sm sm:flex-row sm:justify-end"
-            }
+      <AlertDialogContent className={cn("border-red-200", contentClassName)}>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-red-700">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-600">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {errorMessage ? (
+          <p className="text-sm text-red-600" role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
+        <AlertDialogFooter className={cn("text-sm", footerClassName)}>
+          <AlertDialogCancel disabled={isPending}>
+            {cancelLabel}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isPending}
+            onClick={(event: MouseEvent<HTMLButtonElement>) => {
+              event.preventDefault();
+              if (isPending) {
+                return;
+              }
+              onConfirm();
+            }}
+            className="bg-red-600 text-white hover:bg-red-500 disabled:bg-red-300"
           >
-            <AlertDialogCancel disabled={isPending}>
-              {cancelLabel}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isPending}
-              onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                event.preventDefault();
-                if (isPending) {
-                  return;
-                }
-                onConfirm();
-              }}
-              className="bg-red-600 text-white hover:bg-red-500 disabled:bg-red-300"
-            >
-              {isPending ? confirmPendingLabel : confirmLabel}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </div>
+            {isPending ? confirmPendingLabel : confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
