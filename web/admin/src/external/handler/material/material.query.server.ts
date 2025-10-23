@@ -27,10 +27,10 @@ const QuestionDetailRequestSchema = z.object({
   questionId: z.string().min(1, "questionId is required"),
 });
 
-export async function getMaterialsHierarchy(): Promise<
+export async function listMaterialsHierarchy(): Promise<
   MaterialHierarchyItemDto[]
 > {
-  return materialService.getMaterialsHierarchy();
+  return materialService.listMaterialsHierarchy();
 }
 
 export async function getMaterialHierarchyById(request: {
