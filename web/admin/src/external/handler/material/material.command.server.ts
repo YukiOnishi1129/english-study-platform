@@ -5,10 +5,12 @@ import type {
   CreateMaterialRequest,
   CreateUnitRequest,
   DeleteChapterRequest,
+  DeleteMaterialRequest,
   DeleteQuestionRequest,
   DeleteUnitRequest,
   ImportUnitQuestionsRequest,
   UpdateChapterRequest,
+  UpdateMaterialRequest,
   UpdateQuestionOrdersRequest,
   UpdateQuestionRequest,
   UpdateUnitOrdersRequest,
@@ -19,10 +21,12 @@ import {
   CreateMaterialRequestSchema,
   CreateUnitRequestSchema,
   DeleteChapterRequestSchema,
+  DeleteMaterialRequestSchema,
   DeleteQuestionRequestSchema,
   DeleteUnitRequestSchema,
   ImportUnitQuestionsRequestSchema,
   UpdateChapterRequestSchema,
+  UpdateMaterialRequestSchema,
   UpdateQuestionOrdersRequestSchema,
   UpdateQuestionRequestSchema,
   UpdateUnitOrdersRequestSchema,
@@ -42,6 +46,11 @@ export async function createMaterial(
 ): Promise<MaterialHierarchyItemDto> {
   const payload = CreateMaterialRequestSchema.parse(request);
   return materialService.createMaterial(payload);
+}
+
+export async function updateMaterial(request: UpdateMaterialRequest) {
+  const payload = UpdateMaterialRequestSchema.parse(request);
+  await materialService.updateMaterial(payload);
 }
 
 export async function createChapter(
@@ -95,6 +104,11 @@ export async function deleteQuestion(request: DeleteQuestionRequest) {
 export async function deleteChapter(request: DeleteChapterRequest) {
   const payload = DeleteChapterRequestSchema.parse(request);
   await materialService.deleteChapter(payload);
+}
+
+export async function deleteMaterial(request: DeleteMaterialRequest) {
+  const payload = DeleteMaterialRequestSchema.parse(request);
+  await materialService.deleteMaterial(payload);
 }
 
 export async function deleteUnit(request: DeleteUnitRequest) {

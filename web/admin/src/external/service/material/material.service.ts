@@ -381,6 +381,24 @@ export class MaterialService {
     };
   }
 
+  async updateMaterial(payload: UpdateMaterialRequest): Promise<void> {
+    const existing = await this.materialRepository.findById(payload.materialId);
+    if (!existing) {
+      throw new Error("指定された教材が見つかりません。");
+    }
+
+    const updatedMaterial = new Material({
+      id: existing.id,
+      name: payload.name,
+      description: payload.description ?? undefined,
+      order: existing.order,
+      createdAt: existing.createdAt,
+      updatedAt: new Date(),
+    });
+
+    await this.materialRepository.save(updatedMaterial);
+  }
+
   async createChapter(
     payload: CreateChapterRequest,
   ): Promise<MaterialChapterSummaryDto> {
@@ -774,6 +792,24 @@ export class MaterialService {
     }
   }
 
+  async deleteMaterial(payload: DeleteMaterialRequest): Promise<void> {
+    const material = await this.materialRepository.findById(payload.materialId);
+    if (!material) {
+      throw new Error("指定された教材が見つかりません。");
+    }
+
+    const chapters = await this.chapterRepository.findByMaterialId(material.id);
+    const rootChapters = chapters.filter((chapter) => !chapter.parentChapterId);
+
+    for (const chapter of rootChapters) {
+      await this.deleteChapter({ chapterId: chapter.id });
+    }
+
+    await this.materialRepository.delete(material.id);
+
+    await this.reorderMaterialOrders();
+  }
+
   async deleteUnit(payload: DeleteUnitRequest): Promise<void> {
     const unit = await this.unitRepository.findById(payload.unitId);
     if (!unit) {
@@ -867,6 +903,30 @@ export class MaterialService {
         });
 
         await this.chapterRepository.save(updated);
+      }),
+    );
+  }
+
+  private async reorderMaterialOrders(): Promise<void> {
+    const materials = await this.materialRepository.findAll();
+
+    await Promise.all(
+      materials.map(async (material, index) => {
+        const nextOrder = index + 1;
+        if (material.order === nextOrder) {
+          return;
+        }
+
+        const updated = new Material({
+          id: material.id,
+          name: material.name,
+          description: material.description ?? undefined,
+          order: nextOrder,
+          createdAt: material.createdAt,
+          updatedAt: new Date(),
+        });
+
+        await this.materialRepository.save(updated);
       }),
     );
   }

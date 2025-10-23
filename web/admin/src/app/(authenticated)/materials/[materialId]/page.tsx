@@ -9,21 +9,51 @@ import type {
 import {
   createChapter,
   createUnit,
+  deleteMaterial,
   updateUnitOrders,
 } from "@/external/handler/material/material.command.server";
 import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
 import { ChapterCreateForm } from "@/features/materials/components/client/ChapterCreateForm";
 import { ChapterUnitList } from "@/features/materials/components/client/ChapterUnitList";
+import { MaterialDeleteButton } from "@/features/materials/components/client/MaterialDeleteButton";
 import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
+  toMaterialEditPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
 import type { ReorderUnitsActionPayload } from "@/features/materials/types/reorderUnitsAction";
+import { Button } from "@/shared/components/ui/button";
 
 export const dynamic = "force-dynamic";
+
+type DeleteMaterialResult = {
+  success: boolean;
+  message?: string;
+};
+
+async function deleteMaterialAction(data: {
+  materialId: string;
+}): Promise<DeleteMaterialResult> {
+  "use server";
+
+  try {
+    await deleteMaterial({ materialId: data.materialId });
+
+    revalidatePath("/materials");
+    revalidatePath(toMaterialDetailPath(data.materialId));
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "教材の削除に失敗しました。",
+    };
+  }
+}
 
 function countUnits(chapters: MaterialChapterSummaryDto[]): number {
   return chapters.reduce(
@@ -271,11 +301,16 @@ export default async function MaterialDetailPage({
         </Link>
       </nav>
 
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">{material.name}</h1>
-        <p className="text-sm text-gray-600">
-          {material.description ?? "説明は登録されていません。"}
-        </p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">{material.name}</h1>
+          <p className="text-sm text-gray-600">
+            {material.description ?? "説明は登録されていません。"}
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href={toMaterialEditPath(material.id)}>教材情報を編集</Link>
+        </Button>
       </header>
 
       <section className="grid gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3">
@@ -332,6 +367,14 @@ export default async function MaterialDetailPage({
             )}
           </div>
         )}
+      </section>
+
+      <section>
+        <MaterialDeleteButton
+          materialId={material.id}
+          materialName={material.name}
+          deleteMaterialAction={deleteMaterialAction}
+        />
       </section>
     </main>
   );

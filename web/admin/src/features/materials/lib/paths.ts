@@ -4,6 +4,10 @@ export function toMaterialDetailPath(materialId: string): FormRedirect {
   return `/materials/${materialId}`;
 }
 
+export function toMaterialEditPath(materialId: string): FormRedirect {
+  return `/materials/${materialId}/edit`;
+}
+
 export function toChapterDetailPath(chapterId: string): FormRedirect {
   return `/chapters/${chapterId}`;
 }

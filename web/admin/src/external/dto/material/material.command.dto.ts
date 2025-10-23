@@ -25,6 +25,13 @@ export const CreateMaterialRequestSchema = z.object({
 });
 export type CreateMaterialRequest = z.infer<typeof CreateMaterialRequestSchema>;
 
+export const UpdateMaterialRequestSchema = z.object({
+  materialId: z.string().min(1, "materialIdが指定されていません。"),
+  name: NAME_SCHEMA,
+  description: DESCRIPTION_SCHEMA,
+});
+export type UpdateMaterialRequest = z.infer<typeof UpdateMaterialRequestSchema>;
+
 export const CreateChapterRequestSchema = z.object({
   materialId: z.string().min(1, "materialIdが指定されていません。"),
   parentChapterId: z
@@ -133,6 +140,12 @@ export const DeleteChapterRequestSchema = z.object({
 });
 
 export type DeleteChapterRequest = z.infer<typeof DeleteChapterRequestSchema>;
+
+export const DeleteMaterialRequestSchema = z.object({
+  materialId: z.string().min(1, "materialIdが指定されていません。"),
+});
+
+export type DeleteMaterialRequest = z.infer<typeof DeleteMaterialRequestSchema>;
 
 export const DeleteUnitRequestSchema = z.object({
   unitId: z.string().min(1, "unitIdが指定されていません。"),

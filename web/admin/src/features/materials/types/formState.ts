@@ -2,6 +2,7 @@ export type FormStatus = "idle" | "success" | "error";
 
 export type FormRedirect =
   | `/materials/${string}`
+  | `/materials/${string}/edit`
   | `/chapters/${string}`
   | `/chapters/${string}/edit`
   | `/units/${string}`
