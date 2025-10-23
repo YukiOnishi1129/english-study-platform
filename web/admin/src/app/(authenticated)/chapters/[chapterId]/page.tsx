@@ -6,10 +6,12 @@ import { ZodError } from "zod";
 import {
   createChapter,
   createUnit,
+  deleteChapter,
   updateUnitOrders,
 } from "@/external/handler/material/material.command.server";
 import { getChapterDetail } from "@/external/handler/material/material.query.server";
 import { ChapterCreateForm } from "@/features/materials/components/client/ChapterCreateForm";
+import { ChapterDeleteButton } from "@/features/materials/components/client/ChapterDeleteButton";
 import { ChapterUnitList } from "@/features/materials/components/client/ChapterUnitList";
 import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import {
@@ -17,9 +19,61 @@ import {
   toMaterialDetailPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
-import type { FormState } from "@/features/materials/types/formState";
+import type {
+  FormRedirect,
+  FormState,
+} from "@/features/materials/types/formState";
 
 export const dynamic = "force-dynamic";
+
+type DeleteChapterResult = {
+  success: boolean;
+  message?: string;
+  redirect?: FormRedirect;
+};
+
+async function deleteChapterAction(data: {
+  chapterId: string;
+  materialId: string;
+  parentChapterId: string | null;
+  ancestorChapterIds: string[];
+}): Promise<DeleteChapterResult> {
+  "use server";
+
+  try {
+    await deleteChapter({ chapterId: data.chapterId });
+
+    revalidatePath("/materials");
+    revalidatePath(toMaterialDetailPath(data.materialId));
+
+    const uniqueAncestorIds = Array.from(
+      new Set(
+        data.ancestorChapterIds.filter(
+          (id): id is string => typeof id === "string" && id.length > 0,
+        ),
+      ),
+    );
+
+    for (const ancestorId of uniqueAncestorIds) {
+      revalidatePath(toChapterDetailPath(ancestorId));
+    }
+
+    revalidatePath(toChapterDetailPath(data.chapterId));
+
+    return {
+      success: true,
+      redirect: data.parentChapterId
+        ? toChapterDetailPath(data.parentChapterId)
+        : toMaterialDetailPath(data.materialId),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "章の削除に失敗しました。",
+    };
+  }
+}
 
 async function handleCreateUnit(
   _prevState: FormState,
@@ -296,6 +350,17 @@ export default async function ChapterDetailPage({
             ))}
           </ul>
         )}
+      </section>
+
+      <section>
+        <ChapterDeleteButton
+          chapterId={detail.chapter.id}
+          chapterName={detail.chapter.name}
+          materialId={detail.material.id}
+          parentChapterId={detail.chapter.parentChapterId}
+          ancestorChapterIds={detail.ancestors.map((ancestor) => ancestor.id)}
+          deleteChapterAction={deleteChapterAction}
+        />
       </section>
     </main>
   );

@@ -3,6 +3,7 @@
 import {
   cloneElement,
   isValidElement,
+  type MouseEvent,
   type ReactElement,
   type ReactNode,
   useCallback,
@@ -116,7 +117,7 @@ export function DeleteConfirmDialog(props: DeleteConfirmDialogProps) {
             </AlertDialogCancel>
             <AlertDialogAction
               disabled={isPending}
-              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+              onClick={(event: MouseEvent<HTMLButtonElement>) => {
                 event.preventDefault();
                 if (isPending) {
                   return;

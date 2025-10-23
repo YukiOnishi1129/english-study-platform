@@ -16,6 +16,7 @@ import type {
   CreateChapterRequest,
   CreateMaterialRequest,
   CreateUnitRequest,
+  DeleteChapterRequest,
   DeleteQuestionRequest,
   DeleteUnitRequest,
   ImportUnitQuestionsRequest,
@@ -716,6 +717,41 @@ export class MaterialService {
     );
   }
 
+  async deleteChapter(payload: DeleteChapterRequest): Promise<void> {
+    const chapter = await this.chapterRepository.findById(payload.chapterId);
+    if (!chapter) {
+      throw new Error("指定された章が見つかりません。");
+    }
+
+    const descendants = await this.collectDescendantChapters(chapter.id);
+    const deletingChapterIds = new Set(
+      descendants.map((item) => item.id).concat(chapter.id),
+    );
+
+    const deletionOrder = [...descendants.reverse(), chapter];
+
+    for (const target of deletionOrder) {
+      const units = await this.unitRepository.findByChapterId(target.id);
+      for (const unit of units) {
+        await this.deleteUnit({ unitId: unit.id });
+      }
+
+      await this.chapterRepository.delete(target.id);
+
+      const parentId = target.parentChapterId ?? null;
+      const parentWillBeDeleted =
+        parentId !== null && deletingChapterIds.has(parentId);
+
+      if (parentId === null) {
+        if (target.id === chapter.id) {
+          await this.reorderChapterOrders(null, target.materialId);
+        }
+      } else if (!parentWillBeDeleted) {
+        await this.reorderChapterOrders(parentId, target.materialId);
+      }
+    }
+  }
+
   async deleteUnit(payload: DeleteUnitRequest): Promise<void> {
     const unit = await this.unitRepository.findById(payload.unitId);
     if (!unit) {
@@ -761,6 +797,56 @@ export class MaterialService {
 
     await this.correctAnswerRepository.deleteByQuestionId(question.id);
     await this.questionRepository.delete(question.id);
+  }
+
+  private async collectDescendantChapters(
+    chapterId: string,
+  ): Promise<Chapter[]> {
+    const children = await this.chapterRepository.findByParentId(chapterId);
+    const descendants: Chapter[] = [];
+
+    for (const child of children) {
+      descendants.push(child);
+      const nested = await this.collectDescendantChapters(child.id);
+      descendants.push(...nested);
+    }
+
+    return descendants;
+  }
+
+  private async reorderChapterOrders(
+    parentChapterId: string | null,
+    materialId: string,
+  ): Promise<void> {
+    const siblings =
+      await this.chapterRepository.findByParentId(parentChapterId);
+
+    const ordered = siblings
+      .filter((chapter) => chapter.materialId === materialId)
+      .sort((a, b) => a.order - b.order);
+
+    await Promise.all(
+      ordered.map(async (chapter, index) => {
+        const nextOrder = index + 1;
+        if (chapter.order === nextOrder) {
+          return;
+        }
+
+        const updated = new Chapter({
+          id: chapter.id,
+          materialId: chapter.materialId,
+          parentChapterId: chapter.parentChapterId ?? undefined,
+          name: chapter.name,
+          description: chapter.description ?? undefined,
+          order: nextOrder,
+          level: chapter.level,
+          createdAt: chapter.createdAt,
+          updatedAt: new Date(),
+        });
+
+        await this.chapterRepository.save(updated);
+      }),
+    );
   }
 
   private async buildChapterPath(

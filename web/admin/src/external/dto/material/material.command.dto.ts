@@ -120,6 +120,12 @@ export type UpdateQuestionOrdersRequest = z.infer<
   typeof UpdateQuestionOrdersRequestSchema
 >;
 
+export const DeleteChapterRequestSchema = z.object({
+  chapterId: z.string().min(1, "chapterIdが指定されていません。"),
+});
+
+export type DeleteChapterRequest = z.infer<typeof DeleteChapterRequestSchema>;
+
 export const DeleteUnitRequestSchema = z.object({
   unitId: z.string().min(1, "unitIdが指定されていません。"),
 });
