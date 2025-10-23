@@ -1,5 +1,3 @@
-export { ChapterDetailPageTemplate } from "./ChapterDetailPageTemplate";
-export { ChapterEditPageTemplate } from "./ChapterEditPageTemplate";
 export { MaterialCreatePageTemplate } from "./MaterialCreatePageTemplate";
 export { MaterialDetailPageTemplate } from "./MaterialDetailPageTemplate";
 export { MaterialEditPageTemplate } from "./MaterialEditPageTemplate";

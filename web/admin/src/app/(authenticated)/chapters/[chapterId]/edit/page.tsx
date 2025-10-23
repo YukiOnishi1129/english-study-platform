@@ -1,4 +1,4 @@
-import { ChapterEditPageTemplate } from "@/features/materials/components/server";
+import { ChapterEditPageTemplate } from "@/features/chapters/components/server";
 
 export default async function ChapterEditPage({
   params,

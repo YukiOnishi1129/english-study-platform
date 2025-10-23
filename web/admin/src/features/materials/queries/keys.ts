@@ -3,6 +3,8 @@ export const materialKeys = {
   list: () => [...materialKeys.all, { entity: "list" }] as const,
   detail: (materialId: string) =>
     [...materialKeys.all, { entity: "detail", materialId }] as const,
+  chapterDetail: (chapterId: string) =>
+    [...materialKeys.all, { entity: "chapterDetail", chapterId }] as const,
   unitDetail: (unitId: string) =>
     [...materialKeys.all, { entity: "unitDetail", unitId }] as const,
 };

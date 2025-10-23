@@ -13,8 +13,8 @@ import {
   updateUnitOrders,
 } from "@/external/handler/material/material.command.server";
 import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
-import { ChapterCreateForm } from "@/features/materials/components/client/ChapterCreateForm";
-import { ChapterUnitList } from "@/features/materials/components/client/ChapterUnitList";
+import { ChapterCreateForm } from "@/features/chapters/components/client/ChapterCreateForm";
+import { ChapterUnitList } from "@/features/chapters/components/client/ChapterUnitList";
 import { MaterialDeleteButton } from "@/features/materials/components/client/MaterialDeleteButton";
 import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import {

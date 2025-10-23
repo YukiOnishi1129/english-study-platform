@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getChapterDetail } from "@/external/handler/material/material.query.server";
-import { ChapterDetailPageTemplate } from "@/features/materials/components/server";
+import { ChapterDetailPageTemplate } from "@/features/chapters/components/server";
 
 export const dynamic = "force-dynamic";
 

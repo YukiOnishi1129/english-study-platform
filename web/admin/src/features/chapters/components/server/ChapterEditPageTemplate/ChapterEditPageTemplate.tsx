@@ -1,15 +1,18 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { revalidatePath } from "next/cache";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ZodError } from "zod";
 import { updateChapter } from "@/external/handler/material/material.command.server";
-import { getChapterDetail } from "@/external/handler/material/material.query.server";
-import { ChapterEditForm } from "@/features/materials/components/client/ChapterEditForm";
+import { getChapterDetailAction } from "@/external/handler/material/material.query.action";
+import { ChapterEditContent } from "@/features/chapters/components/client/ChapterEditContent";
+import { chapterKeys } from "@/features/chapters/queries/keys";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
 } from "@/features/materials/lib/paths";
+import { ensureChapterDetail } from "@/features/materials/queries/validation";
 import type { FormState } from "@/features/materials/types/formState";
+import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
 
@@ -79,52 +82,40 @@ interface ChapterEditPageTemplateProps {
   chapterId: string;
 }
 
-export async function ChapterEditPageTemplate(
-  props: ChapterEditPageTemplateProps,
-) {
-  const detail = await getChapterDetail({ chapterId: props.chapterId }).catch(
-    () => null,
-  );
+export async function ChapterEditPageTemplate({
+  chapterId,
+}: ChapterEditPageTemplateProps) {
+  const queryClient = getQueryClient();
 
+  try {
+    await queryClient.prefetchQuery({
+      queryKey: chapterKeys.detail(chapterId),
+      queryFn: async () => {
+        const response = await getChapterDetailAction({ chapterId });
+        if (!response) {
+          throw new Error("CHAPTER_NOT_FOUND");
+        }
+        return ensureChapterDetail(response);
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "CHAPTER_NOT_FOUND") {
+      notFound();
+    }
+    throw error;
+  }
+
+  const detail = queryClient.getQueryData(chapterKeys.detail(chapterId));
   if (!detail) {
     notFound();
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-10">
-      <nav className="text-sm text-gray-500">
-        <Link
-          href={toChapterDetailPath(props.chapterId)}
-          className="inline-flex items-center gap-1 text-indigo-600 underline-offset-2 hover:underline"
-        >
-          ← 章詳細に戻る
-        </Link>
-      </nav>
-
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">章情報を編集</h1>
-        <p className="text-sm text-gray-600">
-          {detail.material.name}
-          {detail.ancestors.length > 0
-            ? ` / ${detail.ancestors.map((item) => item.name).join(" / ")}`
-            : ""}
-          {detail.ancestors.length > 0 ? " / " : ""}
-          {detail.chapter.name}
-        </p>
-      </header>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <ChapterEditForm
-          action={handleUpdateChapter}
-          defaultValues={{
-            chapterId: props.chapterId,
-            materialId: detail.material.id,
-            parentChapterId: detail.chapter.parentChapterId,
-            name: detail.chapter.name,
-            description: detail.chapter.description,
-          }}
-        />
-      </section>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ChapterEditContent
+        chapterId={chapterId}
+        onSubmit={handleUpdateChapter}
+      />
+    </HydrationBoundary>
   );
 }

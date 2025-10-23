@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type {
+  ChapterDetailDto,
   MaterialChapterSummaryDto,
   MaterialHierarchyItemDto,
   QuestionDetailDto,
@@ -54,6 +55,22 @@ export function ensureMaterialHierarchyList(data: unknown) {
 
 export function ensureMaterialHierarchy(data: unknown) {
   return materialHierarchySchema.parse(data);
+}
+
+const chapterBreadcrumbItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  level: z.number(),
+});
+
+const chapterDetailSchema: z.ZodType<ChapterDetailDto> = z.object({
+  material: materialHierarchySchema,
+  chapter: chapterSummarySchema,
+  ancestors: z.array(chapterBreadcrumbItemSchema),
+});
+
+export function ensureChapterDetail(data: unknown) {
+  return chapterDetailSchema.parse(data);
 }
 
 const unitDetailMaterialSchema: z.ZodType<UnitDetailMaterialDto> = z.object({
