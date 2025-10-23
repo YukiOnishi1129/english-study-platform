@@ -119,3 +119,9 @@ export const UpdateQuestionOrdersRequestSchema = z.object({
 export type UpdateQuestionOrdersRequest = z.infer<
   typeof UpdateQuestionOrdersRequestSchema
 >;
+
+export const DeleteUnitRequestSchema = z.object({
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+});
+
+export type DeleteUnitRequest = z.infer<typeof DeleteUnitRequestSchema>;

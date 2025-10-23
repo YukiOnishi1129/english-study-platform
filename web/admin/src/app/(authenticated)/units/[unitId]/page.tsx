@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateQuestionOrders } from "@/external/handler/material/material.command.server";
+import {
+  deleteUnit,
+  updateQuestionOrders,
+} from "@/external/handler/material/material.command.server";
 import { getUnitDetail } from "@/external/handler/material/material.query.server";
 import { QuestionReorderTable } from "@/features/materials/components/client/QuestionReorderTable";
+import { UnitDeleteButton } from "@/features/materials/components/client/UnitDeleteButton";
 import { UnitQuestionCsvImporter } from "@/features/materials/components/client/UnitQuestionCsvImporter";
 import {
   toChapterDetailPath,
@@ -14,6 +18,32 @@ import {
 } from "@/features/materials/lib/paths";
 
 type ReorderResult = { success: boolean; message?: string };
+
+type DeleteResult = { success: boolean; message?: string };
+
+async function deleteUnitAction(data: {
+  unitId: string;
+  materialId: string;
+  chapterId: string;
+}): Promise<DeleteResult> {
+  "use server";
+
+  try {
+    await deleteUnit({ unitId: data.unitId });
+
+    revalidatePath("/materials");
+    revalidatePath(toMaterialDetailPath(data.materialId));
+    revalidatePath(toChapterDetailPath(data.chapterId));
+
+    return { success: true, message: "UNITを削除しました。" };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "UNITの削除に失敗しました。",
+    };
+  }
+}
 
 async function reorderUnitQuestionsAction(data: {
   unitId: string;
@@ -230,6 +260,13 @@ export default async function UnitDetailPage({
             reorderUnitQuestionsAction={reorderUnitQuestionsAction}
           />
         )}
+        <UnitDeleteButton
+          unitId={detail.unit.id}
+          unitName={detail.unit.name}
+          chapterId={detail.unit.chapterId}
+          materialId={detail.material.id}
+          deleteUnitAction={deleteUnitAction}
+        />
       </section>
     </main>
   );

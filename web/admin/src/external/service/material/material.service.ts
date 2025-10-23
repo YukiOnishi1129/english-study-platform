@@ -17,6 +17,7 @@ import type {
   CreateMaterialRequest,
   CreateUnitRequest,
   DeleteQuestionRequest,
+  DeleteUnitRequest,
   ImportUnitQuestionsRequest,
   UpdateQuestionOrdersRequest,
   UpdateQuestionRequest,
@@ -713,6 +714,39 @@ export class MaterialService {
     await Promise.all(
       updates.map((question) => this.questionRepository.save(question)),
     );
+  }
+
+  async deleteUnit(payload: DeleteUnitRequest): Promise<void> {
+    const unit = await this.unitRepository.findById(payload.unitId);
+    if (!unit) {
+      throw new Error("指定されたUNITが見つかりません。");
+    }
+
+    const questions = await this.questionRepository.findByUnitId(unit.id);
+
+    await Promise.all(
+      questions.map(async (question) => {
+        await this.correctAnswerRepository.deleteByQuestionId(question.id);
+      }),
+    );
+
+    if (questions.length > 0) {
+      await this.questionRepository.deleteByUnitId(unit.id);
+    }
+
+    await this.unitRepository.delete(unit.id);
+
+    const remainingUnits = await this.unitRepository.findByChapterId(
+      unit.chapterId,
+    );
+
+    const reorderPayload = remainingUnits
+      .sort((a, b) => a.order - b.order)
+      .map((item, index) => ({ id: item.id, order: index + 1 }));
+
+    if (reorderPayload.length > 0) {
+      await this.unitRepository.updateOrders(unit.chapterId, reorderPayload);
+    }
   }
 
   async deleteQuestion(payload: DeleteQuestionRequest): Promise<void> {

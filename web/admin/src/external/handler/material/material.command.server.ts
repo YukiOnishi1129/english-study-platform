@@ -5,6 +5,7 @@ import type {
   CreateMaterialRequest,
   CreateUnitRequest,
   DeleteQuestionRequest,
+  DeleteUnitRequest,
   ImportUnitQuestionsRequest,
   UpdateQuestionOrdersRequest,
   UpdateQuestionRequest,
@@ -16,6 +17,7 @@ import {
   CreateMaterialRequestSchema,
   CreateUnitRequestSchema,
   DeleteQuestionRequestSchema,
+  DeleteUnitRequestSchema,
   ImportUnitQuestionsRequestSchema,
   UpdateQuestionOrdersRequestSchema,
   UpdateQuestionRequestSchema,
@@ -79,6 +81,11 @@ export async function updateQuestion(request: UpdateQuestionRequest) {
 export async function deleteQuestion(request: DeleteQuestionRequest) {
   const payload = DeleteQuestionRequestSchema.parse(request);
   await materialService.deleteQuestion(payload);
+}
+
+export async function deleteUnit(request: DeleteUnitRequest) {
+  const payload = DeleteUnitRequestSchema.parse(request);
+  await materialService.deleteUnit(payload);
 }
 
 export async function updateQuestionOrders(

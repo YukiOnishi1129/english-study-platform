@@ -96,6 +96,10 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     await db.delete(questions).where(eq(questions.id, id));
   }
 
+  async deleteByUnitId(unitId: string): Promise<void> {
+    await db.delete(questions).where(eq(questions.unitId, unitId));
+  }
+
   async countByUnitIds(unitIds: string[]): Promise<Record<string, number>> {
     if (unitIds.length === 0) {
       return {};
