@@ -1,1 +1,2 @@
-export { UnitDeleteButton } from "./UnitDeleteButton";
+export type { UnitDeleteButtonContainerProps } from "./UnitDeleteButtonContainer";
+export { UnitDeleteButton } from "./UnitDeleteButtonContainer";

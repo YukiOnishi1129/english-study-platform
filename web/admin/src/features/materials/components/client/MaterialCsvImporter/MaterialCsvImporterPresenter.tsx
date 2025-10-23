@@ -1,161 +1,60 @@
-"use client";
-
-import type { ChangeEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  type MaterialCsvHierarchy,
-  type MaterialCsvRow,
-  parseMaterialCsv,
+import type { ChangeEventHandler } from "react";
+import type {
+  MaterialCsvHierarchy,
+  MaterialCsvRow,
 } from "@/features/materials/lib/parseMaterialCsv";
 
-interface ParseState {
+interface MaterialCounts {
+  materialCount: number;
+  chapterCount: number;
+  unitCount: number;
+  questionCount: number;
+}
+
+export interface MaterialCsvImporterPresenterProps {
   status: "idle" | "parsing" | "success" | "error";
-  rows: MaterialCsvRow[];
-  hierarchy: MaterialCsvHierarchy[];
   errors: string[];
+  hierarchy: MaterialCsvHierarchy[];
+  paginatedRows: MaterialCsvRow[];
+  counts: MaterialCounts;
+  rowsLength: number;
+  page: number;
+  totalPages: number;
+  startIndex: number;
+  endIndex: number;
+  canGoPrevious: boolean;
+  canGoNext: boolean;
+  onFileChange: ChangeEventHandler<HTMLInputElement>;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
 }
 
-const INITIAL_STATE: ParseState = {
-  status: "idle",
-  rows: [],
-  hierarchy: [],
-  errors: [],
-};
-
-const PAGE_SIZE = 50;
-
-function formatCounts(hierarchy: MaterialCsvHierarchy[]) {
-  const materialCount = hierarchy.length;
-  let chapterCount = 0;
-  let unitCount = 0;
-  let questionCount = 0;
-
-  hierarchy.forEach((material) => {
-    chapterCount += material.chapters.length;
-    material.chapters.forEach((chapter) => {
-      unitCount += chapter.units.length;
-      chapter.units.forEach((unit) => {
-        questionCount += unit.questions.length;
-      });
-    });
-  });
-
-  return { materialCount, chapterCount, unitCount, questionCount };
-}
-
-export function MaterialCsvImporter() {
-  const [parseState, setParseState] = useState<ParseState>(INITIAL_STATE);
-  const [page, setPage] = useState(1);
-
-  const totalPages = useMemo(() => {
-    if (parseState.rows.length === 0) {
-      return 1;
-    }
-    return Math.ceil(parseState.rows.length / PAGE_SIZE);
-  }, [parseState.rows.length]);
-
-  useEffect(() => {
-    if (parseState.status !== "success") {
-      setPage(1);
-      return;
-    }
-
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [parseState.status, page, totalPages]);
-
-  const startIndex =
-    parseState.status === "success" ? (page - 1) * PAGE_SIZE : 0;
-  const endIndex =
-    parseState.status === "success"
-      ? Math.min(parseState.rows.length, startIndex + PAGE_SIZE)
-      : 0;
-
-  const paginatedRows = useMemo(() => {
-    if (parseState.status !== "success") {
-      return [] as MaterialCsvRow[];
-    }
-    return parseState.rows.slice(startIndex, endIndex);
-  }, [parseState.status, parseState.rows, startIndex, endIndex]);
-
-  const handleFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) {
-        setParseState(INITIAL_STATE);
-        setPage(1);
-        return;
-      }
-
-      setParseState((prev) => ({ ...prev, status: "parsing", errors: [] }));
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const text = typeof reader.result === "string" ? reader.result : "";
-          const result = parseMaterialCsv(text);
-
-          if (result.errors.length > 0) {
-            setParseState({
-              status: "error",
-              rows: [],
-              hierarchy: [],
-              errors: result.errors,
-            });
-            setPage(1);
-          } else {
-            setParseState({
-              status: "success",
-              rows: result.rows,
-              hierarchy: result.hierarchy,
-              errors: [],
-            });
-            setPage(1);
-          }
-        } catch (error) {
-          setParseState({
-            status: "error",
-            rows: [],
-            hierarchy: [],
-            errors: [
-              error instanceof Error
-                ? error.message
-                : "CSVファイルの解析中に予期しないエラーが発生しました。",
-            ],
-          });
-          setPage(1);
-        }
-      };
-      reader.onerror = () => {
-        setParseState({
-          status: "error",
-          rows: [],
-          hierarchy: [],
-          errors: [
-            "ファイルの読み込みに失敗しました。もう一度お試しください。",
-          ],
-        });
-        setPage(1);
-      };
-
-      reader.readAsText(file, "utf-8");
-    },
-    [],
-  );
-
-  const counts = useMemo(
-    () => formatCounts(parseState.hierarchy),
-    [parseState.hierarchy],
-  );
+export function MaterialCsvImporterPresenter(
+  props: MaterialCsvImporterPresenterProps,
+) {
+  const {
+    status,
+    errors,
+    hierarchy,
+    paginatedRows,
+    counts,
+    rowsLength,
+    page,
+    totalPages,
+    startIndex,
+    endIndex,
+    canGoPrevious,
+    canGoNext,
+    onFileChange,
+    onPreviousPage,
+    onNextPage,
+  } = props;
 
   return (
     <section className="flex flex-col gap-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <header className="space-y-2">
-          <h1 className="text-2xl font-semibold text-gray-900">
-            CSVインポート
-          </h1>
+          <h1 className="text-2xl font-semibold text-gray-900">CSVインポート</h1>
           <p className="text-sm text-gray-600">
             教材・章・UNIT・問題を含むCSVファイルをアップロードすると、内容をそのままプレビュー表示します。
           </p>
@@ -188,34 +87,34 @@ export function MaterialCsvImporter() {
             type="file"
             accept=".csv"
             className="hidden"
-            onChange={handleFileChange}
+            onChange={onFileChange}
           />
 
           <p className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            CSV形式（UTF-8）。列名: 教材名 / 章名 / UNIT名 / 日本語 /
-            英語正解1-3 / ヒント / 解説
+            CSV形式（UTF-8）。列名: 教材名 / 章名 / UNIT名 / 日本語 / 英語正解1-3 /
+            ヒント / 解説
           </p>
         </div>
       </div>
 
-      {parseState.status === "parsing" ? (
+      {status === "parsing" ? (
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <p className="text-sm text-gray-600">CSVを解析しています...</p>
         </div>
       ) : null}
 
-      {parseState.status === "error" && parseState.errors.length > 0 ? (
+      {status === "error" && errors.length > 0 ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <h2 className="text-sm font-semibold text-red-700">エラー</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
-            {parseState.errors.map((message) => (
+            {errors.map((message) => (
               <li key={message}>{message}</li>
             ))}
           </ul>
         </div>
       ) : null}
 
-      {parseState.status === "success" ? (
+      {status === "success" ? (
         <div className="space-y-6">
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800">
@@ -260,7 +159,7 @@ export function MaterialCsvImporter() {
           <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800">教材構成</h2>
             <div className="space-y-3">
-              {parseState.hierarchy.map((material) => (
+              {hierarchy.map((material) => (
                 <details
                   key={material.materialTitle}
                   className="rounded-md border border-gray-100 bg-gray-50 px-4 py-3"
@@ -268,7 +167,7 @@ export function MaterialCsvImporter() {
                   <summary className="cursor-pointer text-sm font-semibold text-gray-900">
                     {material.materialTitle}{" "}
                     <span className="ml-2 text-xs font-normal text-gray-600">
-                      {material.chapters.length}章 /{" "}
+                      {material.chapters.length}章 / {" "}
                       {material.chapters.reduce(
                         (acc, chapter) => acc + chapter.units.length,
                         0,
@@ -365,20 +264,20 @@ export function MaterialCsvImporter() {
                 ))}
               </tbody>
             </table>
-            {parseState.rows.length > PAGE_SIZE ? (
+            {rowsLength > paginatedRows.length ? (
               <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                 <p>
                   表示中:{" "}
                   <span className="font-semibold text-gray-800">
                     {startIndex + 1}〜{endIndex}
                   </span>{" "}
-                  / {parseState.rows.length} 行
+                  / {rowsLength} 行
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                    disabled={page === 1}
+                    onClick={onPreviousPage}
+                    disabled={!canGoPrevious}
                     className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     前へ
@@ -388,10 +287,8 @@ export function MaterialCsvImporter() {
                   </span>
                   <button
                     type="button"
-                    onClick={() =>
-                      setPage((prev) => Math.min(totalPages, prev + 1))
-                    }
-                    disabled={page >= totalPages}
+                    onClick={onNextPage}
+                    disabled={!canGoNext}
                     className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     次へ
