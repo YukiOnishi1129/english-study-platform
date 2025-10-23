@@ -1,4 +1,5 @@
 import "server-only";
+import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import type { Account } from "@/features/account/types/account";
 import { authOptions } from "@/features/auth/lib/options";
@@ -15,7 +16,7 @@ export async function getAuthenticatedAdmin(): Promise<Account | null> {
 export async function requireAdmin(): Promise<Account> {
   const account = await getAuthenticatedAdmin();
   if (!account) {
-    throw new Error("Unauthorized");
+    redirect("/login");
   }
 
   return account;

@@ -1,6 +1,6 @@
 import { Unit as DomainUnit, type UnitRepository } from "@acme/shared/domain";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../client";
 import { units } from "../schema/units";
 
@@ -89,5 +89,24 @@ export class UnitRepositoryImpl implements UnitRepository {
 
   async delete(id: string): Promise<void> {
     await db.delete(units).where(eq(units.id, id));
+  }
+
+  async updateOrders(
+    chapterId: string,
+    updates: Array<{ id: string; order: number }>,
+  ): Promise<void> {
+    await db.transaction(async (tx) => {
+      const now = new Date();
+
+      for (const update of updates) {
+        await tx
+          .update(units)
+          .set({
+            order: update.order,
+            updatedAt: now,
+          })
+          .where(and(eq(units.id, update.id), eq(units.chapterId, chapterId)));
+      }
+    });
   }
 }
