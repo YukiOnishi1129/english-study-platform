@@ -27,18 +27,14 @@ async function handleUpdateQuestion(
   const hintEntry = formData.get("hint");
   const explanationEntry = formData.get("explanation");
   const orderEntry = formData.get("order");
-  const correctAnswersEntry = formData.get("correctAnswers");
+  const correctAnswersEntries = formData.getAll("correctAnswers");
 
   const questionId = typeof questionIdEntry === "string" ? questionIdEntry : "";
   const unitId = typeof unitIdEntry === "string" ? unitIdEntry : "";
 
-  const correctAnswers =
-    typeof correctAnswersEntry === "string"
-      ? correctAnswersEntry
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0)
-      : [];
+  const correctAnswers = correctAnswersEntries
+    .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
+    .filter((entry) => entry.length > 0);
 
   const orderNumber =
     typeof orderEntry === "string" && orderEntry.trim().length > 0

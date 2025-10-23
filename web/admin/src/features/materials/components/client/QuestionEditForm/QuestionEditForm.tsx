@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { FormState } from "@/features/materials/types/formState";
 import { initialFormState } from "@/features/materials/types/formState";
@@ -31,9 +31,49 @@ function SubmitButton() {
   );
 }
 
+type AnswerField = { id: string; value: string };
+
+function createAnswerField(value = ""): AnswerField {
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return { id, value };
+}
+
+function toAnswerFields(values: string[]): AnswerField[] {
+  const entries = values.length > 0 ? values : [""];
+  return entries.map((entry) => createAnswerField(entry));
+}
+
 export function QuestionEditForm(props: QuestionEditFormProps) {
   const [state, formAction] = useActionState(props.action, initialFormState);
-  const defaultAnswers = props.defaultValues.correctAnswers.join("\n");
+  const [answers, setAnswers] = useState<AnswerField[]>(
+    toAnswerFields(props.defaultValues.correctAnswers),
+  );
+
+  useEffect(() => {
+    setAnswers(toAnswerFields(props.defaultValues.correctAnswers));
+  }, [props.defaultValues.correctAnswers]);
+
+  const handleAnswerChange = (id: string, value: string) => {
+    setAnswers((prev) =>
+      prev.map((field) => (field.id === id ? { ...field, value } : field)),
+    );
+  };
+
+  const handleAddAnswer = () => {
+    setAnswers((prev) => [...prev, createAnswerField()]);
+  };
+
+  const handleRemoveAnswer = (id: string) => {
+    setAnswers((prev) => {
+      if (prev.length <= 1) {
+        return prev;
+      }
+      return prev.filter((field) => field.id !== id);
+    });
+  };
 
   return (
     <form action={formAction} className="space-y-6">
@@ -61,25 +101,51 @@ export function QuestionEditForm(props: QuestionEditFormProps) {
         />
       </div>
 
-      <div className="space-y-1">
-        <label
-          htmlFor="question-correct-answers"
-          className="text-sm font-semibold text-gray-800"
-        >
-          英語正解 <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="question-correct-answers"
-          name="correctAnswers"
-          required
-          rows={5}
-          defaultValue={defaultAnswers}
-          placeholder={"1行につき1つの正解を入力してください"}
-          className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-        />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label
+            className="text-sm font-semibold text-gray-800"
+            htmlFor="question-correct-answer-0"
+          >
+            英語正解 <span className="text-red-500">*</span>
+          </label>
+          <button
+            type="button"
+            onClick={handleAddAnswer}
+            className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
+          >
+            正解を追加
+          </button>
+        </div>
         <p className="text-xs text-gray-500">
-          1行につき1つの正解を入力します。表示順は上から順に適用されます。
+          表示順に応じて上から順に並べ替えてください。少なくとも1件入力が必要です。
         </p>
+        <div className="space-y-2">
+          {answers.map((field, index) => (
+            <div key={field.id} className="flex items-start gap-2">
+              <input
+                id={`question-correct-answer-${index}`}
+                name="correctAnswers"
+                type="text"
+                required
+                value={field.value}
+                onChange={(event) =>
+                  handleAnswerChange(field.id, event.target.value)
+                }
+                className="flex-1 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+              <button
+                type="button"
+                onClick={() => handleRemoveAnswer(field.id)}
+                disabled={answers.length <= 1}
+                className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-500 shadow-sm transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="正解を削除"
+              >
+                削除
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
