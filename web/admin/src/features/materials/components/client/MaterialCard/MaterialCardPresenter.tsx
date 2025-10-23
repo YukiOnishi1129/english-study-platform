@@ -1,42 +1,31 @@
 import Link from "next/link";
-import type {
-  MaterialChapterSummaryDto,
-  MaterialHierarchyItemDto,
-} from "@/external/dto/material/material.query.dto";
 
-function countChapters(chapters: MaterialChapterSummaryDto[]): number {
-  return chapters.reduce(
-    (total, chapter) => total + 1 + countChapters(chapter.children),
-    0,
-  );
+interface MaterialCardPresenterProps {
+  materialId: string;
+  name: string;
+  description: string | null;
+  totalChapters: number;
+  totalUnits: number;
+  updatedAt: Date;
 }
 
-function countUnits(chapters: MaterialChapterSummaryDto[]): number {
-  return chapters.reduce(
-    (total, chapter) =>
-      total + chapter.units.length + countUnits(chapter.children),
-    0,
-  );
-}
-
-interface MaterialCardProps {
-  material: MaterialHierarchyItemDto;
-}
-
-export function MaterialCard(props: MaterialCardProps) {
-  const { material } = props;
-  const totalChapters = countChapters(material.chapters);
-  const totalUnits = countUnits(material.chapters);
+export function MaterialCardPresenter(props: MaterialCardPresenterProps) {
+  const {
+    materialId,
+    name,
+    description,
+    totalChapters,
+    totalUnits,
+    updatedAt,
+  } = props;
 
   return (
     <article className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="space-y-3">
         <header className="space-y-1">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            {material.name}
-          </h2>
-          {material.description ? (
-            <p className="text-sm text-gray-600">{material.description}</p>
+          <h2 className="text-2xl font-semibold text-gray-900">{name}</h2>
+          {description ? (
+            <p className="text-sm text-gray-600">{description}</p>
           ) : null}
         </header>
 
@@ -62,7 +51,7 @@ export function MaterialCard(props: MaterialCardProps) {
               更新日時
             </dt>
             <dd className="mt-1 text-sm text-indigo-900">
-              {new Date(material.updatedAt).toLocaleString("ja-JP")}
+              {updatedAt.toLocaleString("ja-JP")}
             </dd>
           </div>
         </dl>
@@ -70,7 +59,7 @@ export function MaterialCard(props: MaterialCardProps) {
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
-          href={`/materials/${material.id}`}
+          href={`/materials/${materialId}`}
           className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-500"
         >
           教材詳細へ

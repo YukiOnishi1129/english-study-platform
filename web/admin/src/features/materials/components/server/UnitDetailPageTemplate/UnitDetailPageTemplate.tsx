@@ -98,6 +98,17 @@ export async function UnitDetailPageTemplate(
   }
 
   const questionCount = detail.questions.length;
+  const currentChapter =
+    detail.chapterPath.length > 0
+      ? detail.chapterPath[detail.chapterPath.length - 1]
+      : null;
+  const unitQuestions = detail.questions.map((question) => ({
+    id: question.id,
+    order: question.order,
+    japanese: question.japanese,
+    updatedAt: question.updatedAt,
+  }));
+  const parentChapterId = currentChapter?.id ?? detail.unit.chapterId;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-10 px-6 py-10">
@@ -199,16 +210,20 @@ export async function UnitDetailPageTemplate(
           <h2 className="text-xl font-semibold text-gray-900">問題の並び順</h2>
           <UnitQuestionCsvImporter
             unitId={detail.unit.id}
+            unitName={detail.unit.name}
             materialId={detail.material.id}
-            chapterPath={detail.chapterPath}
+            chapterId={parentChapterId}
+            existingQuestionCount={questionCount}
           />
         </header>
         <QuestionReorderTable
-          unitId={detail.unit.id}
-          materialId={detail.material.id}
-          chapterIds={detail.chapterPath.map((chapter) => chapter.id)}
-          questions={detail.questions}
-          onReorder={reorderUnitQuestionsAction}
+          questions={unitQuestions}
+          serverActionArgs={{
+            unitId: detail.unit.id,
+            materialId: detail.material.id,
+            chapterIds: detail.chapterPath.map((chapter) => chapter.id),
+          }}
+          reorderUnitQuestionsAction={reorderUnitQuestionsAction}
         />
       </section>
 
@@ -217,9 +232,7 @@ export async function UnitDetailPageTemplate(
           unitId={detail.unit.id}
           unitName={detail.unit.name}
           materialId={detail.material.id}
-          chapterId={
-            detail.chapterPath[detail.chapterPath.length - 1]?.id ?? ""
-          }
+          chapterId={parentChapterId}
           deleteUnitAction={deleteUnitAction}
         />
       </section>
