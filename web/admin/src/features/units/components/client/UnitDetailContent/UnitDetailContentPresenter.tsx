@@ -1,11 +1,11 @@
 import Link from "next/link";
 import type { UnitDetailDto } from "@/external/dto/material/material.query.dto";
-import { QuestionReorderTable } from "@/features/materials/components/client/QuestionReorderTable";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
   toUnitEditPath,
 } from "@/features/materials/lib/paths";
+import { QuestionReorderTable } from "@/features/questions/components/client/QuestionReorderTable";
 import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteButton";
 import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
 

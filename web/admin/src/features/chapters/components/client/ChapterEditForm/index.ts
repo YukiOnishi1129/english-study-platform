@@ -1,1 +1,1 @@
-export { ChapterEditForm } from "./ChapterEditForm";
+export { ChapterEditForm } from "./ChapterEditFormContainer";

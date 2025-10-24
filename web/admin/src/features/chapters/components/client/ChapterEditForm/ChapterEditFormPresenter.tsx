@@ -1,59 +1,34 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
-import { useFormStatus } from "react-dom";
 import type { FormState } from "@/features/materials/types/formState";
-import { initialFormState } from "@/features/materials/types/formState";
-import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { SubmitButton } from "./SubmitButton";
 
-interface ChapterEditFormProps {
-  action: (state: FormState, formData: FormData) => Promise<FormState>;
-  defaultValues: {
-    chapterId: string;
-    materialId: string;
-    parentChapterId: string | null;
-    name: string;
-    description: string | null;
-  };
+interface ChapterEditFormDefaultValues {
+  chapterId: string;
+  materialId: string;
+  parentChapterId: string | null;
+  name: string;
+  description: string | null;
 }
 
-function SubmitButton() {
-  const status = useFormStatus();
-  return (
-    <Button type="submit" disabled={status.pending} className="min-w-32">
-      {status.pending ? "保存中..." : "変更を保存"}
-    </Button>
-  );
+export interface ChapterEditFormPresenterProps {
+  state: FormState;
+  formAction: (formData: FormData) => void;
+  defaultValues: ChapterEditFormDefaultValues;
 }
 
-export function ChapterEditForm(props: ChapterEditFormProps) {
-  const router = useRouter();
-  const [state, formAction] = useActionState(props.action, initialFormState);
-
-  useEffect(() => {
-    if (state.status === "success" && state.redirect) {
-      router.replace(state.redirect);
-    }
-  }, [state, router]);
+export function ChapterEditFormPresenter(props: ChapterEditFormPresenterProps) {
+  const { state, formAction, defaultValues } = props;
 
   return (
     <form action={formAction} className="space-y-4">
-      <input
-        type="hidden"
-        name="chapterId"
-        value={props.defaultValues.chapterId}
-      />
-      <input
-        type="hidden"
-        name="materialId"
-        value={props.defaultValues.materialId}
-      />
+      <input type="hidden" name="chapterId" value={defaultValues.chapterId} />
+      <input type="hidden" name="materialId" value={defaultValues.materialId} />
       <input
         type="hidden"
         name="parentChapterId"
-        value={props.defaultValues.parentChapterId ?? ""}
+        value={defaultValues.parentChapterId ?? ""}
       />
 
       <div className="space-y-1">
@@ -69,7 +44,7 @@ export function ChapterEditForm(props: ChapterEditFormProps) {
           type="text"
           required
           maxLength={120}
-          defaultValue={props.defaultValues.name}
+          defaultValue={defaultValues.name}
         />
       </div>
 
@@ -85,7 +60,7 @@ export function ChapterEditForm(props: ChapterEditFormProps) {
           name="description"
           rows={3}
           maxLength={500}
-          defaultValue={props.defaultValues.description ?? ""}
+          defaultValue={defaultValues.description ?? ""}
           className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition focus-visible:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
         />
       </div>

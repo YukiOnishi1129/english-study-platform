@@ -1,64 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo } from "react";
-import { useFormStatus } from "react-dom";
 import type { FormState } from "@/features/materials/types/formState";
-import { initialFormState } from "@/features/materials/types/formState";
+import { SubmitButton } from "./SubmitButton";
 
-interface ChapterCreateFormProps {
-  action: (state: FormState, formData: FormData) => Promise<FormState>;
+export interface ChapterCreateFormPresenterProps {
   materialId: string;
   parentChapterId?: string;
   parentChapterName?: string;
+  contextLabel: string;
+  state: FormState;
+  formAction: (formData: FormData) => void;
 }
 
-function SubmitButton() {
-  const status = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={status.pending}
-      className="inline-flex items-center justify-center rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-sky-300"
-    >
-      {status.pending ? "追加中..." : "章を追加"}
-    </button>
-  );
-}
+export function ChapterCreateFormPresenter(
+  props: ChapterCreateFormPresenterProps,
+) {
+  const { materialId, parentChapterId, contextLabel, state, formAction } =
+    props;
 
-export function ChapterCreateForm(props: ChapterCreateFormProps) {
-  const [state, formAction] = useActionState(props.action, initialFormState);
-
-  const contextLabel = useMemo(() => {
-    if (props.parentChapterId && props.parentChapterName) {
-      return `「${props.parentChapterName}」の下に章を追加`;
-    }
-    return "新しい章を追加";
-  }, [props.parentChapterId, props.parentChapterName]);
+  const parentId = parentChapterId ?? "";
 
   return (
     <div className="space-y-2 rounded-md border border-sky-200 bg-sky-50/60 p-4 text-sm text-gray-700">
       <p className="text-xs font-semibold text-sky-700">{contextLabel}</p>
       <form action={formAction} className="space-y-2">
-        <input type="hidden" name="materialId" value={props.materialId} />
-        {props.parentChapterId ? (
-          <input
-            type="hidden"
-            name="parentChapterId"
-            value={props.parentChapterId}
-          />
-        ) : (
-          <input type="hidden" name="parentChapterId" value="" />
-        )}
+        <input type="hidden" name="materialId" value={materialId} />
+        <input type="hidden" name="parentChapterId" value={parentId} />
         <div className="space-y-1">
           <label
-            htmlFor={`chapter-name-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            htmlFor={`chapter-name-${materialId}-${parentId || "root"}`}
             className="text-xs font-medium text-gray-800"
           >
             章の名称 <span className="text-red-500">*</span>
           </label>
           <input
-            id={`chapter-name-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            id={`chapter-name-${materialId}-${parentId || "root"}`}
             name="name"
             type="text"
             required
@@ -69,13 +46,13 @@ export function ChapterCreateForm(props: ChapterCreateFormProps) {
         </div>
         <div className="space-y-1">
           <label
-            htmlFor={`chapter-desc-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            htmlFor={`chapter-desc-${materialId}-${parentId || "root"}`}
             className="text-xs font-medium text-gray-800"
           >
             説明
           </label>
           <textarea
-            id={`chapter-desc-${props.materialId}-${props.parentChapterId ?? "root"}`}
+            id={`chapter-desc-${materialId}-${parentId || "root"}`}
             name="description"
             rows={2}
             maxLength={500}
