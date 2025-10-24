@@ -3,6 +3,7 @@
 import {
   getChapterDetail,
   getQuestionDetail,
+  getUnitDetail,
   listMaterialsHierarchy,
 } from "./material.query.server";
 
@@ -21,6 +22,14 @@ export async function getQuestionDetailAction(input: { questionId: string }) {
 export async function getChapterDetailAction(input: { chapterId: string }) {
   try {
     return await getChapterDetail(input);
+  } catch (_error) {
+    return null;
+  }
+}
+
+export async function getUnitDetailAction(input: { unitId: string }) {
+  try {
+    return await getUnitDetail(input);
   } catch (_error) {
     return null;
   }

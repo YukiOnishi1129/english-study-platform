@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuestionDetailQuery } from "@/features/materials/queries/useQuestionDetailQuery";
+import { useQuestionDetailQuery } from "@/features/questions/queries/useQuestionDetailQuery";
 import { QuestionDetailContentPresenter } from "./QuestionDetailContentPresenter";
 
 interface QuestionDetailContentProps {

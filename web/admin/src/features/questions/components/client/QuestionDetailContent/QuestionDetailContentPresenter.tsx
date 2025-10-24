@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { QuestionDetailDto } from "@/external/dto/material/material.query.dto";
-import { QuestionDeleteButton } from "@/features/materials/components/client/QuestionDeleteButton";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
   toQuestionEditPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
+import { QuestionDeleteButton } from "@/features/questions/components/client/QuestionDeleteButton";
 
 interface QuestionDetailContentPresenterProps {
   detail: QuestionDetailDto | undefined;

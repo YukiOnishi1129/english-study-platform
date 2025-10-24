@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getQuestionDetail } from "@/external/handler/material/material.query.server";
-import { QuestionDetailPageTemplate } from "@/features/materials/components/server";
+import { QuestionDetailPageTemplate } from "@/features/questions/components/server";
 
 export async function generateMetadata({
   params,

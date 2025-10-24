@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getUnitDetail } from "@/external/handler/material/material.query.server";
-import { UnitDetailPageTemplate } from "@/features/materials/components/server";
+import { UnitDetailPageTemplate } from "@/features/units/components/server";
 
 export async function generateMetadata({
   params,

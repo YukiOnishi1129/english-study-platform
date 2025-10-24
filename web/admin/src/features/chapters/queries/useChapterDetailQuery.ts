@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getChapterDetailAction } from "@/external/handler/material/material.query.action";
-import { ensureChapterDetail } from "@/features/materials/queries/validation";
+import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import { chapterKeys } from "./keys";
 
 export function useChapterDetailQuery(chapterId: string) {

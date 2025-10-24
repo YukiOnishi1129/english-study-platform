@@ -11,12 +11,12 @@ import {
 import { getChapterDetailAction } from "@/external/handler/material/material.query.action";
 import { ChapterDetailContent } from "@/features/chapters/components/client/ChapterDetailContent";
 import { chapterKeys } from "@/features/chapters/queries/keys";
+import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
-import { ensureChapterDetail } from "@/features/materials/queries/validation";
 import type {
   FormRedirect,
   FormState,

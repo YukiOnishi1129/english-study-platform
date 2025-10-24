@@ -1,4 +1,4 @@
-import { UnitEditPageTemplate } from "@/features/materials/components/server";
+import { UnitEditPageTemplate } from "@/features/units/components/server";
 
 export default async function UnitEditPage({
   params,

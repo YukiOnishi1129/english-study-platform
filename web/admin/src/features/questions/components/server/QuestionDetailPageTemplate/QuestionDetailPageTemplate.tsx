@@ -2,9 +2,9 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import type { QuestionDetailDto } from "@/external/dto/material/material.query.dto";
 import { getQuestionDetailAction } from "@/external/handler/material/material.query.action";
-import { QuestionDetailContent } from "@/features/materials/components/client/QuestionDetailContent";
-import { questionKeys } from "@/features/materials/queries/keys";
-import { ensureQuestionDetail } from "@/features/materials/queries/validation";
+import { QuestionDetailContent } from "@/features/questions/components/client/QuestionDetailContent";
+import { questionKeys } from "@/features/questions/queries/keys";
+import { ensureQuestionDetail } from "@/features/questions/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";

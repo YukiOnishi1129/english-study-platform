@@ -6,11 +6,11 @@ import { updateChapter } from "@/external/handler/material/material.command.serv
 import { getChapterDetailAction } from "@/external/handler/material/material.query.action";
 import { ChapterEditContent } from "@/features/chapters/components/client/ChapterEditContent";
 import { chapterKeys } from "@/features/chapters/queries/keys";
+import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
 } from "@/features/materials/lib/paths";
-import { ensureChapterDetail } from "@/features/materials/queries/validation";
 import type { FormState } from "@/features/materials/types/formState";
 import { getQueryClient } from "@/shared/lib/query-client";
 

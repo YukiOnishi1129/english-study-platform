@@ -6,13 +6,16 @@ import type {
 import { ChapterCreateForm } from "@/features/chapters/components/client/ChapterCreateForm";
 import { ChapterDeleteButton } from "@/features/chapters/components/client/ChapterDeleteButton";
 import { ChapterUnitList } from "@/features/chapters/components/client/ChapterUnitList";
-import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
 } from "@/features/materials/lib/paths";
-import type { FormRedirect, FormState } from "@/features/materials/types/formState";
+import type {
+  FormRedirect,
+  FormState,
+} from "@/features/materials/types/formState";
 import type { ReorderUnitsAction } from "@/features/materials/types/reorderUnitsAction";
+import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
 
 interface ChapterDetailContentPresenterProps {
   detail: ChapterDetailDto | undefined;
@@ -26,7 +29,11 @@ interface ChapterDetailContentPresenterProps {
     materialId: string;
     parentChapterId: string | null;
     ancestorChapterIds: string[];
-  }) => Promise<{ success: boolean; message?: string; redirect?: FormRedirect }>;
+  }) => Promise<{
+    success: boolean;
+    message?: string;
+    redirect?: FormRedirect;
+  }>;
 }
 
 function countChapters(chapters: MaterialChapterSummaryDto[]): number {

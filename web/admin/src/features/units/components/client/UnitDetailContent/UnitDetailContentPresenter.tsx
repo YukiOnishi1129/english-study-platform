@@ -1,100 +1,56 @@
-import { revalidatePath } from "next/cache";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import {
-  deleteUnit,
-  updateQuestionOrders,
-} from "@/external/handler/material/material.command.server";
-import { getUnitDetail } from "@/external/handler/material/material.query.server";
+import type { UnitDetailDto } from "@/external/dto/material/material.query.dto";
 import { QuestionReorderTable } from "@/features/materials/components/client/QuestionReorderTable";
-import { UnitDeleteButton } from "@/features/materials/components/client/UnitDeleteButton";
-import { UnitQuestionCsvImporter } from "@/features/materials/components/client/UnitQuestionCsvImporter";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
-  toUnitDetailPath,
   toUnitEditPath,
 } from "@/features/materials/lib/paths";
+import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteButton";
+import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
 
-export const dynamic = "force-dynamic";
-
-type ReorderResult = { success: boolean; message?: string };
-
-type DeleteResult = { success: boolean; message?: string };
-
-async function deleteUnitAction(data: {
-  unitId: string;
-  materialId: string;
-  chapterId: string;
-}): Promise<DeleteResult> {
-  "use server";
-
-  try {
-    await deleteUnit({ unitId: data.unitId });
-
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(data.materialId));
-    revalidatePath(toChapterDetailPath(data.chapterId));
-
-    return { success: true, message: "UNITを削除しました。" };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "UNITの削除に失敗しました。",
-    };
-  }
+export interface UnitDetailContentPresenterProps {
+  detail: UnitDetailDto | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  onDeleteUnit: (payload: {
+    unitId: string;
+    materialId: string;
+    chapterId: string;
+  }) => Promise<{ success: boolean; message?: string }>;
+  onReorderQuestions: (data: {
+    unitId: string;
+    materialId: string;
+    chapterIds: string[];
+    orderedQuestionIds: string[];
+  }) => Promise<{ success: boolean; message?: string }>;
 }
 
-async function reorderUnitQuestionsAction(data: {
-  unitId: string;
-  materialId: string;
-  chapterIds: string[];
-  orderedQuestionIds: string[];
-}): Promise<ReorderResult> {
-  "use server";
-
-  try {
-    await updateQuestionOrders({
-      unitId: data.unitId,
-      orderedQuestionIds: data.orderedQuestionIds,
-    });
-
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(data.materialId));
-
-    const uniqueChapterIds = Array.from(new Set(data.chapterIds));
-    for (const chapterId of uniqueChapterIds) {
-      revalidatePath(toChapterDetailPath(chapterId));
-    }
-
-    revalidatePath(toUnitDetailPath(data.unitId));
-
-    return { success: true, message: "問題の並び順を更新しました。" };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "問題の並び順更新に失敗しました。",
-    };
-  }
-}
-
-interface UnitDetailPageTemplateProps {
-  unitId: string;
-}
-
-export async function UnitDetailPageTemplate(
-  props: UnitDetailPageTemplateProps,
+export function UnitDetailContentPresenter(
+  props: UnitDetailContentPresenterProps,
 ) {
-  const detail = await getUnitDetail({ unitId: props.unitId }).catch(
-    () => null,
-  );
+  const { detail, isLoading, isError, onDeleteUnit, onReorderQuestions } =
+    props;
 
-  if (!detail) {
-    notFound();
+  if (isLoading) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
+        <div className="h-4 w-40 animate-pulse rounded bg-gray-200" />
+        <div className="h-10 w-64 animate-pulse rounded bg-gray-200" />
+        <div className="h-40 animate-pulse rounded-lg border border-gray-200 bg-gray-100" />
+        <div className="h-56 animate-pulse rounded-lg border border-gray-200 bg-gray-100" />
+      </main>
+    );
+  }
+
+  if (isError || !detail) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-10">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+          UNITの情報を取得できませんでした。時間を置いて再度お試しください。
+        </div>
+      </main>
+    );
   }
 
   const questionCount = detail.questions.length;
@@ -223,7 +179,7 @@ export async function UnitDetailPageTemplate(
             materialId: detail.material.id,
             chapterIds: detail.chapterPath.map((chapter) => chapter.id),
           }}
-          reorderUnitQuestionsAction={reorderUnitQuestionsAction}
+          reorderUnitQuestionsAction={onReorderQuestions}
         />
       </section>
 
@@ -233,7 +189,7 @@ export async function UnitDetailPageTemplate(
           unitName={detail.unit.name}
           materialId={detail.material.id}
           chapterId={parentChapterId}
-          deleteUnitAction={deleteUnitAction}
+          deleteUnitAction={onDeleteUnit}
         />
       </section>
     </main>

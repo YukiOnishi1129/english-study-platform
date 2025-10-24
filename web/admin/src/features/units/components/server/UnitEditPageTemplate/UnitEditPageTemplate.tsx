@@ -1,16 +1,19 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { revalidatePath } from "next/cache";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ZodError } from "zod";
 import { updateUnit } from "@/external/handler/material/material.command.server";
-import { getUnitDetail } from "@/external/handler/material/material.query.server";
-import { UnitEditForm } from "@/features/materials/components/client/UnitEditForm";
+import { getUnitDetailAction } from "@/external/handler/material/material.query.action";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
+import { UnitEditContent } from "@/features/units/components/client/UnitEditContent";
+import { unitKeys } from "@/features/units/queries/keys";
+import { ensureUnitDetail } from "@/features/units/queries/validation";
+import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
 
@@ -75,49 +78,37 @@ interface UnitEditPageTemplateProps {
   unitId: string;
 }
 
-export async function UnitEditPageTemplate(props: UnitEditPageTemplateProps) {
-  const detail = await getUnitDetail({ unitId: props.unitId }).catch(
-    () => null,
-  );
+export async function UnitEditPageTemplate({
+  unitId,
+}: UnitEditPageTemplateProps) {
+  const queryClient = getQueryClient();
 
+  try {
+    await queryClient.prefetchQuery({
+      queryKey: unitKeys.detail(unitId),
+      queryFn: async () => {
+        const response = await getUnitDetailAction({ unitId });
+        if (!response) {
+          throw new Error("UNIT_NOT_FOUND");
+        }
+        return ensureUnitDetail(response);
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNIT_NOT_FOUND") {
+      notFound();
+    }
+    throw error;
+  }
+
+  const detail = queryClient.getQueryData(unitKeys.detail(unitId));
   if (!detail) {
     notFound();
   }
 
-  const currentChapter = detail.chapterPath[detail.chapterPath.length - 1];
-
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-10">
-      <nav className="text-sm text-gray-500">
-        <Link
-          href={toUnitDetailPath(props.unitId)}
-          className="inline-flex items-center gap-1 text-indigo-600 underline-offset-2 hover:underline"
-        >
-          ← UNIT詳細に戻る
-        </Link>
-      </nav>
-
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">UNIT情報を編集</h1>
-        <p className="text-sm text-gray-600">
-          {detail.material.name} /{" "}
-          {detail.chapterPath.map((chapter) => chapter.name).join(" / ")} /{" "}
-          {detail.unit.name}
-        </p>
-      </header>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <UnitEditForm
-          action={handleUpdateUnit}
-          defaultValues={{
-            unitId: props.unitId,
-            materialId: detail.material.id,
-            chapterId: currentChapter?.id ?? detail.unit.chapterId,
-            name: detail.unit.name,
-            description: detail.unit.description,
-          }}
-        />
-      </section>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <UnitEditContent unitId={unitId} onSubmit={handleUpdateUnit} />
+    </HydrationBoundary>
   );
 }

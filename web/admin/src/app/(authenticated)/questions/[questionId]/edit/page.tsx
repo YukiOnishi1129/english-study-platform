@@ -1,4 +1,4 @@
-import { QuestionEditPageTemplate } from "@/features/materials/components/server";
+import { QuestionEditPageTemplate } from "@/features/questions/components/server";
 
 export default async function QuestionEditPage({
   params,

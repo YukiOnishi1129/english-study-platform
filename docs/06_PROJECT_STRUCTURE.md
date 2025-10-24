@@ -144,35 +144,94 @@ web/client/
 │   │   ├── materials/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   ├── MaterialListPageTemplate/
-│   │   │   │   │   │   ├── MaterialListPageTemplate.tsx
+│   │   │   │   │   ├── MaterialCreatePageTemplate/
+│   │   │   │   │   │   ├── MaterialCreatePageTemplate.tsx
 │   │   │   │   │   │   └── index.ts
 │   │   │   │   │   ├── MaterialDetailPageTemplate/
 │   │   │   │   │   │   ├── MaterialDetailPageTemplate.tsx
 │   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── MaterialEditPageTemplate/
+│   │   │   │   │   │   ├── MaterialEditPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── MaterialImportPageTemplate/
+│   │   │   │   │   │   ├── MaterialImportPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── MaterialListPageTemplate/
+│   │   │   │   │       ├── MaterialListPageTemplate.tsx
+│   │   │   │   │       └── index.ts
+│   │   │   │   └── client/
+│   │   │   │       ├── CsvPreview/
+│   │   │   │       ├── CsvUploader/
+│   │   │   │       ├── ImportProgress/
+│   │   │   │       ├── MaterialCard/
+│   │   │   │       ├── MaterialCreateForm/
+│   │   │   │       ├── MaterialCsvImporter/
+│   │   │   │       ├── MaterialDeleteButton/
+│   │   │   │       ├── MaterialEditForm/
+│   │   │   │       ├── MaterialList/
+│   │   │   │       └── QuestionReorderTable/
+│   │   │   └── queries/
+│   │   │       ├── keys.ts
+│   │   │       ├── useMaterialsListQuery.ts
+│   │   │       └── validation.ts
+│   │   │
+│   │   ├── chapters/
+│   │   │   ├── components/
+│   │   │   │   ├── server/
 │   │   │   │   │   ├── ChapterDetailPageTemplate/
 │   │   │   │   │   │   ├── ChapterDetailPageTemplate.tsx
 │   │   │   │   │   │   └── index.ts
-│   │   │   │   │   └── UnitDetailPageTemplate/
-│   │   │   │   │       ├── UnitDetailPageTemplate.tsx
+│   │   │   │   │   └── ChapterEditPageTemplate/
+│   │   │   │   │       ├── ChapterEditPageTemplate.tsx
 │   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
-│   │   │   │       ├── MaterialCard/
-│   │   │   │       │   ├── MaterialCardPresenter.tsx
-│   │   │   │       │   └── index.ts
-│   │   │   │       ├── ChapterTree/
-│   │   │   │       │   ├── ChapterTreeContainer.tsx
-│   │   │   │       │   ├── ChapterTreePresenter.tsx
-│   │   │   │       │   ├── useChapterTree.ts
-│   │   │   │       │   └── index.ts
-│   │   │   │       └── UnitCard/
-│   │   │   │           ├── UnitCardPresenter.tsx
-│   │   │   │           └── index.ts
+│   │   │   │       ├── ChapterCreateForm/
+│   │   │   │       ├── ChapterDeleteButton/
+│   │   │   │       ├── ChapterDetailContent/
+│   │   │   │       └── ChapterUnitList/
 │   │   │   └── queries/
 │   │   │       ├── keys.ts
-│   │   │       ├── useMaterialQuery.ts
-│   │   │       ├── useChapterQuery.ts
-│   │   │       └── useUnitQuery.ts
+│   │   │       ├── useChapterDetailQuery.ts
+│   │   │       └── validation.ts
+│   │   │
+│   │   ├── units/
+│   │   │   ├── components/
+│   │   │   │   ├── server/
+│   │   │   │   │   ├── UnitDetailPageTemplate/
+│   │   │   │   │   │   ├── UnitDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── UnitEditPageTemplate/
+│   │   │   │   │       ├── UnitEditPageTemplate.tsx
+│   │   │   │   │       └── index.ts
+│   │   │   │   └── client/
+│   │   │   │       ├── UnitCreateForm/
+│   │   │   │       ├── UnitDeleteButton/
+│   │   │   │       ├── UnitDetailContent/
+│   │   │   │       ├── UnitEditContent/
+│   │   │   │       ├── UnitEditForm/
+│   │   │   │       └── UnitQuestionCsvImporter/
+│   │   │   └── queries/
+│   │   │       ├── keys.ts
+│   │   │       ├── useUnitDetailQuery.ts
+│   │   │       └── validation.ts
+│   │   │
+│   │   ├── questions/
+│   │   │   ├── components/
+│   │   │   │   ├── server/
+│   │   │   │   │   ├── QuestionDetailPageTemplate/
+│   │   │   │   │   │   ├── QuestionDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── QuestionEditPageTemplate/
+│   │   │   │   │       ├── QuestionEditPageTemplate.tsx
+│   │   │   │   │       └── index.ts
+│   │   │   │   └── client/
+│   │   │   │       ├── QuestionDeleteButton/
+│   │   │   │       ├── QuestionDetailContent/
+│   │   │   │       └── QuestionEditForm/
+│   │   │   └── queries/
+│   │   │       ├── keys.ts
+│   │   │       ├── useQuestionDetailQuery.ts
+│   │   │       └── validation.ts
 │   │   │
 │   │   ├── study/
 │   │   │   ├── components/

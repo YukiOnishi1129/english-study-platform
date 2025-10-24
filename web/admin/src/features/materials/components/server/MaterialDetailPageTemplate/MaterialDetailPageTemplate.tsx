@@ -16,7 +16,6 @@ import { getMaterialHierarchyById } from "@/external/handler/material/material.q
 import { ChapterCreateForm } from "@/features/chapters/components/client/ChapterCreateForm";
 import { ChapterUnitList } from "@/features/chapters/components/client/ChapterUnitList";
 import { MaterialDeleteButton } from "@/features/materials/components/client/MaterialDeleteButton";
-import { UnitCreateForm } from "@/features/materials/components/client/UnitCreateForm";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
@@ -25,6 +24,7 @@ import {
 } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
 import type { ReorderUnitsActionPayload } from "@/features/materials/types/reorderUnitsAction";
+import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
 import { Button } from "@/shared/components/ui/button";
 
 export const dynamic = "force-dynamic";

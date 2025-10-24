@@ -3,7 +3,3 @@ export { MaterialDetailPageTemplate } from "./MaterialDetailPageTemplate";
 export { MaterialEditPageTemplate } from "./MaterialEditPageTemplate";
 export { MaterialImportPageTemplate } from "./MaterialImportPageTemplate";
 export { MaterialListPageTemplate } from "./MaterialListPageTemplate";
-export { QuestionDetailPageTemplate } from "./QuestionDetailPageTemplate";
-export { QuestionEditPageTemplate } from "./QuestionEditPageTemplate";
-export { UnitDetailPageTemplate } from "./UnitDetailPageTemplate";
-export { UnitEditPageTemplate } from "./UnitEditPageTemplate";
