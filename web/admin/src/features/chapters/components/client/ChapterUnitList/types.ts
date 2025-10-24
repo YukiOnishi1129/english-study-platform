@@ -1,5 +1,4 @@
 import type { DragEvent } from "react";
-import type { ReorderUnitsAction } from "@/features/materials/types/reorderUnitsAction";
 
 export interface UnitItem {
   id: string;
@@ -13,7 +12,7 @@ export interface ChapterUnitListProps {
   materialId: string;
   chapterId: string;
   units: UnitItem[];
-  onReorder: ReorderUnitsAction;
+  invalidateChapterId?: string;
 }
 
 export interface ChapterUnitListPresenterProps {

@@ -1,9 +1,13 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DragEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { moveItem } from "@/features/chapters/lib/move-item";
-import type { ReorderUnitsActionPayload } from "@/features/materials/types/reorderUnitsAction";
+import { chapterKeys } from "@/features/chapters/queries/keys";
+import { materialKeys } from "@/features/materials/queries/keys";
+import type { FormState } from "@/features/materials/types/formState";
+import { reorderUnitsAction } from "./actions";
 import type {
   ChapterUnitListPresenterProps,
   ChapterUnitListProps,
@@ -13,7 +17,8 @@ import type {
 export function useChapterUnitList(
   props: ChapterUnitListProps,
 ): ChapterUnitListPresenterProps {
-  const { materialId, chapterId, units, onReorder } = props;
+  const { materialId, chapterId, units, invalidateChapterId } = props;
+  const queryClient = useQueryClient();
 
   const sortedInput = useMemo(
     () => [...units].sort((a, b) => a.order - b.order),
@@ -43,36 +48,70 @@ export function useChapterUnitList(
     return () => window.clearTimeout(timer);
   }, [successMessage]);
 
-  const handleReorder = async (
-    payload: ReorderUnitsActionPayload,
-    previousItems: UnitItem[],
-  ) => {
-    setIsSaving(true);
-    try {
-      const result = await onReorder(payload);
+  const mutation = useMutation<
+    FormState,
+    Error,
+    { orderedUnitIds: string[]; materialId: string; chapterId: string },
+    UnitItem[]
+  >({
+    mutationFn: async (payload) => {
+      const result = await reorderUnitsAction({
+        materialId: payload.materialId,
+        chapterId: payload.chapterId,
+        orderedUnitIds: payload.orderedUnitIds,
+      });
+
       if (result.status === "error") {
-        setErrorMessage(result.message ?? "並び順の更新に失敗しました。");
-        setItems(previousItems);
-      } else {
-        setErrorMessage(null);
-        setSuccessMessage(result.message ?? "並び順を更新しました。");
+        throw new Error(result.message ?? "並び順の更新に失敗しました。");
       }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "並び順の更新に失敗しました。",
-      );
-      setItems(previousItems);
-    } finally {
+
+      return result;
+    },
+    onSuccess: async () => {
+      const invalidateTargets = [
+        queryClient.invalidateQueries({
+          queryKey: materialKeys.detail(materialId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: chapterKeys.detail(chapterId),
+        }),
+      ];
+
+      if (invalidateChapterId) {
+        invalidateTargets.push(
+          queryClient.invalidateQueries({
+            queryKey: chapterKeys.detail(invalidateChapterId),
+          }),
+        );
+      }
+
+      await Promise.all(invalidateTargets);
+      setErrorMessage(null);
+      setSuccessMessage("並び順を更新しました。");
+    },
+    onError: (error, _variables, previousItems) => {
+      if (previousItems) {
+        setItems(previousItems);
+      }
+      setErrorMessage(error instanceof Error ? error.message : null);
+    },
+    onMutate: async (_variables) => {
+      const previousItems = items;
+      setIsSaving(true);
+      setSuccessMessage(null);
+      setErrorMessage(null);
+      return previousItems;
+    },
+    onSettled: () => {
       setIsSaving(false);
-    }
-  };
+    },
+  });
 
   const commitReorder = (targetIndex: number) => {
     if (!draggingId) {
       return;
     }
 
-    const previousItems = items;
     const updated = moveItem(items, draggingId, targetIndex);
 
     if (updated === items) {
@@ -83,13 +122,11 @@ export function useChapterUnitList(
 
     setItems(updated);
 
-    const payload: ReorderUnitsActionPayload = {
+    mutation.mutate({
       materialId,
       chapterId,
       orderedUnitIds: updated.map((item) => item.id),
-    };
-
-    void handleReorder(payload, previousItems);
+    });
 
     setDraggingId(null);
     setHoverId(null);
@@ -152,11 +189,11 @@ export function useChapterUnitList(
     setHoverId(null);
   };
 
-  const isDisabled = items.length <= 1 || isSaving;
+  const isDisabled = items.length <= 1 || isSaving || mutation.isPending;
 
   return {
     items,
-    isSaving,
+    isSaving: isSaving || mutation.isPending,
     successMessage,
     errorMessage,
     draggingId,

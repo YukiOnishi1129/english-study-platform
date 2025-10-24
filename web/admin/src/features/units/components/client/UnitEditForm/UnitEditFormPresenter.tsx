@@ -4,10 +4,16 @@ import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
 import type { UnitEditFormPresenterProps } from "./types";
 
 export function UnitEditFormPresenter(props: UnitEditFormPresenterProps) {
-  const { state, formAction, defaultValues } = props;
+  const { defaultValues, status, message, isPending, onSubmit } = props;
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    await onSubmit(formData);
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <input type="hidden" name="unitId" value={defaultValues.unitId} />
       <input type="hidden" name="materialId" value={defaultValues.materialId} />
       <input type="hidden" name="chapterId" value={defaultValues.chapterId} />
@@ -47,14 +53,16 @@ export function UnitEditFormPresenter(props: UnitEditFormPresenterProps) {
         />
       </div>
 
-      {state.status === "error" ? (
+      {status === "error" ? (
         <p className="text-sm text-red-600">
-          {state.message ?? "変更の保存に失敗しました。"}
+          {message ?? "変更の保存に失敗しました。"}
         </p>
       ) : null}
 
       <div className="flex items-center justify-end">
-        <FormSubmitButton pendingLabel="保存中...">変更を保存</FormSubmitButton>
+        <FormSubmitButton pendingLabel="保存中..." isPending={isPending}>
+          変更を保存
+        </FormSubmitButton>
       </div>
     </form>
   );

@@ -5,7 +5,6 @@ import { ChapterEditContent } from "@/features/chapters/components/client/Chapte
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
-import { updateChapterAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -43,10 +42,7 @@ export async function ChapterEditPageTemplate({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ChapterEditContent
-        chapterId={chapterId}
-        onSubmit={updateChapterAction}
-      />
+      <ChapterEditContent chapterId={chapterId} />
     </HydrationBoundary>
   );
 }

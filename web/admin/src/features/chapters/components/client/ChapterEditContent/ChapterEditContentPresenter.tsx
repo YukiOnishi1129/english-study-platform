@@ -2,19 +2,17 @@ import Link from "next/link";
 import type { ChapterDetailDto } from "@/external/dto/material/material.query.dto";
 import { ChapterEditForm } from "@/features/chapters/components/client/ChapterEditForm";
 import { toChapterDetailPath } from "@/features/materials/lib/paths";
-import type { FormState } from "@/features/materials/types/formState";
 
 interface ChapterEditContentPresenterProps {
   detail: ChapterDetailDto | undefined;
   isLoading: boolean;
   isError: boolean;
-  onSubmit: (state: FormState, formData: FormData) => Promise<FormState>;
 }
 
 export function ChapterEditContentPresenter(
   props: ChapterEditContentPresenterProps,
 ) {
-  const { detail, isLoading, isError, onSubmit } = props;
+  const { detail, isLoading, isError } = props;
 
   if (isLoading) {
     return (
@@ -61,7 +59,6 @@ export function ChapterEditContentPresenter(
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <ChapterEditForm
-          action={onSubmit}
           defaultValues={{
             chapterId: detail.chapter.id,
             materialId: detail.material.id,

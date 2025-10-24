@@ -12,15 +12,20 @@ export interface QuestionEditFormDefaultValues {
 }
 
 export interface QuestionEditFormProps {
-  action: (state: FormState, formData: FormData) => Promise<FormState>;
   defaultValues: QuestionEditFormDefaultValues;
+  context: {
+    materialId: string;
+    chapterIds: string[];
+  };
 }
 
 export interface QuestionEditFormPresenterProps {
-  formAction: (formData: FormData) => void;
-  state: FormState;
   defaultValues: QuestionEditFormDefaultValues;
   answers: AnswerField[];
+  status: FormState["status"];
+  message?: string;
+  isPending: boolean;
+  onSubmit: (formData: FormData) => Promise<void>;
   onAddAnswer: () => void;
   onAnswerChange: (id: string, value: string) => void;
   onRemoveAnswer: (id: string) => void;

@@ -13,24 +13,12 @@ export interface UnitDetailContentPresenterProps {
   detail: UnitDetailDto | undefined;
   isLoading: boolean;
   isError: boolean;
-  onDeleteUnit: (payload: {
-    unitId: string;
-    materialId: string;
-    chapterId: string;
-  }) => Promise<{ success: boolean; message?: string }>;
-  onReorderQuestions: (data: {
-    unitId: string;
-    materialId: string;
-    chapterIds: string[];
-    orderedQuestionIds: string[];
-  }) => Promise<{ success: boolean; message?: string }>;
 }
 
 export function UnitDetailContentPresenter(
   props: UnitDetailContentPresenterProps,
 ) {
-  const { detail, isLoading, isError, onDeleteUnit, onReorderQuestions } =
-    props;
+  const { detail, isLoading, isError } = props;
 
   if (isLoading) {
     return (
@@ -173,13 +161,10 @@ export function UnitDetailContentPresenter(
           />
         </header>
         <QuestionReorderTable
+          unitId={detail.unit.id}
+          materialId={detail.material.id}
+          chapterIds={detail.chapterPath.map((chapter) => chapter.id)}
           questions={unitQuestions}
-          serverActionArgs={{
-            unitId: detail.unit.id,
-            materialId: detail.material.id,
-            chapterIds: detail.chapterPath.map((chapter) => chapter.id),
-          }}
-          reorderUnitQuestionsAction={onReorderQuestions}
         />
       </section>
 
@@ -189,7 +174,6 @@ export function UnitDetailContentPresenter(
           unitName={detail.unit.name}
           materialId={detail.material.id}
           chapterId={parentChapterId}
-          deleteUnitAction={onDeleteUnit}
         />
       </section>
     </main>

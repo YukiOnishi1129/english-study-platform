@@ -1,25 +1,73 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
-import {
-  type FormState,
-  initialFormState,
-} from "@/features/materials/types/formState";
-import type { ChapterCreateFormProps } from "./ChapterCreateFormContainer";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { chapterKeys } from "@/features/chapters/queries/keys";
+import { materialKeys } from "@/features/materials/queries/keys";
+import type { FormState } from "@/features/materials/types/formState";
+import { createChapterAction } from "./actions";
 
-export interface UseChapterCreateFormResult {
+interface ChapterCreateFormParams {
+  materialId: string;
+  parentChapterId?: string;
+  parentChapterName?: string;
+  invalidateChapterId?: string;
+}
+
+interface UseChapterCreateFormResult {
   materialId: string;
   parentChapterId?: string;
   parentChapterName?: string;
   contextLabel: string;
-  state: FormState;
-  formAction: (formData: FormData) => void;
+  status: FormState["status"];
+  message?: string;
+  isPending: boolean;
+  onSubmit: (formData: FormData) => Promise<void>;
 }
 
 export function useChapterCreateForm(
-  props: ChapterCreateFormProps,
+  props: ChapterCreateFormParams,
 ): UseChapterCreateFormResult {
-  const [state, formAction] = useActionState(props.action, initialFormState);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const mutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const result = await createChapterAction(formData);
+      if (result.status === "error") {
+        throw new Error(result.message ?? "章の作成に失敗しました。");
+      }
+      return result;
+    },
+    onSuccess: async (result) => {
+      const tasks = [
+        queryClient.invalidateQueries({
+          queryKey: materialKeys.detail(props.materialId),
+        }),
+      ];
+
+      if (props.invalidateChapterId) {
+        tasks.push(
+          queryClient.invalidateQueries({
+            queryKey: chapterKeys.detail(props.invalidateChapterId),
+          }),
+        );
+      }
+
+      await Promise.all(tasks);
+
+      if (result.redirect) {
+        router.push(result.redirect as Parameters<typeof router.push>[0]);
+      }
+
+      router.refresh();
+    },
+  });
+
+  const handleSubmit = async (formData: FormData) => {
+    await mutation.mutateAsync(formData);
+  };
 
   const contextLabel = useMemo(() => {
     if (props.parentChapterId && props.parentChapterName) {
@@ -33,7 +81,15 @@ export function useChapterCreateForm(
     parentChapterId: props.parentChapterId,
     parentChapterName: props.parentChapterName,
     contextLabel,
-    state,
-    formAction,
-  } satisfies UseChapterCreateFormResult;
+    status: mutation.isSuccess
+      ? "success"
+      : mutation.isError
+        ? "error"
+        : "idle",
+    message: mutation.isError
+      ? (mutation.error as Error).message
+      : mutation.data?.message,
+    isPending: mutation.isPending,
+    onSubmit: handleSubmit,
+  };
 }

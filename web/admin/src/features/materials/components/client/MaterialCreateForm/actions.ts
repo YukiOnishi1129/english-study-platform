@@ -1,13 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 import { createMaterial } from "@/external/handler/material/material.command.server";
 import { toMaterialDetailPath } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
 
 export async function createMaterialAction(
-  _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
   const name = formData.get("name");
@@ -23,8 +21,6 @@ export async function createMaterialAction(
     });
 
     const detailPath = toMaterialDetailPath(material.id);
-    revalidatePath("/materials");
-    revalidatePath(detailPath);
 
     return {
       status: "success",

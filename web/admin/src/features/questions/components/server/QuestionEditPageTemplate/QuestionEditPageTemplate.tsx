@@ -9,7 +9,6 @@ import {
 } from "@/features/materials/lib/paths";
 import { QuestionEditForm } from "@/features/questions/components/client/QuestionEditForm";
 import { ensureQuestionDetail } from "@/features/questions/queries/validation";
-import { updateQuestionAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +52,6 @@ export async function QuestionEditPageTemplate({
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <QuestionEditForm
-          action={updateQuestionAction}
           defaultValues={{
             questionId: parsed.question.id,
             unitId: parsed.unit.id,
@@ -64,6 +62,10 @@ export async function QuestionEditPageTemplate({
             correctAnswers: parsed.question.correctAnswers.map(
               (answer) => answer.answerText,
             ),
+          }}
+          context={{
+            materialId: parsed.material.id,
+            chapterIds: parsed.chapterPath.map((chapter) => chapter.id),
           }}
         />
       </section>

@@ -11,6 +11,7 @@ interface FormSubmitButtonProps {
   className?: string;
   variant?: VariantProps<typeof buttonVariants>["variant"];
   size?: VariantProps<typeof buttonVariants>["size"];
+  isPending?: boolean;
 }
 
 export function FormSubmitButton(props: FormSubmitButtonProps) {
@@ -21,17 +22,20 @@ export function FormSubmitButton(props: FormSubmitButtonProps) {
     className,
     variant,
     size,
+    isPending,
   } = props;
+
+  const pending = isPending ?? status.pending;
 
   return (
     <Button
       type="submit"
-      disabled={status.pending}
+      disabled={pending}
       className={className}
       variant={variant}
       size={size}
     >
-      {status.pending ? pendingLabel : children}
+      {pending ? pendingLabel : children}
     </Button>
   );
 }

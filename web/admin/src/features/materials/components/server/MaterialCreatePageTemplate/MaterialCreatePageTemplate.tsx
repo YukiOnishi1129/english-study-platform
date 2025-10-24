@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { MaterialCreateForm } from "@/features/materials/components/client/MaterialCreateForm";
-import { createMaterialAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +14,7 @@ export function MaterialCreatePageTemplate() {
       </header>
 
       <section>
-        <MaterialCreateForm action={createMaterialAction} />
+        <MaterialCreateForm />
       </section>
 
       <footer className="mt-auto">

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
 import { MaterialEditForm } from "@/features/materials/components/client/MaterialEditForm";
 import { toMaterialDetailPath } from "@/features/materials/lib/paths";
-import { updateMaterialAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +39,6 @@ export async function MaterialEditPageTemplate(
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <MaterialEditForm
-          action={updateMaterialAction}
           defaultValues={{
             materialId: props.materialId,
             name: detail.name,

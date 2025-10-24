@@ -7,18 +7,26 @@ export function QuestionEditFormPresenter(
   props: QuestionEditFormPresenterProps,
 ) {
   const {
-    formAction,
-    state,
     defaultValues,
     answers,
+    status,
+    message,
+    isPending,
+    onSubmit,
     onAddAnswer,
     onAnswerChange,
     onRemoveAnswer,
     isRemoveDisabled,
   } = props;
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    await onSubmit(formData);
+  };
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <input type="hidden" name="questionId" value={defaultValues.questionId} />
       <input type="hidden" name="unitId" value={defaultValues.unitId} />
 
@@ -140,14 +148,20 @@ export function QuestionEditFormPresenter(
         />
       </div>
 
-      {state.status === "error" ? (
+      {status === "error" ? (
         <p className="text-sm text-red-600">
-          {state.message ?? "保存に失敗しました。"}
+          {message ?? "保存に失敗しました。"}
         </p>
       ) : null}
 
+      {status === "success" ? (
+        <p className="text-sm text-emerald-600">問題を更新しました。</p>
+      ) : null}
+
       <div className="flex justify-end">
-        <FormSubmitButton pendingLabel="保存中...">変更を保存</FormSubmitButton>
+        <FormSubmitButton pendingLabel="保存中..." isPending={isPending}>
+          変更を保存
+        </FormSubmitButton>
       </div>
     </form>
   );

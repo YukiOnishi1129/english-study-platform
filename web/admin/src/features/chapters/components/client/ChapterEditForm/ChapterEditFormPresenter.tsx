@@ -13,16 +13,24 @@ interface ChapterEditFormDefaultValues {
 }
 
 export interface ChapterEditFormPresenterProps {
-  state: FormState;
-  formAction: (formData: FormData) => void;
   defaultValues: ChapterEditFormDefaultValues;
+  status: FormState["status"];
+  message?: string;
+  isPending: boolean;
+  onSubmit: (formData: FormData) => Promise<void>;
 }
 
 export function ChapterEditFormPresenter(props: ChapterEditFormPresenterProps) {
-  const { state, formAction, defaultValues } = props;
+  const { defaultValues, status, message, isPending, onSubmit } = props;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    await onSubmit(formData);
+  };
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <input type="hidden" name="chapterId" value={defaultValues.chapterId} />
       <input type="hidden" name="materialId" value={defaultValues.materialId} />
       <input
@@ -65,14 +73,22 @@ export function ChapterEditFormPresenter(props: ChapterEditFormPresenterProps) {
         />
       </div>
 
-      {state.status === "error" ? (
+      {status === "error" ? (
         <p className="text-sm text-red-600" role="alert">
-          {state.message ?? "変更の保存に失敗しました。"}
+          {message ?? "変更の保存に失敗しました。"}
         </p>
       ) : null}
 
+      {status === "success" ? (
+        <p className="text-sm text-emerald-600">変更を保存しました。</p>
+      ) : null}
+
       <div className="flex items-center justify-end">
-        <FormSubmitButton pendingLabel="保存中..." className="min-w-32">
+        <FormSubmitButton
+          pendingLabel="保存中..."
+          className="min-w-32"
+          isPending={isPending}
+        >
           変更を保存
         </FormSubmitButton>
       </div>

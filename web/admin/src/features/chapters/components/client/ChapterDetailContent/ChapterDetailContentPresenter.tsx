@@ -10,30 +10,12 @@ import {
   toChapterDetailPath,
   toMaterialDetailPath,
 } from "@/features/materials/lib/paths";
-import type {
-  FormRedirect,
-  FormState,
-} from "@/features/materials/types/formState";
-import type { ReorderUnitsAction } from "@/features/materials/types/reorderUnitsAction";
 import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
 
 interface ChapterDetailContentPresenterProps {
   detail: ChapterDetailDto | undefined;
   isLoading: boolean;
   isError: boolean;
-  onCreateChapter: (state: FormState, formData: FormData) => Promise<FormState>;
-  onCreateUnit: (state: FormState, formData: FormData) => Promise<FormState>;
-  onReorderUnits: ReorderUnitsAction;
-  onDeleteChapter: (payload: {
-    chapterId: string;
-    materialId: string;
-    parentChapterId: string | null;
-    ancestorChapterIds: string[];
-  }) => Promise<{
-    success: boolean;
-    message?: string;
-    redirect?: FormRedirect;
-  }>;
 }
 
 function countChapters(chapters: MaterialChapterSummaryDto[]): number {
@@ -54,9 +36,7 @@ function countUnits(chapters: MaterialChapterSummaryDto[]): number {
 function renderChapter(
   chapter: MaterialChapterSummaryDto,
   materialId: string,
-  onCreateChapter: ChapterDetailContentPresenterProps["onCreateChapter"],
-  onCreateUnit: ChapterDetailContentPresenterProps["onCreateUnit"],
-  onReorderUnits: ReorderUnitsAction,
+  rootChapterId: string,
 ) {
   const childChapters = [...chapter.children].sort((a, b) => a.order - b.order);
 
@@ -87,7 +67,7 @@ function renderChapter(
             materialId={materialId}
             chapterId={chapter.id}
             units={chapter.units}
-            onReorder={onReorderUnits}
+            invalidateChapterId={rootChapterId}
           />
         </div>
 
@@ -97,16 +77,16 @@ function renderChapter(
           </summary>
           <div className="mt-3 space-y-3">
             <UnitCreateForm
-              action={onCreateUnit}
               chapterId={chapter.id}
               materialId={materialId}
               chapterName={chapter.name}
+              invalidateChapterId={rootChapterId}
             />
             <ChapterCreateForm
-              action={onCreateChapter}
               materialId={materialId}
               parentChapterId={chapter.id}
               parentChapterName={chapter.name}
+              invalidateChapterId={rootChapterId}
             />
           </div>
         </details>
@@ -115,13 +95,7 @@ function renderChapter(
       {childChapters.length > 0 ? (
         <div className="space-y-3 border-l border-gray-200 pl-4">
           {childChapters.map((child) =>
-            renderChapter(
-              child,
-              materialId,
-              onCreateChapter,
-              onCreateUnit,
-              onReorderUnits,
-            ),
+            renderChapter(child, materialId, rootChapterId),
           )}
         </div>
       ) : null}
@@ -132,15 +106,7 @@ function renderChapter(
 export function ChapterDetailContentPresenter(
   props: ChapterDetailContentPresenterProps,
 ) {
-  const {
-    detail,
-    isLoading,
-    isError,
-    onCreateChapter,
-    onCreateUnit,
-    onReorderUnits,
-    onDeleteChapter,
-  } = props;
+  const { detail, isLoading, isError } = props;
 
   if (isLoading) {
     return (
@@ -237,10 +203,10 @@ export function ChapterDetailContentPresenter(
         <header className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">UNIT一覧</h2>
           <UnitCreateForm
-            action={onCreateUnit}
             chapterId={chapter.id}
             materialId={material.id}
             chapterName={chapter.name}
+            invalidateChapterId={chapter.id}
           />
         </header>
 
@@ -248,7 +214,7 @@ export function ChapterDetailContentPresenter(
           materialId={material.id}
           chapterId={chapter.id}
           units={chapter.units}
-          onReorder={onReorderUnits}
+          invalidateChapterId={chapter.id}
         />
       </section>
 
@@ -256,10 +222,10 @@ export function ChapterDetailContentPresenter(
         <header className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">子章</h2>
           <ChapterCreateForm
-            action={onCreateChapter}
             materialId={material.id}
             parentChapterId={chapter.id}
             parentChapterName={chapter.name}
+            invalidateChapterId={chapter.id}
           />
         </header>
         {chapter.children.length === 0 ? (
@@ -269,13 +235,7 @@ export function ChapterDetailContentPresenter(
         ) : (
           <div className="space-y-5">
             {chapter.children.map((child) =>
-              renderChapter(
-                child,
-                material.id,
-                onCreateChapter,
-                onCreateUnit,
-                onReorderUnits,
-              ),
+              renderChapter(child, material.id, chapter.id),
             )}
           </div>
         )}
@@ -288,7 +248,6 @@ export function ChapterDetailContentPresenter(
           materialId={material.id}
           parentChapterId={chapter.parentChapterId}
           ancestorChapterIds={ancestors.map((ancestor) => ancestor.id)}
-          deleteChapterAction={onDeleteChapter}
         />
       </section>
     </main>

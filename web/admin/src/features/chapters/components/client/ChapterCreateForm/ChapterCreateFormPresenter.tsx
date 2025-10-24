@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import type { FormState } from "@/features/materials/types/formState";
 import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
 
 export interface ChapterCreateFormPresenterProps {
@@ -9,22 +7,38 @@ export interface ChapterCreateFormPresenterProps {
   parentChapterId?: string;
   parentChapterName?: string;
   contextLabel: string;
-  state: FormState;
-  formAction: (formData: FormData) => void;
+  status: "idle" | "success" | "error";
+  message?: string;
+  isPending: boolean;
+  onSubmit: (formData: FormData) => Promise<void>;
 }
 
 export function ChapterCreateFormPresenter(
   props: ChapterCreateFormPresenterProps,
 ) {
-  const { materialId, parentChapterId, contextLabel, state, formAction } =
-    props;
+  const {
+    materialId,
+    parentChapterId,
+    contextLabel,
+    status,
+    message,
+    isPending,
+    onSubmit,
+  } = props;
 
   const parentId = parentChapterId ?? "";
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    await onSubmit(formData);
+    event.currentTarget.reset();
+  }
 
   return (
     <div className="space-y-2 rounded-md border border-sky-200 bg-sky-50/60 p-4 text-sm text-gray-700">
       <p className="text-xs font-semibold text-sky-700">{contextLabel}</p>
-      <form action={formAction} className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-2">
         <input type="hidden" name="materialId" value={materialId} />
         <input type="hidden" name="parentChapterId" value={parentId} />
         <div className="space-y-1">
@@ -61,11 +75,11 @@ export function ChapterCreateFormPresenter(
           />
         </div>
         <div className="flex items-center justify-between">
-          {state.status === "success" ? (
+          {status === "success" ? (
             <span className="text-xs text-emerald-600">章を追加しました。</span>
-          ) : state.status === "error" ? (
+          ) : status === "error" ? (
             <span className="text-xs text-red-600">
-              {state.message ?? "追加に失敗しました。"}
+              {message ?? "追加に失敗しました。"}
             </span>
           ) : (
             <span className="text-[11px] text-sky-600">
@@ -76,21 +90,12 @@ export function ChapterCreateFormPresenter(
             pendingLabel="追加中..."
             variant="outline"
             className="inline-flex items-center justify-center rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-sky-300"
+            isPending={isPending}
           >
             章を追加
           </FormSubmitButton>
         </div>
       </form>
-      {state.redirect ? (
-        <p className="text-[11px] text-indigo-600">
-          <Link
-            href={state.redirect}
-            className="underline-offset-2 hover:underline"
-          >
-            詳細ページを開く
-          </Link>
-        </p>
-      ) : null}
     </div>
   );
 }

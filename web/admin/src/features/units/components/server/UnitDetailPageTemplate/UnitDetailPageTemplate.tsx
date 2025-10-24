@@ -5,7 +5,6 @@ import { UnitDetailContent } from "@/features/units/components/client/UnitDetail
 import { unitKeys } from "@/features/units/queries/keys";
 import { ensureUnitDetail } from "@/features/units/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
-import { deleteUnitAction, reorderUnitQuestionsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -43,11 +42,7 @@ export async function UnitDetailPageTemplate({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <UnitDetailContent
-        unitId={unitId}
-        onDeleteUnit={deleteUnitAction}
-        onReorderQuestions={reorderUnitQuestionsAction}
-      />
+      <UnitDetailContent unitId={unitId} />
     </HydrationBoundary>
   );
 }

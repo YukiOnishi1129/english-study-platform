@@ -1,6 +1,5 @@
 "use client";
 
-import type { FormRedirect } from "@/features/materials/types/formState";
 import { ChapterDeleteButtonPresenter } from "./ChapterDeleteButtonPresenter";
 import { useChapterDeleteButton } from "./useChapterDeleteButton";
 
@@ -10,16 +9,6 @@ export interface ChapterDeleteButtonContainerProps {
   materialId: string;
   parentChapterId: string | null;
   ancestorChapterIds: string[];
-  deleteChapterAction: (payload: {
-    chapterId: string;
-    materialId: string;
-    parentChapterId: string | null;
-    ancestorChapterIds: string[];
-  }) => Promise<{
-    success: boolean;
-    message?: string;
-    redirect?: FormRedirect;
-  }>;
 }
 
 export function ChapterDeleteButton(props: ChapterDeleteButtonContainerProps) {

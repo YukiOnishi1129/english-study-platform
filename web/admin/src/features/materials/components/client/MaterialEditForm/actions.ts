@@ -1,13 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 import { updateMaterial } from "@/external/handler/material/material.command.server";
 import { toMaterialDetailPath } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
 
 export async function updateMaterialAction(
-  _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
   const materialId = formData.get("materialId");
@@ -25,11 +23,6 @@ export async function updateMaterialAction(
           ? description
           : undefined,
     });
-
-    revalidatePath("/materials");
-    if (materialIdValue) {
-      revalidatePath(toMaterialDetailPath(materialIdValue));
-    }
 
     return {
       status: "success",

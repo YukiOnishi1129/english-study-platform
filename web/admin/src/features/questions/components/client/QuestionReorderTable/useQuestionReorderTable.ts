@@ -8,30 +8,37 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { chapterKeys } from "@/features/chapters/queries/keys";
+import { materialKeys } from "@/features/materials/queries/keys";
+import { questionKeys } from "@/features/questions/queries/keys";
+import { unitKeys } from "@/features/units/queries/keys";
+import { reorderQuestionsAction } from "./actions";
 import type {
-  QuestionReorderTableItem,
   QuestionReorderTablePresenterProps,
   QuestionReorderTableProps,
 } from "./types";
 
-type UseQuestionReorderTableResult = QuestionReorderTablePresenterProps;
+interface MutationVariables {
+  orderedItems: QuestionReorderTablePresenterProps["items"];
+  previousItems: QuestionReorderTablePresenterProps["items"];
+}
 
 export function useQuestionReorderTable(
   props: QuestionReorderTableProps,
-): UseQuestionReorderTableResult {
-  const { questions, reorderUnitQuestionsAction, serverActionArgs } = props;
-  const [items, setItems] = useState<QuestionReorderTableItem[]>(() =>
-    questions.map((item) => ({ ...item })),
+): QuestionReorderTablePresenterProps {
+  const queryClient = useQueryClient();
+  const [items, setItems] = useState(() =>
+    [...props.questions].sort((a, b) => a.order - b.order),
   );
   const [isMounted, setIsMounted] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    setItems(questions.map((item) => ({ ...item })));
-  }, [questions]);
+    setItems([...props.questions].sort((a, b) => a.order - b.order));
+  }, [props.questions]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -44,6 +51,70 @@ export function useQuestionReorderTable(
     }),
   );
 
+  const mutation = useMutation({
+    mutationFn: async (variables: MutationVariables) => {
+      const payload = {
+        unitId: props.unitId,
+        materialId: props.materialId,
+        chapterIds: props.chapterIds,
+        orderedQuestionIds: variables.orderedItems.map((item) => item.id),
+      };
+
+      const result = await reorderQuestionsAction(payload);
+      if (!result.success) {
+        throw new Error(result.message ?? "問題の並び順更新に失敗しました。");
+      }
+
+      return result;
+    },
+    onMutate: (variables) => {
+      setSuccessMessage(null);
+      setErrorMessage(null);
+      return variables.previousItems;
+    },
+    onError: (error, _variables, context) => {
+      if (context) {
+        setItems(context);
+      }
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "問題の並び順更新に失敗しました。",
+      );
+    },
+    onSuccess: async (result) => {
+      const invalidateTasks = [
+        queryClient.invalidateQueries({
+          queryKey: unitKeys.detail(props.unitId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: materialKeys.detail(props.materialId),
+        }),
+      ];
+
+      props.questions.forEach((question) => {
+        invalidateTasks.push(
+          queryClient.invalidateQueries({
+            queryKey: questionKeys.detail(question.id),
+          }),
+        );
+      });
+
+      props.chapterIds.forEach((chapterId) => {
+        invalidateTasks.push(
+          queryClient.invalidateQueries({
+            queryKey: chapterKeys.detail(chapterId),
+          }),
+        );
+      });
+
+      await Promise.all(invalidateTasks);
+
+      setErrorMessage(null);
+      setSuccessMessage(result.message ?? "問題の並び順を更新しました。");
+    },
+  });
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -51,68 +122,49 @@ export function useQuestionReorderTable(
         return;
       }
 
-      setSuccessMessage(null);
-      setErrorMessage(null);
+      const currentItems = [...items];
+      const oldIndex = currentItems.findIndex((item) => item.id === active.id);
+      const newIndex = currentItems.findIndex((item) => item.id === over.id);
 
-      const oldIndex = items.findIndex((item) => item.id === active.id);
-      const newIndex = items.findIndex((item) => item.id === over.id);
       if (oldIndex === -1 || newIndex === -1) {
         return;
       }
 
-      const previousItems = items.map((item) => ({ ...item }));
-      const reordered = arrayMove(items, oldIndex, newIndex).map(
+      const reordered = arrayMove(currentItems, oldIndex, newIndex).map(
         (item, index) => ({ ...item, order: index + 1 }),
       );
 
       setItems(reordered);
 
-      startTransition(async () => {
-        try {
-          const result = await reorderUnitQuestionsAction({
-            unitId: serverActionArgs.unitId,
-            materialId: serverActionArgs.materialId,
-            chapterIds: serverActionArgs.chapterIds,
-            orderedQuestionIds: reordered.map((item) => item.id),
-          });
-
-          if (!result.success) {
-            setItems(previousItems);
-            setErrorMessage(
-              result.message ?? "問題の並び順更新に失敗しました。",
-            );
-            return;
-          }
-
-          setErrorMessage(null);
-          setSuccessMessage(result.message ?? "問題の並び順を更新しました。");
-        } catch (error) {
-          setItems(previousItems);
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "問題の並び順更新に失敗しました。",
-          );
-        }
+      mutation.mutate({
+        orderedItems: reordered,
+        previousItems: currentItems,
       });
     },
-    [
-      items,
-      reorderUnitQuestionsAction,
-      serverActionArgs.chapterIds,
-      serverActionArgs.materialId,
-      serverActionArgs.unitId,
-    ],
+    [items, mutation],
   );
 
-  return {
-    questions,
+  const presenterState = useMemo<QuestionReorderTablePresenterProps>(() => {
+    return {
+      questions: props.questions,
+      items,
+      isMounted,
+      isPending: mutation.isPending,
+      successMessage,
+      errorMessage,
+      sensors,
+      onDragEnd: handleDragEnd,
+    };
+  }, [
+    props.questions,
     items,
     isMounted,
-    isPending,
+    mutation.isPending,
     successMessage,
     errorMessage,
     sensors,
-    onDragEnd: handleDragEnd,
-  };
+    handleDragEnd,
+  ]);
+
+  return presenterState;
 }

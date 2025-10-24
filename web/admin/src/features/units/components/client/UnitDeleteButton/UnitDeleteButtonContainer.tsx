@@ -8,11 +8,6 @@ export interface UnitDeleteButtonContainerProps {
   unitName: string;
   chapterId: string;
   materialId: string;
-  deleteUnitAction: (payload: {
-    unitId: string;
-    chapterId: string;
-    materialId: string;
-  }) => Promise<{ success: boolean; message?: string }>;
 }
 
 export function UnitDeleteButton(props: UnitDeleteButtonContainerProps) {

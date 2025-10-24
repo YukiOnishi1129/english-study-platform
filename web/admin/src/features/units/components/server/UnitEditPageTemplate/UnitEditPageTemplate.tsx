@@ -5,7 +5,6 @@ import { UnitEditContent } from "@/features/units/components/client/UnitEditCont
 import { unitKeys } from "@/features/units/queries/keys";
 import { ensureUnitDetail } from "@/features/units/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
-import { updateUnitAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +42,7 @@ export async function UnitEditPageTemplate({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <UnitEditContent unitId={unitId} onSubmit={updateUnitAction} />
+      <UnitEditContent unitId={unitId} />
     </HydrationBoundary>
   );
 }

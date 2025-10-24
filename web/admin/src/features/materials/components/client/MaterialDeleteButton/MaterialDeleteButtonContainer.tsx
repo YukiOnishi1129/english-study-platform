@@ -1,19 +1,10 @@
 "use client";
 
 import { MaterialDeleteButtonPresenter } from "./MaterialDeleteButtonPresenter";
+import type { MaterialDeleteButtonProps } from "./types";
 import { useMaterialDeleteButton } from "./useMaterialDeleteButton";
 
-export interface MaterialDeleteButtonContainerProps {
-  materialId: string;
-  materialName: string;
-  deleteMaterialAction: (payload: {
-    materialId: string;
-  }) => Promise<{ success: boolean; message?: string }>;
-}
-
-export function MaterialDeleteButton(
-  props: MaterialDeleteButtonContainerProps,
-) {
+export function MaterialDeleteButton(props: MaterialDeleteButtonProps) {
   const state = useMaterialDeleteButton(props);
 
   return (

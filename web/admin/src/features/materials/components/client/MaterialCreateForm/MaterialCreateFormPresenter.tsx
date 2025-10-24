@@ -1,33 +1,31 @@
+import type { Route } from "next";
 import Link from "next/link";
-import { useFormStatus } from "react-dom";
 import type { FormState } from "@/features/materials/types/formState";
+import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
 
 interface MaterialCreateFormPresenterProps {
-  formAction: (formData: FormData) => void;
-  state: FormState;
-}
-
-function SubmitButton() {
-  const status = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={status.pending}
-      className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
-    >
-      {status.pending ? "作成中..." : "教材を作成"}
-    </button>
-  );
+  status: FormState["status"];
+  message?: string;
+  redirect?: string;
+  isPending: boolean;
+  onSubmit: (formData: FormData) => Promise<void>;
 }
 
 export function MaterialCreateFormPresenter(
   props: MaterialCreateFormPresenterProps,
 ) {
-  const { formAction, state } = props;
+  const { status, message, redirect, isPending, onSubmit } = props;
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    await onSubmit(formData);
+    event.currentTarget.reset();
+  };
 
   return (
     <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-6 shadow-sm">
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1">
           <label
             htmlFor="material-name"
@@ -66,20 +64,26 @@ export function MaterialCreateFormPresenter(
           <p className="text-xs text-indigo-700">
             作成後は章とUNITを追加して構成を整えます。
           </p>
-          <SubmitButton />
+          <FormSubmitButton
+            isPending={isPending}
+            pendingLabel="作成中..."
+            className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
+          >
+            教材を作成
+          </FormSubmitButton>
         </div>
 
-        {state.status === "error" ? (
+        {status === "error" ? (
           <p className="text-sm text-red-600">
-            {state.message ?? "作成に失敗しました。"}
+            {message ?? "作成に失敗しました。"}
           </p>
         ) : null}
-        {state.status === "success" ? (
+        {status === "success" ? (
           <div className="space-y-1 text-sm">
             <p className="text-emerald-600">教材を作成しました。</p>
-            {state.redirect ? (
+            {redirect ? (
               <Link
-                href={state.redirect}
+                href={redirect as Route}
                 className="inline-flex items-center gap-1 text-indigo-600 underline-offset-4 hover:underline"
               >
                 教材の詳細管理へ進む →

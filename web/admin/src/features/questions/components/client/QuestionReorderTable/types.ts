@@ -7,21 +7,11 @@ export interface QuestionReorderTableItem {
   updatedAt: string;
 }
 
-export interface QuestionReorderServerActionArgs {
+export interface QuestionReorderTableProps {
+  questions: QuestionReorderTableItem[];
   unitId: string;
   materialId: string;
   chapterIds: string[];
-}
-
-export interface QuestionReorderTableProps {
-  questions: QuestionReorderTableItem[];
-  serverActionArgs: QuestionReorderServerActionArgs;
-  reorderUnitQuestionsAction: (data: {
-    unitId: string;
-    materialId: string;
-    chapterIds: string[];
-    orderedQuestionIds: string[];
-  }) => Promise<{ success: boolean; message?: string }>;
 }
 
 export interface QuestionReorderTablePresenterProps {

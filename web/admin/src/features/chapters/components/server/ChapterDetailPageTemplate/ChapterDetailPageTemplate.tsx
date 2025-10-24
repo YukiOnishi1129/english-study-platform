@@ -5,12 +5,6 @@ import { ChapterDetailContent } from "@/features/chapters/components/client/Chap
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
-import {
-  createChapterAction,
-  createUnitAction,
-  deleteChapterAction,
-  reorderUnitsAction,
-} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -48,13 +42,7 @@ export async function ChapterDetailPageTemplate({
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ChapterDetailContent
-        chapterId={chapterId}
-        onCreateChapter={createChapterAction}
-        onCreateUnit={createUnitAction}
-        onReorderUnits={reorderUnitsAction}
-        onDeleteChapter={deleteChapterAction}
-      />
+      <ChapterDetailContent chapterId={chapterId} />
     </HydrationBoundary>
   );
 }

@@ -1,18 +1,16 @@
 import Link from "next/link";
 import type { UnitDetailDto } from "@/external/dto/material/material.query.dto";
 import { toUnitDetailPath } from "@/features/materials/lib/paths";
-import type { FormState } from "@/features/materials/types/formState";
 import { UnitEditForm } from "@/features/units/components/client/UnitEditForm";
 
 interface UnitEditContentPresenterProps {
   detail: UnitDetailDto | undefined;
   isLoading: boolean;
   isError: boolean;
-  onSubmit: (state: FormState, formData: FormData) => Promise<FormState>;
 }
 
 export function UnitEditContentPresenter(props: UnitEditContentPresenterProps) {
-  const { detail, isLoading, isError, onSubmit } = props;
+  const { detail, isLoading, isError } = props;
 
   if (isLoading) {
     return (
@@ -61,7 +59,6 @@ export function UnitEditContentPresenter(props: UnitEditContentPresenterProps) {
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <UnitEditForm
-          action={onSubmit}
           defaultValues={{
             unitId: detail.unit.id,
             materialId: detail.material.id,

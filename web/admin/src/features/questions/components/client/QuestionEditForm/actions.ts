@@ -1,18 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { ZodError } from "zod";
 import { updateQuestion } from "@/external/handler/material/material.command.server";
-import {
-  toChapterDetailPath,
-  toMaterialDetailPath,
-  toQuestionDetailPath,
-  toUnitDetailPath,
-} from "@/features/materials/lib/paths";
+import { toQuestionDetailPath } from "@/features/materials/lib/paths";
 import type { FormState } from "@/features/materials/types/formState";
 
 export async function updateQuestionAction(
-  _prevState: FormState,
   formData: FormData,
 ): Promise<FormState> {
   const questionIdEntry = formData.get("questionId");
@@ -62,15 +55,6 @@ export async function updateQuestionAction(
           : undefined,
       correctAnswers,
     });
-
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(detail.material.id));
-    if (detail.chapterPath.length > 0) {
-      const lastChapter = detail.chapterPath[detail.chapterPath.length - 1];
-      revalidatePath(toChapterDetailPath(lastChapter.id));
-    }
-    revalidatePath(toUnitDetailPath(detail.unit.id));
-    revalidatePath(toQuestionDetailPath(detail.question.id));
 
     return {
       status: "success",

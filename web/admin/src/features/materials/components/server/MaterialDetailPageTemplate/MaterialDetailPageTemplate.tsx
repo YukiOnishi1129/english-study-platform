@@ -14,12 +14,6 @@ import {
 } from "@/features/materials/lib/paths";
 import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
 import { Button } from "@/shared/components/ui/button";
-import {
-  createChapterAction,
-  createUnitAction,
-  deleteMaterialAction,
-  reorderUnitsAction,
-} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -83,7 +77,6 @@ function renderChapter(
             materialId={material.id}
             chapterId={chapter.id}
             units={chapter.units}
-            onReorder={reorderUnitsAction}
           />
         </div>
 
@@ -93,13 +86,11 @@ function renderChapter(
           </summary>
           <div className="mt-3 space-y-3">
             <UnitCreateForm
-              action={createUnitAction}
               chapterId={chapter.id}
               materialId={material.id}
               chapterName={chapter.name}
             />
             <ChapterCreateForm
-              action={createChapterAction}
               materialId={material.id}
               parentChapterId={chapter.id}
               parentChapterName={chapter.name}
@@ -189,10 +180,7 @@ export async function MaterialDetailPageTemplate(
               ルート直下に章を追加する
             </summary>
             <div className="mt-3">
-              <ChapterCreateForm
-                action={createChapterAction}
-                materialId={material.id}
-              />
+              <ChapterCreateForm materialId={material.id} />
             </div>
           </details>
         </header>
@@ -214,7 +202,6 @@ export async function MaterialDetailPageTemplate(
         <MaterialDeleteButton
           materialId={material.id}
           materialName={material.name}
-          deleteMaterialAction={deleteMaterialAction}
         />
       </section>
     </main>
