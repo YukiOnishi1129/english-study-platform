@@ -1,201 +1,30 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import type { ChangeEvent } from "react";
-import { useCallback, useMemo, useState } from "react";
-import { importUnitQuestionsAction } from "@/features/materials/actions/importUnitQuestionsAction";
-import {
-  parseUnitQuestionCsv,
-  type UnitQuestionCsvRow,
-} from "@/features/materials/lib/parseUnitQuestionCsv";
+import type { UnitQuestionCsvImporterPresenterProps } from "./types";
 
-interface ParseState {
-  status: "idle" | "parsing" | "success" | "error";
-  rows: UnitQuestionCsvRow[];
-  errors: string[];
-}
-
-const INITIAL_STATE: ParseState = {
-  status: "idle",
-  rows: [],
-  errors: [],
-};
-
-const PAGE_SIZE = 25;
-
-const TEMPLATE_CSV = `関連ID,並び順,日本語,ヒント,解説,英語正解1,英語正解2
-,1,サンプルの日本語文,ヒント例,解説例,Sample answer A,Sample answer B
-`.trim();
-
-interface UnitQuestionCsvImporterProps {
-  materialId: string;
-  chapterId: string;
-  unitId: string;
-  unitName: string;
-  existingQuestionCount: number;
-}
-
-export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
-  const router = useRouter();
-  const [parseState, setParseState] = useState<ParseState>(INITIAL_STATE);
-  const [page, setPage] = useState(1);
-  const [importStatus, setImportStatus] = useState<{
-    status: "idle" | "loading" | "success" | "error";
-    message?: string;
-  }>({ status: "idle" });
-
-  const totalPages = useMemo(() => {
-    if (parseState.rows.length === 0) {
-      return 1;
-    }
-    return Math.ceil(parseState.rows.length / PAGE_SIZE);
-  }, [parseState.rows.length]);
-
-  const paginatedRows = useMemo(() => {
-    if (parseState.status !== "success") {
-      return [];
-    }
-
-    const startIndex = (page - 1) * PAGE_SIZE;
-    const endIndex = Math.min(startIndex + PAGE_SIZE, parseState.rows.length);
-    return parseState.rows.slice(startIndex, endIndex);
-  }, [page, parseState]);
-
-  const summary = useMemo(() => {
-    if (parseState.status !== "success") {
-      return { total: 0, newCount: 0, updateCount: 0 };
-    }
-
-    const newCount = parseState.rows.filter((row) => !row.questionId).length;
-    const updateCount = parseState.rows.length - newCount;
-    return {
-      total: parseState.rows.length,
-      newCount,
-      updateCount,
-    };
-  }, [parseState]);
-
-  const templateHref = useMemo(
-    () =>
-      `data:text/csv;charset=utf-8,${encodeURIComponent(`${TEMPLATE_CSV}\n`)}`,
-    [],
-  );
-
-  const handleFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) {
-        setParseState(INITIAL_STATE);
-        setPage(1);
-        setImportStatus({ status: "idle" });
-        return;
-      }
-
-      setParseState({ status: "parsing", rows: [], errors: [] });
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const text = typeof reader.result === "string" ? reader.result : "";
-          const result = parseUnitQuestionCsv(text);
-
-          if (result.errors.length > 0) {
-            setParseState({ status: "error", rows: [], errors: result.errors });
-            setPage(1);
-            setImportStatus({ status: "idle" });
-          } else {
-            setParseState({ status: "success", rows: result.rows, errors: [] });
-            setPage(1);
-            setImportStatus({ status: "idle" });
-          }
-        } catch (error) {
-          setParseState({
-            status: "error",
-            rows: [],
-            errors: [
-              error instanceof Error
-                ? error.message
-                : "CSV解析中に予期しないエラーが発生しました。",
-            ],
-          });
-          setPage(1);
-          setImportStatus({ status: "idle" });
-        }
-      };
-      reader.onerror = () => {
-        setParseState({
-          status: "error",
-          rows: [],
-          errors: [
-            "ファイルの読み込みに失敗しました。もう一度お試しください。",
-          ],
-        });
-        setPage(1);
-        setImportStatus({ status: "idle" });
-      };
-
-      reader.readAsText(file, "utf-8");
-    },
-    [],
-  );
-
-  const handleImport = useCallback(async () => {
-    if (parseState.status !== "success" || parseState.rows.length === 0) {
-      return;
-    }
-
-    setImportStatus({ status: "loading" });
-
-    try {
-      const result = await importUnitQuestionsAction({
-        materialId: props.materialId,
-        chapterId: props.chapterId,
-        unitId: props.unitId,
-        rows: parseState.rows.map((row) => ({
-          relatedId: row.questionId ?? undefined,
-          order:
-            typeof row.order === "number" && Number.isFinite(row.order)
-              ? row.order
-              : undefined,
-          japanese: row.japanese,
-          hint: row.hint ?? undefined,
-          explanation: row.explanation ?? undefined,
-          correctAnswers: row.correctAnswers,
-        })),
-      });
-
-      if (!result.success) {
-        setImportStatus({
-          status: "error",
-          message: result.message ?? "取り込みに失敗しました。",
-        });
-        return;
-      }
-
-      const created = result.createdCount ?? 0;
-      const updated = result.updatedCount ?? 0;
-      const summaryMessage = `CSVの取り込みが完了しました。（新規 ${created} 件 / 更新 ${updated} 件）`;
-      setImportStatus({
-        status: "success",
-        message: summaryMessage,
-      });
-      setParseState(INITIAL_STATE);
-      setPage(1);
-      router.refresh();
-    } catch (error) {
-      setImportStatus({
-        status: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "CSVの取り込みに失敗しました。",
-      });
-    }
-  }, [parseState, props.materialId, props.chapterId, props.unitId, router]);
-
-  const canImport =
-    parseState.status === "success" && parseState.rows.length > 0;
-  const isImporting = importStatus.status === "loading";
+export function UnitQuestionCsvImporterPresenter(
+  props: UnitQuestionCsvImporterPresenterProps,
+) {
+  const {
+    unitName,
+    existingQuestionCount,
+    templateHref,
+    parseState,
+    importStatus,
+    paginatedRows,
+    summary,
+    page,
+    totalPages,
+    pageSize,
+    rangeStart,
+    rangeEnd,
+    canImport,
+    isImporting,
+    onFileChange,
+    onImport,
+    onPrevPage,
+    onNextPage,
+  } = props;
 
   return (
     <section className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -206,8 +35,8 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
               CSVで問題を取り込む
             </h3>
             <p className="text-sm text-gray-600">
-              UNIT「{props.unitName}」の問題をCSVから一括で追加・更新します。
-              既存の問題を更新する場合は「関連ID」（旧:
+              UNIT「{unitName}
+              」の問題をCSVから一括で追加・更新します。既存の問題を更新する場合は「関連ID」（旧:
               問題ID）を入力してください。
             </p>
           </div>
@@ -222,8 +51,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
         <div className="rounded-md bg-slate-50 px-4 py-3 text-xs text-slate-600">
           必須列: 日本語, 英語正解1。任意: 関連ID, 並び順, ヒント, 解説,
           英語正解2〜。 英語正解の列は `英語正解1`, `英語正解2`, ...
-          と連番で追加してください。
-          関連IDを空欄にすると新規追加として扱われます。
+          と連番で追加してください。関連IDを空欄にすると新規追加として扱われます。
         </div>
       </header>
 
@@ -254,10 +82,10 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
           type="file"
           accept=".csv"
           className="hidden"
-          onChange={handleFileChange}
+          onChange={onFileChange}
         />
         <span className="text-xs text-gray-500">
-          既存の問題数: {props.existingQuestionCount}問
+          既存の問題数: {existingQuestionCount}問
         </span>
       </div>
 
@@ -291,6 +119,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
 
       {parseState.status === "success" ? (
         <div className="space-y-4">
+          {/* Summary cards */}
           <dl className="grid gap-4 rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 sm:grid-cols-3">
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -318,6 +147,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
             </div>
           </dl>
 
+          {/* Import action */}
           <div className="space-y-2 rounded-lg border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-700">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="font-semibold">
@@ -325,7 +155,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
               </p>
               <button
                 type="button"
-                onClick={handleImport}
+                onClick={onImport}
                 disabled={!canImport || isImporting}
                 className="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300"
               >
@@ -344,6 +174,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
             ) : null}
           </div>
 
+          {/* Preview table */}
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
@@ -364,7 +195,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
                     className="align-top"
                   >
                     <td className="px-4 py-3 text-xs font-semibold text-gray-500">
-                      {(page - 1) * PAGE_SIZE + index + 1}
+                      {(page - 1) * pageSize + index + 1}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
                       {row.questionId ?? (
@@ -400,20 +231,19 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
             </table>
           </div>
 
-          {parseState.rows.length > PAGE_SIZE ? (
+          {parseState.rows.length > pageSize ? (
             <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
               <p>
                 表示範囲:{" "}
                 <span className="font-semibold text-gray-800">
-                  {(page - 1) * PAGE_SIZE + 1}〜
-                  {Math.min(page * PAGE_SIZE, parseState.rows.length)}
+                  {rangeStart}〜{rangeEnd}
                 </span>{" "}
                 / {parseState.rows.length} 行
               </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  onClick={onPrevPage}
                   disabled={page === 1}
                   className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -424,9 +254,7 @@ export function UnitQuestionCsvImporter(props: UnitQuestionCsvImporterProps) {
                 </span>
                 <button
                   type="button"
-                  onClick={() =>
-                    setPage((prev) => Math.min(totalPages, prev + 1))
-                  }
+                  onClick={onNextPage}
                   disabled={page >= totalPages}
                   className="rounded-md border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >

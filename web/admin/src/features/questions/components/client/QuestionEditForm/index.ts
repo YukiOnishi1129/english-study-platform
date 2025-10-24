@@ -1,1 +1,2 @@
-export { QuestionEditForm } from "./QuestionEditForm";
+export { QuestionEditForm } from "./QuestionEditFormContainer";
+export type { QuestionEditFormProps } from "./types";

@@ -1,51 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import type { FormState } from "@/features/materials/types/formState";
-import { initialFormState } from "@/features/materials/types/formState";
+import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
+import type { UnitCreateFormPresenterProps } from "./types";
 
-interface UnitCreateFormProps {
-  action: (state: FormState, formData: FormData) => Promise<FormState>;
-  chapterId: string;
-  chapterName: string;
-  materialId: string;
-}
-
-function SubmitButton() {
-  const status = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={status.pending}
-      className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-300"
-    >
-      {status.pending ? "追加中..." : "UNITを追加"}
-    </button>
-  );
-}
-
-export function UnitCreateForm(props: UnitCreateFormProps) {
-  const [state, formAction] = useActionState(props.action, initialFormState);
+export function UnitCreateFormPresenter(props: UnitCreateFormPresenterProps) {
+  const { state, formAction, chapterId, chapterName, materialId } = props;
 
   return (
     <div className="space-y-2 rounded-md border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-gray-700">
       <p className="text-xs font-semibold text-emerald-700">
-        「{props.chapterName}」にUNITを追加
+        「{chapterName}」にUNITを追加
       </p>
       <form action={formAction} className="space-y-2">
-        <input type="hidden" name="chapterId" value={props.chapterId} />
-        <input type="hidden" name="materialId" value={props.materialId} />
+        <input type="hidden" name="chapterId" value={chapterId} />
+        <input type="hidden" name="materialId" value={materialId} />
         <div className="space-y-1">
           <label
-            htmlFor={`unit-name-${props.chapterId}`}
+            htmlFor={`unit-name-${chapterId}`}
             className="text-xs font-medium text-gray-800"
           >
             UNIT名 <span className="text-red-500">*</span>
           </label>
           <input
-            id={`unit-name-${props.chapterId}`}
+            id={`unit-name-${chapterId}`}
             name="name"
             type="text"
             required
@@ -56,13 +34,13 @@ export function UnitCreateForm(props: UnitCreateFormProps) {
         </div>
         <div className="space-y-1">
           <label
-            htmlFor={`unit-desc-${props.chapterId}`}
+            htmlFor={`unit-desc-${chapterId}`}
             className="text-xs font-medium text-gray-800"
           >
             説明
           </label>
           <textarea
-            id={`unit-desc-${props.chapterId}`}
+            id={`unit-desc-${chapterId}`}
             name="description"
             rows={2}
             maxLength={500}
@@ -84,7 +62,13 @@ export function UnitCreateForm(props: UnitCreateFormProps) {
               作成後は詳細画面から問題CSVを取り込みできます。
             </span>
           )}
-          <SubmitButton />
+          <FormSubmitButton
+            pendingLabel="追加中..."
+            variant="outline"
+            className="border-emerald-200 bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500"
+          >
+            UNITを追加
+          </FormSubmitButton>
         </div>
       </form>
       {state.redirect ? (

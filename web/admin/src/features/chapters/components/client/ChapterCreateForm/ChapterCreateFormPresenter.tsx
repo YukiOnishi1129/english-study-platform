@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { FormState } from "@/features/materials/types/formState";
-import { SubmitButton } from "./SubmitButton";
+import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
 
 export interface ChapterCreateFormPresenterProps {
   materialId: string;
@@ -72,7 +72,13 @@ export function ChapterCreateFormPresenter(
               必要なら後から階層を編集できます。
             </span>
           )}
-          <SubmitButton />
+          <FormSubmitButton
+            pendingLabel="追加中..."
+            variant="outline"
+            className="inline-flex items-center justify-center rounded-md bg-sky-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-sky-300"
+          >
+            章を追加
+          </FormSubmitButton>
         </div>
       </form>
       {state.redirect ? (

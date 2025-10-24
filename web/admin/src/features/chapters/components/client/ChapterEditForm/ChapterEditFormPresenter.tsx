@@ -1,8 +1,8 @@
 "use client";
 
 import type { FormState } from "@/features/materials/types/formState";
+import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
 import { Input } from "@/shared/components/ui/input";
-import { SubmitButton } from "./SubmitButton";
 
 interface ChapterEditFormDefaultValues {
   chapterId: string;
@@ -72,7 +72,9 @@ export function ChapterEditFormPresenter(props: ChapterEditFormPresenterProps) {
       ) : null}
 
       <div className="flex items-center justify-end">
-        <SubmitButton />
+        <FormSubmitButton pendingLabel="保存中..." className="min-w-32">
+          変更を保存
+        </FormSubmitButton>
       </div>
     </form>
   );

@@ -1,6 +1,5 @@
-import { useFormStatus } from "react-dom";
 import type { FormState } from "@/features/materials/types/formState";
-import { Button } from "@/shared/components/ui/button";
+import { FormSubmitButton } from "@/shared/components/ui/form-submit-button";
 import { Input } from "@/shared/components/ui/input";
 
 interface MaterialEditFormPresenterProps {
@@ -11,15 +10,6 @@ interface MaterialEditFormPresenterProps {
     name: string;
     description: string | null;
   };
-}
-
-function SubmitButton() {
-  const status = useFormStatus();
-  return (
-    <Button type="submit" disabled={status.pending} className="min-w-32">
-      {status.pending ? "保存中..." : "変更を保存"}
-    </Button>
-  );
 }
 
 export function MaterialEditFormPresenter(
@@ -72,7 +62,9 @@ export function MaterialEditFormPresenter(
       ) : null}
 
       <div className="flex items-center justify-end">
-        <SubmitButton />
+        <FormSubmitButton pendingLabel="保存中..." className="min-w-32">
+          変更を保存
+        </FormSubmitButton>
       </div>
     </form>
   );

@@ -1,1 +1,2 @@
-export { UnitEditForm } from "./UnitEditForm";
+export type { UnitEditFormProps } from "./types";
+export { UnitEditForm } from "./UnitEditFormContainer";
