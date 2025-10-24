@@ -1,64 +1,11 @@
-import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ZodError } from "zod";
-import { updateMaterial } from "@/external/handler/material/material.command.server";
 import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
 import { MaterialEditForm } from "@/features/materials/components/client/MaterialEditForm";
 import { toMaterialDetailPath } from "@/features/materials/lib/paths";
-import type { FormState } from "@/features/materials/types/formState";
+import { updateMaterialAction } from "./actions";
 
 export const dynamic = "force-dynamic";
-
-async function handleUpdateMaterial(
-  _prevState: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  "use server";
-
-  const materialId = formData.get("materialId");
-  const name = formData.get("name");
-  const description = formData.get("description");
-
-  const materialIdValue = typeof materialId === "string" ? materialId : "";
-
-  try {
-    await updateMaterial({
-      materialId: materialIdValue,
-      name: typeof name === "string" ? name : "",
-      description:
-        typeof description === "string" && description.length > 0
-          ? description
-          : undefined,
-    });
-
-    revalidatePath("/materials");
-    if (materialIdValue) {
-      revalidatePath(toMaterialDetailPath(materialIdValue));
-    }
-
-    return {
-      status: "success",
-      redirect: materialIdValue
-        ? toMaterialDetailPath(materialIdValue)
-        : undefined,
-    };
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const issues = error.issues ?? [];
-      return {
-        status: "error",
-        message: issues[0]?.message ?? "入力内容を確認してください。",
-      };
-    }
-
-    return {
-      status: "error",
-      message:
-        error instanceof Error ? error.message : "教材の更新に失敗しました。",
-    };
-  }
-}
 
 interface MaterialEditPageTemplateProps {
   materialId: string;
@@ -93,7 +40,7 @@ export async function MaterialEditPageTemplate(
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <MaterialEditForm
-          action={handleUpdateMaterial}
+          action={updateMaterialAction}
           defaultValues={{
             materialId: props.materialId,
             name: detail.name,

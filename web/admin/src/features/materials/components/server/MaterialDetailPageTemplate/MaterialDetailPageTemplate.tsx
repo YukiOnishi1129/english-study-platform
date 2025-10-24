@@ -1,59 +1,27 @@
-import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ZodError } from "zod";
 import type {
   MaterialChapterSummaryDto,
   MaterialHierarchyItemDto,
 } from "@/external/dto/material/material.query.dto";
-import {
-  createChapter,
-  createUnit,
-  deleteMaterial,
-  updateUnitOrders,
-} from "@/external/handler/material/material.command.server";
 import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
 import { ChapterCreateForm } from "@/features/chapters/components/client/ChapterCreateForm";
 import { ChapterUnitList } from "@/features/chapters/components/client/ChapterUnitList";
 import { MaterialDeleteButton } from "@/features/materials/components/client/MaterialDeleteButton";
 import {
   toChapterDetailPath,
-  toMaterialDetailPath,
   toMaterialEditPath,
-  toUnitDetailPath,
 } from "@/features/materials/lib/paths";
-import type { FormState } from "@/features/materials/types/formState";
-import type { ReorderUnitsActionPayload } from "@/features/materials/types/reorderUnitsAction";
 import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
 import { Button } from "@/shared/components/ui/button";
+import {
+  createChapterAction,
+  createUnitAction,
+  deleteMaterialAction,
+  reorderUnitsAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
-
-type DeleteMaterialResult = {
-  success: boolean;
-  message?: string;
-};
-
-async function deleteMaterialAction(data: {
-  materialId: string;
-}): Promise<DeleteMaterialResult> {
-  "use server";
-
-  try {
-    await deleteMaterial({ materialId: data.materialId });
-
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(data.materialId));
-
-    return { success: true };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error ? error.message : "教材の削除に失敗しました。",
-    };
-  }
-}
 
 function countUnits(chapters: MaterialChapterSummaryDto[]): number {
   return chapters.reduce(
@@ -68,137 +36,6 @@ function countChapters(chapters: MaterialChapterSummaryDto[]): number {
     (total, chapter) => total + 1 + countChapters(chapter.children),
     0,
   );
-}
-
-async function handleCreateChapter(
-  _prevState: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  "use server";
-
-  const materialId = formData.get("materialId");
-  const parentChapterId = formData.get("parentChapterId");
-  const name = formData.get("name");
-  const description = formData.get("description");
-
-  const materialIdValue = typeof materialId === "string" ? materialId : "";
-
-  try {
-    await createChapter({
-      materialId: materialIdValue,
-      parentChapterId:
-        typeof parentChapterId === "string" && parentChapterId.length > 0
-          ? parentChapterId
-          : undefined,
-      name: typeof name === "string" ? name : "",
-      description: typeof description === "string" ? description : undefined,
-    });
-
-    revalidatePath("/materials");
-    if (materialIdValue) {
-      revalidatePath(toMaterialDetailPath(materialIdValue));
-    }
-    if (typeof parentChapterId === "string" && parentChapterId.length > 0) {
-      revalidatePath(toChapterDetailPath(parentChapterId));
-    }
-
-    return { status: "success" };
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const issues = error.issues ?? [];
-      return {
-        status: "error",
-        message: issues[0]?.message ?? "入力内容を確認してください。",
-      };
-    }
-
-    return {
-      status: "error",
-      message:
-        error instanceof Error ? error.message : "章の作成に失敗しました。",
-    };
-  }
-}
-
-async function handleCreateUnit(
-  _prevState: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  "use server";
-
-  const chapterIdEntry = formData.get("chapterId");
-  const materialIdEntry = formData.get("materialId");
-  const name = formData.get("name");
-  const description = formData.get("description");
-
-  const chapterId = typeof chapterIdEntry === "string" ? chapterIdEntry : "";
-  const materialId = typeof materialIdEntry === "string" ? materialIdEntry : "";
-
-  try {
-    const unit = await createUnit({
-      chapterId,
-      name: typeof name === "string" ? name : "",
-      description: typeof description === "string" ? description : undefined,
-    });
-
-    if (materialId.length > 0) {
-      revalidatePath(toMaterialDetailPath(materialId));
-    }
-    if (chapterId.length > 0) {
-      revalidatePath(toChapterDetailPath(chapterId));
-    }
-    revalidatePath("/materials");
-
-    revalidatePath(toUnitDetailPath(unit.id));
-
-    return {
-      status: "success",
-      redirect: toUnitDetailPath(unit.id),
-    };
-  } catch (error) {
-    if (error instanceof ZodError) {
-      const issues = error.issues ?? [];
-      return {
-        status: "error",
-        message: issues[0]?.message ?? "入力内容を確認してください。",
-      };
-    }
-    return {
-      status: "error",
-      message:
-        error instanceof Error ? error.message : "UNITの作成に失敗しました。",
-    };
-  }
-}
-
-async function handleReorderUnits(
-  payload: ReorderUnitsActionPayload,
-): Promise<FormState> {
-  "use server";
-
-  try {
-    await updateUnitOrders({
-      chapterId: payload.chapterId,
-      orderedUnitIds: payload.orderedUnitIds,
-    });
-
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(payload.materialId));
-    revalidatePath(toChapterDetailPath(payload.chapterId));
-
-    return {
-      status: "success",
-      message: "UNITの並び順を更新しました。",
-    };
-  } catch (error) {
-    return {
-      status: "error",
-      message:
-        error instanceof Error
-          ? error.message
-          : "UNITの並び順を更新できませんでした。",
-    };
-  }
 }
 
 function renderChapter(
@@ -246,7 +83,7 @@ function renderChapter(
             materialId={material.id}
             chapterId={chapter.id}
             units={chapter.units}
-            onReorder={handleReorderUnits}
+            onReorder={reorderUnitsAction}
           />
         </div>
 
@@ -256,13 +93,13 @@ function renderChapter(
           </summary>
           <div className="mt-3 space-y-3">
             <UnitCreateForm
-              action={handleCreateUnit}
+              action={createUnitAction}
               chapterId={chapter.id}
               materialId={material.id}
               chapterName={chapter.name}
             />
             <ChapterCreateForm
-              action={handleCreateChapter}
+              action={createChapterAction}
               materialId={material.id}
               parentChapterId={chapter.id}
               parentChapterName={chapter.name}
@@ -353,7 +190,7 @@ export async function MaterialDetailPageTemplate(
             </summary>
             <div className="mt-3">
               <ChapterCreateForm
-                action={handleCreateChapter}
+                action={createChapterAction}
                 materialId={material.id}
               />
             </div>
