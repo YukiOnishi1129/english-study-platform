@@ -1,8 +1,10 @@
-import Link from "next/link";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
-import { MaterialEditForm } from "@/features/materials/components/client/MaterialEditForm";
-import { toMaterialDetailPath } from "@/features/materials/lib/paths";
+import { getMaterialHierarchyAction } from "@/external/handler/material/material.query.action";
+import { MaterialEditContent } from "@/features/materials/components/client/MaterialEditContent";
+import { materialKeys } from "@/features/materials/queries/keys";
+import { ensureMaterialHierarchy } from "@/features/materials/queries/validation";
+import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
 
@@ -10,42 +12,37 @@ interface MaterialEditPageTemplateProps {
   materialId: string;
 }
 
-export async function MaterialEditPageTemplate(
-  props: MaterialEditPageTemplateProps,
-) {
-  const detail = await getMaterialHierarchyById({
-    materialId: props.materialId,
-  }).catch(() => null);
+export async function MaterialEditPageTemplate({
+  materialId,
+}: MaterialEditPageTemplateProps) {
+  const queryClient = getQueryClient();
 
+  try {
+    await queryClient.prefetchQuery({
+      queryKey: materialKeys.detail(materialId),
+      queryFn: async () => {
+        const response = await getMaterialHierarchyAction({ materialId });
+        if (!response) {
+          throw new Error("MATERIAL_NOT_FOUND");
+        }
+        return ensureMaterialHierarchy(response);
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "MATERIAL_NOT_FOUND") {
+      notFound();
+    }
+    throw error;
+  }
+
+  const detail = queryClient.getQueryData(materialKeys.detail(materialId));
   if (!detail) {
     notFound();
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-10">
-      <nav className="text-sm text-gray-500">
-        <Link
-          href={toMaterialDetailPath(props.materialId)}
-          className="inline-flex items-center gap-1 text-indigo-600 underline-offset-2 hover:underline"
-        >
-          ← 教材詳細に戻る
-        </Link>
-      </nav>
-
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">教材情報を編集</h1>
-        <p className="text-sm text-gray-600">{detail.name}</p>
-      </header>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <MaterialEditForm
-          defaultValues={{
-            materialId: props.materialId,
-            name: detail.name,
-            description: detail.description,
-          }}
-        />
-      </section>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <MaterialEditContent materialId={materialId} />
+    </HydrationBoundary>
   );
 }

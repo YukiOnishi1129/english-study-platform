@@ -1,5 +1,7 @@
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { QuestionDetailDto } from "@/external/dto/material/material.query.dto";
 import { getQuestionDetailAction } from "@/external/handler/material/material.query.action";
 import {
   toChapterDetailPath,
@@ -7,8 +9,10 @@ import {
   toQuestionDetailPath,
   toUnitDetailPath,
 } from "@/features/materials/lib/paths";
-import { QuestionEditForm } from "@/features/questions/components/client/QuestionEditForm";
+import { QuestionEditContent } from "@/features/questions/components/client/QuestionEditContent";
+import { questionKeys } from "@/features/questions/queries/keys";
 import { ensureQuestionDetail } from "@/features/questions/queries/validation";
+import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +23,33 @@ interface QuestionEditPageTemplateProps {
 export async function QuestionEditPageTemplate({
   questionId,
 }: QuestionEditPageTemplateProps) {
-  const detail = await getQuestionDetailAction({ questionId });
+  const queryClient = getQueryClient();
 
-  if (!detail) {
-    notFound();
+  try {
+    await queryClient.prefetchQuery({
+      queryKey: questionKeys.detail(questionId),
+      queryFn: async () => {
+        const response = await getQuestionDetailAction({ questionId });
+        if (!response) {
+          throw new Error("QUESTION_NOT_FOUND");
+        }
+        return ensureQuestionDetail(response);
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "QUESTION_NOT_FOUND") {
+      notFound();
+    }
+    throw error;
   }
 
-  const parsed = ensureQuestionDetail(detail);
+  const parsed = queryClient.getQueryData<QuestionDetailDto>(
+    questionKeys.detail(questionId),
+  );
+
+  if (!parsed) {
+    notFound();
+  }
 
   const currentChapter =
     parsed.chapterPath.length > 0
@@ -51,23 +75,9 @@ export async function QuestionEditPageTemplate({
       </header>
 
       <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <QuestionEditForm
-          defaultValues={{
-            questionId: parsed.question.id,
-            unitId: parsed.unit.id,
-            japanese: parsed.question.japanese,
-            hint: parsed.question.hint,
-            explanation: parsed.question.explanation,
-            order: parsed.question.order,
-            correctAnswers: parsed.question.correctAnswers.map(
-              (answer) => answer.answerText,
-            ),
-          }}
-          context={{
-            materialId: parsed.material.id,
-            chapterIds: parsed.chapterPath.map((chapter) => chapter.id),
-          }}
-        />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <QuestionEditContent questionId={questionId} />
+        </HydrationBoundary>
       </section>
 
       <section className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-600">

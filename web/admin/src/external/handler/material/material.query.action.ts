@@ -2,6 +2,7 @@
 
 import {
   getChapterDetail,
+  getMaterialHierarchyById,
   getQuestionDetail,
   getUnitDetail,
   listMaterialsHierarchy,
@@ -9,6 +10,16 @@ import {
 
 export async function listMaterialsHierarchyAction() {
   return listMaterialsHierarchy();
+}
+
+export async function getMaterialHierarchyAction(input: {
+  materialId: string;
+}) {
+  try {
+    return await getMaterialHierarchyById(input);
+  } catch (_error) {
+    return null;
+  }
 }
 
 export async function getQuestionDetailAction(input: { questionId: string }) {
