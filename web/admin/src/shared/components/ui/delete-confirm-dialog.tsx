@@ -27,7 +27,7 @@ export interface DeleteConfirmDialogProps {
   trigger: ReactElement<{ disabled?: boolean }>;
   title: ReactNode;
   description: ReactNode;
-  onConfirm: () => void;
+  onConfirm?: () => void | Promise<void>;
   isPending?: boolean;
   errorMessage?: ReactNode;
   open?: boolean;
@@ -107,12 +107,18 @@ export function DeleteConfirmDialog(props: DeleteConfirmDialogProps) {
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={isPending}
-            onClick={(event: MouseEvent<HTMLButtonElement>) => {
+            onClick={async (event: MouseEvent<HTMLButtonElement>) => {
               event.preventDefault();
               if (isPending) {
                 return;
               }
-              onConfirm();
+
+              try {
+                await onConfirm?.();
+                handleOpenChange(false);
+              } catch (error) {
+                throw error;
+              }
             }}
             className="bg-red-600 text-white hover:bg-red-500 disabled:bg-red-300"
           >

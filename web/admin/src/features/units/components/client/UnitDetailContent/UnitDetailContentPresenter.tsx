@@ -10,6 +10,7 @@ import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteB
 import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { DeleteConfirmDialog } from "@/shared/components/ui/delete-confirm-dialog";
 
 export interface UnitDetailContentPresenterProps {
   detail: UnitDetailDto | undefined;
@@ -179,21 +180,30 @@ export function UnitDetailContentPresenter(
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="destructive"
-              onClick={onBulkDelete}
-              disabled={selectedCount === 0 || isBulkDeleting}
-              className="gap-2"
-            >
-              {isBulkDeleting ? (
-                <>
-                  <Spinner className="text-white" />
-                  <span>削除中...</span>
-                </>
-              ) : (
-                <span>選択した問題を削除</span>
-              )}
-            </Button>
+            <DeleteConfirmDialog
+              trigger={
+                <Button
+                  variant="destructive"
+                  disabled={selectedCount === 0 || isBulkDeleting}
+                  className="gap-2"
+                >
+                  {isBulkDeleting ? (
+                    <>
+                      <Spinner className="text-white" />
+                      <span>削除中...</span>
+                    </>
+                  ) : (
+                    <span>選択した問題を削除</span>
+                  )}
+                </Button>
+              }
+              title="選択した問題を削除しますか？"
+              description={`${selectedCount}件の問題を削除します。この操作は取り消せません。`}
+              confirmLabel="削除する"
+              confirmPendingLabel="削除中..."
+              onConfirm={onBulkDelete}
+              isPending={isBulkDeleting}
+            />
             <UnitQuestionCsvImporter
               unitId={detail.unit.id}
               unitName={detail.unit.name}
