@@ -10,10 +10,11 @@ interface ChapterEditContentProps {
 export function ChapterEditContent(props: ChapterEditContentProps) {
   const { chapterId } = props;
   const { data, isLoading, isError } = useChapterDetailQuery(chapterId);
+  const detail = data ?? undefined;
 
   return (
     <ChapterEditContentPresenter
-      detail={data}
+      detail={detail}
       isLoading={isLoading}
       isError={isError}
     />
