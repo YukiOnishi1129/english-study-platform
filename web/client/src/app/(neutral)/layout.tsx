@@ -1,8 +1,3 @@
-export default function NeutralLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // No authentication check - accessible by anyone
-  return <>{children}</>;
+export default function NeutralLayout(props: LayoutProps<"/">) {
+  return <>{props.children}</>;
 }

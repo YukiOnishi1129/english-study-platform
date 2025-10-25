@@ -1,0 +1,1 @@
+export { ChapterDetailContent } from "./ChapterDetailContentContainer";

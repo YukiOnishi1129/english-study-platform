@@ -105,7 +105,7 @@ export class MaterialService {
 
   private readonly correctAnswerRepository = new CorrectAnswerRepositoryImpl();
 
-  async getMaterialsHierarchy(): Promise<MaterialHierarchyItemDto[]> {
+  async listMaterialsHierarchy(): Promise<MaterialHierarchyItemDto[]> {
     const materialEntities = await this.materialRepository.findAll();
 
     const materials = await Promise.all(
@@ -160,7 +160,7 @@ export class MaterialService {
   async getMaterialHierarchyById(
     materialId: string,
   ): Promise<MaterialHierarchyItemDto | null> {
-    const materials = await this.getMaterialsHierarchy();
+    const materials = await this.listMaterialsHierarchy();
     return materials.find((material) => material.id === materialId) ?? null;
   }
 

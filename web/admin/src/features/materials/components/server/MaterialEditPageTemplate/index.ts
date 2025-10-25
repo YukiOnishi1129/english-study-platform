@@ -1,0 +1,1 @@
+export { MaterialEditPageTemplate } from "./MaterialEditPageTemplate";

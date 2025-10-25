@@ -7,15 +7,11 @@ export const metadata: Metadata = {
   description: "管理画面",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout(props: LayoutProps<"/">) {
   return (
     <html lang="ja">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>{props.children}</Providers>
       </body>
     </html>
   );

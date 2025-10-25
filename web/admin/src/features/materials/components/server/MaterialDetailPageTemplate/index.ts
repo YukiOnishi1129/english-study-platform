@@ -1,0 +1,1 @@
+export { MaterialDetailPageTemplate } from "./MaterialDetailPageTemplate";

@@ -1,27 +1,26 @@
 "use server";
-
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { DeleteQuestionRequestSchema } from "@/external/dto/material/material.command.dto";
 import { deleteQuestion } from "@/external/handler/material/material.command.server";
-import { getQuestionDetail } from "@/external/handler/material/material.query.server";
-import {
-  toChapterDetailPath,
-  toMaterialDetailPath,
-  toQuestionDetailPath,
-  toUnitDetailPath,
-} from "@/features/materials/lib/paths";
 
 const DeleteQuestionActionSchema = z.object({
   questionId: z.string().min(1, "questionIdが指定されていません。"),
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+});
+
+const DeleteQuestionsActionSchema = z.object({
+  questionIds: z
+    .array(z.string().min(1))
+    .min(1, "削除対象の問題が選択されていません。"),
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
 });
 
 type DeleteQuestionActionInput = z.infer<typeof DeleteQuestionActionSchema>;
+type DeleteQuestionsActionInput = z.infer<typeof DeleteQuestionsActionSchema>;
 
 type DeleteQuestionActionResult =
   | {
       success: true;
-      unitId: string;
     }
   | {
       success: false;
@@ -34,25 +33,39 @@ export async function deleteQuestionAction(
   const payload = DeleteQuestionActionSchema.parse(input);
 
   try {
-    const detail = await getQuestionDetail({ questionId: payload.questionId });
-
     const request = DeleteQuestionRequestSchema.parse({
       questionId: payload.questionId,
-      unitId: detail.unit.id,
+      unitId: payload.unitId,
     });
 
     await deleteQuestion(request);
 
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(detail.material.id));
-    if (detail.chapterPath.length > 0) {
-      const lastChapter = detail.chapterPath[detail.chapterPath.length - 1];
-      revalidatePath(toChapterDetailPath(lastChapter.id));
-    }
-    revalidatePath(toUnitDetailPath(detail.unit.id));
-    revalidatePath(toQuestionDetailPath(detail.question.id));
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "問題の削除に失敗しました。",
+    };
+  }
+}
 
-    return { success: true, unitId: detail.unit.id };
+export async function deleteQuestionsAction(
+  input: DeleteQuestionsActionInput,
+): Promise<DeleteQuestionActionResult> {
+  const payload = DeleteQuestionsActionSchema.parse(input);
+
+  try {
+    for (const questionId of payload.questionIds) {
+      const request = DeleteQuestionRequestSchema.parse({
+        questionId,
+        unitId: payload.unitId,
+      });
+
+      await deleteQuestion(request);
+    }
+
+    return { success: true };
   } catch (error) {
     return {
       success: false,

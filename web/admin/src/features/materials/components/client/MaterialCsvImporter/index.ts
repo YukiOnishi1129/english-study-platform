@@ -1,1 +1,1 @@
-export { MaterialCsvImporter } from "./MaterialCsvImporter";
+export { MaterialCsvImporter } from "./MaterialCsvImporterContainer";

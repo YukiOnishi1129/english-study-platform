@@ -93,6 +93,9 @@ web/client/
 │   │   ├── auth/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
+│   │   │   │   │   ├── AuthRedirectPageTemplate/
+│   │   │   │   │   │   ├── AuthRedirectPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
 │   │   │   │   │   └── LoginPageTemplate/
 │   │   │   │   │       ├── LoginPageTemplate.tsx
 │   │   │   │   │       └── index.ts
@@ -115,7 +118,9 @@ web/client/
 │   │   ├── dashboard/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   └── DashboardPageTemplate.tsx
+│   │   │   │   │   └── DashboardPageTemplate/
+│   │   │   │   │       ├── DashboardPageTemplate.tsx
+│   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
 │   │   │   │       ├── StatsSummary/
 │   │   │   │       │   ├── StatsSummaryContainer.tsx
@@ -139,27 +144,94 @@ web/client/
 │   │   ├── materials/
 │   │   │   ├── components/
 │   │   │   │   ├── server/
-│   │   │   │   │   ├── MaterialListPageTemplate.tsx
-│   │   │   │   │   ├── MaterialDetailPageTemplate.tsx
-│   │   │   │   │   ├── ChapterDetailPageTemplate.tsx
-│   │   │   │   │   └── UnitDetailPageTemplate.tsx
+│   │   │   │   │   ├── MaterialCreatePageTemplate/
+│   │   │   │   │   │   ├── MaterialCreatePageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── MaterialDetailPageTemplate/
+│   │   │   │   │   │   ├── MaterialDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── MaterialEditPageTemplate/
+│   │   │   │   │   │   ├── MaterialEditPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── MaterialImportPageTemplate/
+│   │   │   │   │   │   ├── MaterialImportPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── MaterialListPageTemplate/
+│   │   │   │   │       ├── MaterialListPageTemplate.tsx
+│   │   │   │   │       └── index.ts
 │   │   │   │   └── client/
+│   │   │   │       ├── CsvPreview/
+│   │   │   │       ├── CsvUploader/
+│   │   │   │       ├── ImportProgress/
 │   │   │   │       ├── MaterialCard/
-│   │   │   │       │   ├── MaterialCardPresenter.tsx
-│   │   │   │       │   └── index.ts
-│   │   │   │       ├── ChapterTree/
-│   │   │   │       │   ├── ChapterTreeContainer.tsx
-│   │   │   │       │   ├── ChapterTreePresenter.tsx
-│   │   │   │       │   ├── useChapterTree.ts
-│   │   │   │       │   └── index.ts
-│   │   │   │       └── UnitCard/
-│   │   │   │           ├── UnitCardPresenter.tsx
-│   │   │   │           └── index.ts
+│   │   │   │       ├── MaterialCreateForm/
+│   │   │   │       ├── MaterialCsvImporter/
+│   │   │   │       ├── MaterialDeleteButton/
+│   │   │   │       ├── MaterialEditForm/
+│   │   │   │       ├── MaterialList/
+│   │   │   │       └── QuestionReorderTable/
 │   │   │   └── queries/
 │   │   │       ├── keys.ts
-│   │   │       ├── useMaterialQuery.ts
-│   │   │       ├── useChapterQuery.ts
-│   │   │       └── useUnitQuery.ts
+│   │   │       ├── useMaterialsListQuery.ts
+│   │   │       └── validation.ts
+│   │   │
+│   │   ├── chapters/
+│   │   │   ├── components/
+│   │   │   │   ├── server/
+│   │   │   │   │   ├── ChapterDetailPageTemplate/
+│   │   │   │   │   │   ├── ChapterDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── ChapterEditPageTemplate/
+│   │   │   │   │       ├── ChapterEditPageTemplate.tsx
+│   │   │   │   │       └── index.ts
+│   │   │   │   └── client/
+│   │   │   │       ├── ChapterCreateForm/
+│   │   │   │       ├── ChapterDeleteButton/
+│   │   │   │       ├── ChapterDetailContent/
+│   │   │   │       └── ChapterUnitList/
+│   │   │   └── queries/
+│   │   │       ├── keys.ts
+│   │   │       ├── useChapterDetailQuery.ts
+│   │   │       └── validation.ts
+│   │   │
+│   │   ├── units/
+│   │   │   ├── components/
+│   │   │   │   ├── server/
+│   │   │   │   │   ├── UnitDetailPageTemplate/
+│   │   │   │   │   │   ├── UnitDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── UnitEditPageTemplate/
+│   │   │   │   │       ├── UnitEditPageTemplate.tsx
+│   │   │   │   │       └── index.ts
+│   │   │   │   └── client/
+│   │   │   │       ├── UnitCreateForm/
+│   │   │   │       ├── UnitDeleteButton/
+│   │   │   │       ├── UnitDetailContent/
+│   │   │   │       ├── UnitEditContent/
+│   │   │   │       ├── UnitEditForm/
+│   │   │   │       └── UnitQuestionCsvImporter/
+│   │   │   └── queries/
+│   │   │       ├── keys.ts
+│   │   │       ├── useUnitDetailQuery.ts
+│   │   │       └── validation.ts
+│   │   │
+│   │   ├── questions/
+│   │   │   ├── components/
+│   │   │   │   ├── server/
+│   │   │   │   │   ├── QuestionDetailPageTemplate/
+│   │   │   │   │   │   ├── QuestionDetailPageTemplate.tsx
+│   │   │   │   │   │   └── index.ts
+│   │   │   │   │   └── QuestionEditPageTemplate/
+│   │   │   │   │       ├── QuestionEditPageTemplate.tsx
+│   │   │   │   │       └── index.ts
+│   │   │   │   └── client/
+│   │   │   │       ├── QuestionDeleteButton/
+│   │   │   │       ├── QuestionDetailContent/
+│   │   │   │       └── QuestionEditForm/
+│   │   │   └── queries/
+│   │   │       ├── keys.ts
+│   │   │       ├── useQuestionDetailQuery.ts
+│   │   │       └── validation.ts
 │   │   │
 │   │   ├── study/
 │   │   │   ├── components/
@@ -637,9 +709,11 @@ src/
    - ページはルーティングとパラメータ受け渡しのみ
    - データフェッチや描画ロジックはfeatures/配下のTemplateに委譲
    - PageProps型を使用して型安全にパラメータを受け取る
+   - layoutではLayoutPropsを利用し、`import`は不要
 
 2. features/はドメイン単位
    - 各feature配下: components/server, components/client, queries
+   - Pageテンプレートは `components/server/<Name>PageTemplate/<Name>PageTemplate.tsx` + `index.ts` の2ファイル構成で配置
    - clientコンポーネント: Container → Presenter → Hook の3層構造
    - Containerはロジック集約、Presenterは純粋な描画、HookはTanStack Query
 

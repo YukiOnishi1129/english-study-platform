@@ -1,0 +1,1 @@
+export { QuestionDetailPageTemplate } from "./QuestionDetailPageTemplate";
