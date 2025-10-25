@@ -49,19 +49,20 @@ const REQUIRED_HEADERS = [
   "英語正解1",
 ] as const;
 
-function splitCsvLine(line: string): RawCsvRow {
-  const cells: string[] = [];
-  let current = "";
+function parseCsvRows(content: string): RawCsvRow[] {
+  const rows: RawCsvRow[] = [];
+  let currentRow: string[] = [];
+  let currentCell = "";
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
 
     if (char === '"') {
-      const peek = line[i + 1];
-      if (inQuotes && peek === '"') {
-        current += '"';
-        i += 1;
+      const next = content[index + 1];
+      if (inQuotes && next === '"') {
+        currentCell += '"';
+        index += 1;
       } else {
         inQuotes = !inQuotes;
       }
@@ -69,16 +70,31 @@ function splitCsvLine(line: string): RawCsvRow {
     }
 
     if (char === "," && !inQuotes) {
-      cells.push(current);
-      current = "";
+      currentRow.push(currentCell);
+      currentCell = "";
       continue;
     }
 
-    current += char;
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      currentRow.push(currentCell);
+      currentCell = "";
+
+      if (char === "\r" && content[index + 1] === "\n") {
+        index += 1;
+      }
+
+      rows.push(currentRow);
+      currentRow = [];
+      continue;
+    }
+
+    currentCell += char;
   }
 
-  cells.push(current);
-  return cells;
+  currentRow.push(currentCell);
+  rows.push(currentRow);
+
+  return rows.filter((row) => row.some((cell) => cell.trim().length > 0));
 }
 
 function buildHierarchy(rows: MaterialCsvRow[]): MaterialCsvHierarchy[] {
@@ -131,12 +147,10 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
     return { rows: [], hierarchy: [], errors: ["CSVファイルが空です。"] };
   }
 
-  const lines = content
-    .replace(/\uFEFF/g, "")
-    .split(/\r?\n/)
-    .filter((line) => line.trim().length > 0);
+  const sanitizedContent = content.replace(/\uFEFF/g, "");
+  const csvRows = parseCsvRows(sanitizedContent);
 
-  if (lines.length === 0) {
+  if (csvRows.length === 0) {
     return {
       rows: [],
       hierarchy: [],
@@ -144,7 +158,7 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
     };
   }
 
-  const headerCells = splitCsvLine(lines[0]).map((cell) => cell.trim());
+  const headerCells = csvRows[0]?.map((cell) => cell.trim()) ?? [];
 
   const headerIndexMap = new Map<keyof typeof HEADER_MAP, number>();
   const answerHeaderEntries: Array<{ index: number; order: number }> = [];
@@ -188,12 +202,9 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
 
   const rows: MaterialCsvRow[] = [];
 
-  for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
-    const line = lines[lineIndex];
-    const cells = splitCsvLine(line);
-    if (cells.every((cell) => cell.trim() === "")) {
-      continue;
-    }
+  for (let rowIndex = 1; rowIndex < csvRows.length; rowIndex += 1) {
+    const cells = csvRows[rowIndex];
+    const rowNumber = rowIndex + 1;
 
     const getCell = (header: keyof MaterialCsvRow) => {
       const index = headerIndexMap.get(header);
@@ -215,7 +226,7 @@ export function parseMaterialCsv(content: string): ParseMaterialCsvResult {
       !questionJapanese ||
       answers.length === 0
     ) {
-      errors.push(`${lineIndex + 1}行目に必須項目の抜けがあります。`);
+      errors.push(`${rowNumber}行目に必須項目の抜けがあります。`);
       continue;
     }
 
