@@ -1,1 +1,1 @@
-export { MaterialEditForm } from "./MaterialEditForm";
+export { MaterialEditForm } from "./MaterialEditFormContainer";

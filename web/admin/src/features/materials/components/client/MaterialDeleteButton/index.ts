@@ -1,1 +1,1 @@
-export { MaterialDeleteButton } from "./MaterialDeleteButton";
+export { MaterialDeleteButton } from "./MaterialDeleteButtonContainer";

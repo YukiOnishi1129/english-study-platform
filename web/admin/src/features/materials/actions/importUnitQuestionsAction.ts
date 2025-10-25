@@ -1,17 +1,10 @@
 "use server";
-
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
   type ImportUnitQuestionsRequest,
   ImportUnitQuestionsRequestSchema,
 } from "@/external/dto/material/material.command.dto";
 import { importUnitQuestions } from "@/external/handler/material/material.command.server";
-import {
-  toChapterDetailPath,
-  toMaterialDetailPath,
-  toUnitDetailPath,
-} from "@/features/materials/lib/paths";
 
 const ImportUnitQuestionsActionSchema = ImportUnitQuestionsRequestSchema.extend(
   {
@@ -45,11 +38,6 @@ export async function importUnitQuestionsAction(
     };
 
     const result = await importUnitQuestions(requestPayload);
-
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(payload.materialId));
-    revalidatePath(toChapterDetailPath(payload.chapterId));
-    revalidatePath(toUnitDetailPath(payload.unitId));
 
     return { success: true, ...result };
   } catch (error) {

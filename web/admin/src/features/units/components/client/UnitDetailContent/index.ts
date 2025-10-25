@@ -1,0 +1,1 @@
+export { UnitDetailContent } from "./UnitDetailContentContainer";

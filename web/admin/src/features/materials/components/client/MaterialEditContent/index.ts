@@ -1,0 +1,1 @@
+export { MaterialEditContent } from "./MaterialEditContentContainer";

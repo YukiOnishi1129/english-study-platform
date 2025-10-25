@@ -1,1 +1,1 @@
-export { MaterialCreateForm } from "./MaterialCreateForm";
+export { MaterialCreateForm } from "./MaterialCreateFormContainer";

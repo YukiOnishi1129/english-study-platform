@@ -1,0 +1,1 @@
+export { MaterialListPageTemplate } from "./MaterialListPageTemplate";

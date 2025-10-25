@@ -1,0 +1,52 @@
+import type { QuestionDetailDto } from "@/external/dto/material/material.query.dto";
+import { QuestionEditForm } from "@/features/questions/components/client/QuestionEditForm";
+
+interface QuestionEditContentPresenterProps {
+  detail: QuestionDetailDto | undefined;
+  isLoading: boolean;
+  isError: boolean;
+}
+
+export function QuestionEditContentPresenter(
+  props: QuestionEditContentPresenterProps,
+) {
+  const { detail, isLoading, isError } = props;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-4 w-40 animate-pulse rounded bg-gray-200" />
+        <div className="h-10 animate-pulse rounded bg-gray-200" />
+        <div className="h-16 animate-pulse rounded bg-gray-100" />
+      </div>
+    );
+  }
+
+  if (isError || !detail) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+        問題の情報を取得できませんでした。時間を置いて再度お試しください。
+      </div>
+    );
+  }
+
+  return (
+    <QuestionEditForm
+      defaultValues={{
+        questionId: detail.question.id,
+        unitId: detail.unit.id,
+        japanese: detail.question.japanese,
+        hint: detail.question.hint,
+        explanation: detail.question.explanation,
+        order: detail.question.order,
+        correctAnswers: detail.question.correctAnswers.map(
+          (answer) => answer.answerText,
+        ),
+      }}
+      context={{
+        materialId: detail.material.id,
+        chapterIds: detail.chapterPath.map((chapter) => chapter.id),
+      }}
+    />
+  );
+}
