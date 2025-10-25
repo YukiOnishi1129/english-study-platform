@@ -15,7 +15,6 @@ interface UseQuestionDeleteButtonState {
   supportingText: string;
   isPending: boolean;
   errorMessage: string | null;
-  successMessage: string | null;
   onDelete: () => void;
 }
 
@@ -25,12 +24,12 @@ export function useQuestionDeleteButton(
   const router = useRouter();
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
       const result = await deleteQuestionAction({
         questionId: props.questionId,
+        unitId: props.unitId,
       });
 
       if (!result.success) {
@@ -61,13 +60,11 @@ export function useQuestionDeleteButton(
 
       await Promise.all(invalidateTasks);
 
-      setSuccessMessage("問題を削除しました。");
       setErrorMessage(null);
       router.push(toUnitDetailPath(props.unitId));
       router.refresh();
     },
     onError: (error) => {
-      setSuccessMessage(null);
       setErrorMessage(
         error instanceof Error
           ? error.message
@@ -81,16 +78,7 @@ export function useQuestionDeleteButton(
       return;
     }
 
-    const confirmed = window.confirm(
-      "この問題を削除しますか？この操作は元に戻せません。",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     mutation.mutate();
   }, [mutation]);
@@ -100,7 +88,6 @@ export function useQuestionDeleteButton(
       "問題を完全に削除します。関連する解答履歴は現時点では保持されません。",
     isPending: mutation.isPending,
     errorMessage,
-    successMessage,
     onDelete: handleDelete,
   };
 }

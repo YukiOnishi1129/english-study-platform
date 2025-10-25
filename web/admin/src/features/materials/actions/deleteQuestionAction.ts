@@ -2,10 +2,10 @@
 import { z } from "zod";
 import { DeleteQuestionRequestSchema } from "@/external/dto/material/material.command.dto";
 import { deleteQuestion } from "@/external/handler/material/material.command.server";
-import { getQuestionDetail } from "@/external/handler/material/material.query.server";
 
 const DeleteQuestionActionSchema = z.object({
   questionId: z.string().min(1, "questionIdが指定されていません。"),
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
 });
 
 type DeleteQuestionActionInput = z.infer<typeof DeleteQuestionActionSchema>;
@@ -25,11 +25,9 @@ export async function deleteQuestionAction(
   const payload = DeleteQuestionActionSchema.parse(input);
 
   try {
-    const detail = await getQuestionDetail({ questionId: payload.questionId });
-
     const request = DeleteQuestionRequestSchema.parse({
       questionId: payload.questionId,
-      unitId: detail.unit.id,
+      unitId: payload.unitId,
     });
 
     await deleteQuestion(request);

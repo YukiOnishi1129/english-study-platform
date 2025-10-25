@@ -20,7 +20,6 @@ export function QuestionDeleteButton(
       supportingText={state.supportingText}
       isPending={state.isPending}
       errorMessage={state.errorMessage}
-      successMessage={state.successMessage}
       onDelete={state.onDelete}
     />
   );
