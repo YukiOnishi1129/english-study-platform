@@ -1,10 +1,9 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import Link from "next/link";
 import type { MaterialHierarchyItemDto } from "@/external/dto/material/material.query.dto";
-import { listMaterialsHierarchyAction } from "@/external/handler/material/material.query.action";
+import { listMaterialsHierarchy } from "@/external/handler/material/material.query.server";
 import { MaterialList } from "@/features/materials/components/client/MaterialList";
 import { materialKeys } from "@/features/materials/queries/keys";
-import { ensureMaterialHierarchyList } from "@/features/materials/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
 
 export async function MaterialListPageTemplate() {
@@ -12,10 +11,7 @@ export async function MaterialListPageTemplate() {
 
   await queryClient.prefetchQuery({
     queryKey: materialKeys.list(),
-    queryFn: async () => {
-      const response = await listMaterialsHierarchyAction();
-      return ensureMaterialHierarchyList(response);
-    },
+    queryFn: () => listMaterialsHierarchy(),
   });
 
   const prefetchedMaterials =

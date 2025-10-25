@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getMaterialHierarchyAction } from "@/external/handler/material/material.query.action";
 import { materialKeys } from "./keys";
-import { ensureMaterialHierarchy } from "./validation";
 
 export function useMaterialDetailQuery(materialId: string) {
   return useQuery({
@@ -13,7 +12,7 @@ export function useMaterialDetailQuery(materialId: string) {
       if (!response) {
         throw new Error("MATERIAL_NOT_FOUND");
       }
-      return ensureMaterialHierarchy(response);
+      return response;
     },
   });
 }

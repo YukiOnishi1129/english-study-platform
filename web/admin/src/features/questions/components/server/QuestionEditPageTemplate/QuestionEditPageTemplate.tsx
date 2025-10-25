@@ -2,7 +2,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { QuestionDetailDto } from "@/external/dto/material/material.query.dto";
-import { getQuestionDetailAction } from "@/external/handler/material/material.query.action";
+import { getQuestionDetail } from "@/external/handler/material/material.query.server";
 import {
   toChapterDetailPath,
   toMaterialDetailPath,
@@ -11,7 +11,6 @@ import {
 } from "@/features/materials/lib/paths";
 import { QuestionEditContent } from "@/features/questions/components/client/QuestionEditContent";
 import { questionKeys } from "@/features/questions/queries/keys";
-import { ensureQuestionDetail } from "@/features/questions/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
@@ -28,13 +27,7 @@ export async function QuestionEditPageTemplate({
   try {
     await queryClient.prefetchQuery({
       queryKey: questionKeys.detail(questionId),
-      queryFn: async () => {
-        const response = await getQuestionDetailAction({ questionId });
-        if (!response) {
-          throw new Error("QUESTION_NOT_FOUND");
-        }
-        return ensureQuestionDetail(response);
-      },
+      queryFn: () => getQuestionDetail({ questionId }),
     });
   } catch (error) {
     if (error instanceof Error && error.message === "QUESTION_NOT_FOUND") {

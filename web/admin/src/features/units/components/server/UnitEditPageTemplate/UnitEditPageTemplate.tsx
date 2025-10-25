@@ -1,9 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { getUnitDetailAction } from "@/external/handler/material/material.query.action";
+import { getUnitDetail } from "@/external/handler/material/material.query.server";
 import { UnitEditContent } from "@/features/units/components/client/UnitEditContent";
 import { unitKeys } from "@/features/units/queries/keys";
-import { ensureUnitDetail } from "@/features/units/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +19,7 @@ export async function UnitEditPageTemplate({
   try {
     await queryClient.prefetchQuery({
       queryKey: unitKeys.detail(unitId),
-      queryFn: async () => {
-        const response = await getUnitDetailAction({ unitId });
-        if (!response) {
-          throw new Error("UNIT_NOT_FOUND");
-        }
-        return ensureUnitDetail(response);
-      },
+      queryFn: () => getUnitDetail({ unitId }),
     });
   } catch (error) {
     if (error instanceof Error && error.message === "UNIT_NOT_FOUND") {

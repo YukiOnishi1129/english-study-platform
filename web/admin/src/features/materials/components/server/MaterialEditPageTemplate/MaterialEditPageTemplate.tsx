@@ -1,9 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { getMaterialHierarchyAction } from "@/external/handler/material/material.query.action";
+import { getMaterialHierarchyById } from "@/external/handler/material/material.query.server";
 import { MaterialEditContent } from "@/features/materials/components/client/MaterialEditContent";
 import { materialKeys } from "@/features/materials/queries/keys";
-import { ensureMaterialHierarchy } from "@/features/materials/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +20,11 @@ export async function MaterialEditPageTemplate({
     await queryClient.prefetchQuery({
       queryKey: materialKeys.detail(materialId),
       queryFn: async () => {
-        const response = await getMaterialHierarchyAction({ materialId });
+        const response = await getMaterialHierarchyById({ materialId });
         if (!response) {
           throw new Error("MATERIAL_NOT_FOUND");
         }
-        return ensureMaterialHierarchy(response);
+        return response;
       },
     });
   } catch (error) {

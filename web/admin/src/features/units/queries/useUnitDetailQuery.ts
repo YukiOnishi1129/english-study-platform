@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getUnitDetailAction } from "@/external/handler/material/material.query.action";
 import { unitKeys } from "./keys";
-import { ensureUnitDetail } from "./validation";
 
 export function useUnitDetailQuery(unitId: string) {
   return useQuery({
@@ -13,7 +12,7 @@ export function useUnitDetailQuery(unitId: string) {
       if (!response) {
         throw new Error("UNIT_NOT_FOUND");
       }
-      return ensureUnitDetail(response);
+      return response;
     },
   });
 }
