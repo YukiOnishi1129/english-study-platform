@@ -8,6 +8,7 @@ import type {
   UnitDetailDto,
 } from "@/external/dto/material/material.query.dto";
 import { MaterialService } from "@/external/service/material/material.service";
+import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 
 const materialService = new MaterialService();
 
@@ -51,7 +52,8 @@ export async function getChapterDetail(request: {
   chapterId: string;
 }): Promise<ChapterDetailDto> {
   const { chapterId } = ChapterDetailRequestSchema.parse(request);
-  return materialService.getChapterDetail(chapterId);
+  const detail = await materialService.getChapterDetail(chapterId);
+  return ensureChapterDetail(detail);
 }
 
 export async function getQuestionDetail(request: {

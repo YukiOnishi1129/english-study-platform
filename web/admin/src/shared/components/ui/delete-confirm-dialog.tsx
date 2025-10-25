@@ -113,12 +113,8 @@ export function DeleteConfirmDialog(props: DeleteConfirmDialogProps) {
                 return;
               }
 
-              try {
-                await onConfirm?.();
-                handleOpenChange(false);
-              } catch (error) {
-                throw error;
-              }
+              await onConfirm?.();
+              handleOpenChange(false);
             }}
             className="bg-red-600 text-white hover:bg-red-500 disabled:bg-red-300"
           >

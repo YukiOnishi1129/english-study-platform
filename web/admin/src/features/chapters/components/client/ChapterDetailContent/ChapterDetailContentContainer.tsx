@@ -11,6 +11,10 @@ export function ChapterDetailContent(props: ChapterDetailContentProps) {
   const { chapterId } = props;
   const { data, isLoading, isError } = useChapterDetailQuery(chapterId);
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <ChapterDetailContentPresenter
       detail={data}

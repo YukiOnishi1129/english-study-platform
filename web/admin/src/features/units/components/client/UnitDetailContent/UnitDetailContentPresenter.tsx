@@ -9,8 +9,8 @@ import { QuestionReorderTable } from "@/features/questions/components/client/Que
 import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteButton";
 import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
 import { Button } from "@/shared/components/ui/button";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { DeleteConfirmDialog } from "@/shared/components/ui/delete-confirm-dialog";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export interface UnitDetailContentPresenterProps {
   detail: UnitDetailDto | undefined;

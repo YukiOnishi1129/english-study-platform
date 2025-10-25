@@ -1,9 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { getChapterDetailAction } from "@/external/handler/material/material.query.action";
+import { getChapterDetail } from "@/external/handler/material/material.query.server";
 import { ChapterDetailContent } from "@/features/chapters/components/client/ChapterDetailContent";
 import { chapterKeys } from "@/features/chapters/queries/keys";
-import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import { getQueryClient } from "@/shared/lib/query-client";
 
 export const dynamic = "force-dynamic";
@@ -20,13 +19,7 @@ export async function ChapterDetailPageTemplate({
   try {
     await queryClient.prefetchQuery({
       queryKey: chapterKeys.detail(chapterId),
-      queryFn: async () => {
-        const response = await getChapterDetailAction({ chapterId });
-        if (!response) {
-          throw new Error("CHAPTER_NOT_FOUND");
-        }
-        return ensureChapterDetail(response);
-      },
+      queryFn: async () => getChapterDetail({ chapterId }),
     });
   } catch (error) {
     if (error instanceof Error && error.message === "CHAPTER_NOT_FOUND") {
