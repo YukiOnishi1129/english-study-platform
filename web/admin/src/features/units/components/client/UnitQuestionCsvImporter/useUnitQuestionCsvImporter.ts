@@ -1,13 +1,17 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { chapterKeys } from "@/features/chapters/queries/keys";
 import { importUnitQuestionsAction } from "@/features/materials/actions/importUnitQuestionsAction";
 import {
   parseUnitQuestionCsv,
   type UnitQuestionCsvRow,
 } from "@/features/materials/lib/parseUnitQuestionCsv";
+import { materialKeys } from "@/features/materials/queries/keys";
+import { unitKeys } from "@/features/units/queries/keys";
 import type {
   ImportStatus,
   ParseState,
@@ -33,6 +37,7 @@ export function useUnitQuestionCsvImporter(
   props: UnitQuestionCsvImporterProps,
 ): UnitQuestionCsvImporterPresenterProps {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [parseState, setParseState] = useState<ParseState>(INITIAL_PARSE_STATE);
   const [page, setPage] = useState(1);
   const [importStatus, setImportStatus] = useState<ImportStatus>(
@@ -134,19 +139,13 @@ export function useUnitQuestionCsvImporter(
     [],
   );
 
-  const handleImport = useCallback(async () => {
-    if (parseState.status !== "success" || parseState.rows.length === 0) {
-      return;
-    }
-
-    setImportStatus({ status: "loading" });
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (rows: UnitQuestionCsvRow[]) => {
       const result = await importUnitQuestionsAction({
         materialId: props.materialId,
         chapterId: props.chapterId,
         unitId: props.unitId,
-        rows: parseState.rows.map((row) => ({
+        rows: rows.map((row) => ({
           relatedId: row.questionId ?? undefined,
           order:
             typeof row.order === "number" && Number.isFinite(row.order)
@@ -160,25 +159,40 @@ export function useUnitQuestionCsvImporter(
       });
 
       if (!result.success) {
-        setImportStatus({
-          status: "error",
-          message: result.message ?? "取り込みに失敗しました。",
-        });
-        return;
+        throw new Error(result.message ?? "取り込みに失敗しました。");
       }
+
+      return result;
+    },
+    onMutate: () => {
+      setImportStatus({ status: "loading" });
+    },
+    onSuccess: async (result) => {
+      const invalidateTasks = [
+        queryClient.invalidateQueries({ queryKey: materialKeys.list() }),
+        queryClient.invalidateQueries({
+          queryKey: materialKeys.detail(props.materialId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: chapterKeys.detail(props.chapterId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: unitKeys.detail(props.unitId),
+        }),
+      ];
+
+      await Promise.all(invalidateTasks);
 
       const created = result.createdCount ?? 0;
       const updated = result.updatedCount ?? 0;
       const summaryMessage = `CSVの取り込みが完了しました。（新規 ${created} 件 / 更新 ${updated} 件）`;
 
-      setImportStatus({
-        status: "success",
-        message: summaryMessage,
-      });
+      setImportStatus({ status: "success", message: summaryMessage });
       setParseState(INITIAL_PARSE_STATE);
       setPage(1);
       router.refresh();
-    } catch (error) {
+    },
+    onError: (error) => {
       setImportStatus({
         status: "error",
         message:
@@ -186,12 +200,20 @@ export function useUnitQuestionCsvImporter(
             ? error.message
             : "CSVの取り込みに失敗しました。",
       });
+    },
+  });
+
+  const handleImport = useCallback(() => {
+    if (parseState.status !== "success" || parseState.rows.length === 0) {
+      return;
     }
-  }, [parseState, props.chapterId, props.materialId, props.unitId, router]);
+
+    mutation.mutate(parseState.rows);
+  }, [mutation, parseState]);
 
   const canImport =
     parseState.status === "success" && parseState.rows.length > 0;
-  const isImporting = importStatus.status === "loading";
+  const isImporting = importStatus.status === "loading" || mutation.isPending;
 
   const rangeStart =
     parseState.status === "success" ? (page - 1) * PAGE_SIZE + 1 : 0;
