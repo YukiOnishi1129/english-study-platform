@@ -6,6 +6,8 @@ import { useQuestionDeleteButton } from "./useQuestionDeleteButton";
 export interface QuestionDeleteButtonContainerProps {
   questionId: string;
   unitId: string;
+  materialId: string;
+  chapterIds: string[];
 }
 
 export function QuestionDeleteButton(

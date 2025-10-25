@@ -171,6 +171,8 @@ export function QuestionDetailContentPresenter(
       <QuestionDeleteButton
         questionId={detail.question.id}
         unitId={detail.unit.id}
+        materialId={detail.material.id}
+        chapterIds={detail.chapterPath.map((chapter) => chapter.id)}
       />
     </main>
   );

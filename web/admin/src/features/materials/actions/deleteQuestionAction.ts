@@ -1,16 +1,8 @@
 "use server";
-
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { DeleteQuestionRequestSchema } from "@/external/dto/material/material.command.dto";
 import { deleteQuestion } from "@/external/handler/material/material.command.server";
 import { getQuestionDetail } from "@/external/handler/material/material.query.server";
-import {
-  toChapterDetailPath,
-  toMaterialDetailPath,
-  toQuestionDetailPath,
-  toUnitDetailPath,
-} from "@/features/materials/lib/paths";
 
 const DeleteQuestionActionSchema = z.object({
   questionId: z.string().min(1, "questionIdが指定されていません。"),
@@ -21,7 +13,6 @@ type DeleteQuestionActionInput = z.infer<typeof DeleteQuestionActionSchema>;
 type DeleteQuestionActionResult =
   | {
       success: true;
-      unitId: string;
     }
   | {
       success: false;
@@ -43,16 +34,7 @@ export async function deleteQuestionAction(
 
     await deleteQuestion(request);
 
-    revalidatePath("/materials");
-    revalidatePath(toMaterialDetailPath(detail.material.id));
-    if (detail.chapterPath.length > 0) {
-      const lastChapter = detail.chapterPath[detail.chapterPath.length - 1];
-      revalidatePath(toChapterDetailPath(lastChapter.id));
-    }
-    revalidatePath(toUnitDetailPath(detail.unit.id));
-    revalidatePath(toQuestionDetailPath(detail.question.id));
-
-    return { success: true, unitId: detail.unit.id };
+    return { success: true };
   } catch (error) {
     return {
       success: false,
