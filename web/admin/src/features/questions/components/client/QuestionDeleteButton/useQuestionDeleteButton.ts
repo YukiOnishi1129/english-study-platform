@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { deleteQuestionAction } from "@/features/materials/actions/deleteQuestionAction";
 import { toUnitDetailPath } from "@/features/materials/lib/paths";
@@ -63,6 +64,10 @@ export function useQuestionDeleteButton(
 
         router.refresh();
       })();
+
+      toast.success("問題を削除しました", {
+        description: "UNIT詳細にリダイレクトしました。",
+      });
     },
     onError: (error) => {
       setErrorMessage(
