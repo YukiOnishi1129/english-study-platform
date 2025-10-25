@@ -36,33 +36,33 @@ export function useQuestionDeleteButton(
         throw new Error(result.message ?? "問題の削除に失敗しました。");
       }
     },
-    onSuccess: async () => {
-      const invalidateTasks = [
-        queryClient.invalidateQueries({
-          queryKey: questionKeys.detail(props.questionId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: unitKeys.detail(props.unitId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: materialKeys.detail(props.materialId),
-        }),
-        queryClient.invalidateQueries({ queryKey: materialKeys.list() }),
-      ];
-
-      props.chapterIds.forEach((chapterId) => {
-        invalidateTasks.push(
-          queryClient.invalidateQueries({
-            queryKey: chapterKeys.detail(chapterId),
-          }),
-        );
-      });
-
-      await Promise.all(invalidateTasks);
-
+    onSuccess: () => {
       setErrorMessage(null);
-      router.push(toUnitDetailPath(props.unitId));
-      router.refresh();
+
+      const redirectPath = toUnitDetailPath(props.unitId);
+      router.replace(redirectPath);
+
+      void (async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: questionKeys.detail(props.questionId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: unitKeys.detail(props.unitId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: materialKeys.detail(props.materialId),
+          }),
+          queryClient.invalidateQueries({ queryKey: materialKeys.list() }),
+          ...props.chapterIds.map((chapterId) =>
+            queryClient.invalidateQueries({
+              queryKey: chapterKeys.detail(chapterId),
+            }),
+          ),
+        ]);
+
+        router.refresh();
+      })();
     },
     onError: (error) => {
       setErrorMessage(
