@@ -117,6 +117,9 @@ export function useQuestionReorderTable(
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      if (props.disabled || mutation.isPending) {
+        return;
+      }
       const { active, over } = event;
       if (!over || active.id === over.id) {
         return;
@@ -141,29 +144,40 @@ export function useQuestionReorderTable(
         previousItems: currentItems,
       });
     },
-    [items, mutation],
+    [items, mutation, props.disabled],
   );
+
+  const externalDisabled = props.disabled ?? false;
 
   const presenterState = useMemo<QuestionReorderTablePresenterProps>(() => {
     return {
       questions: props.questions,
       items,
       isMounted,
-      isPending: mutation.isPending,
+      isPending: mutation.isPending || externalDisabled,
       successMessage,
       errorMessage,
       sensors,
       onDragEnd: handleDragEnd,
+      selectable: props.selectable ?? false,
+      selectedIds: props.selectedIds ?? [],
+      onToggleSelect: props.onToggleSelect,
+      onToggleSelectAll: props.onToggleSelectAll,
     };
   }, [
     props.questions,
     items,
     isMounted,
     mutation.isPending,
+    externalDisabled,
     successMessage,
     errorMessage,
     sensors,
     handleDragEnd,
+    props.selectable,
+    props.selectedIds,
+    props.onToggleSelect,
+    props.onToggleSelectAll,
   ]);
 
   return presenterState;

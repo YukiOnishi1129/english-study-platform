@@ -8,17 +8,33 @@ import {
 import { QuestionReorderTable } from "@/features/questions/components/client/QuestionReorderTable";
 import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteButton";
 import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
+import { Button } from "@/shared/components/ui/button";
+import { Spinner } from "@/shared/components/ui/spinner";
 
 export interface UnitDetailContentPresenterProps {
   detail: UnitDetailDto | undefined;
   isLoading: boolean;
   isError: boolean;
+  selectedQuestionIds: string[];
+  isBulkDeleting: boolean;
+  onToggleQuestionSelect: (questionId: string, nextSelected: boolean) => void;
+  onToggleAllQuestions: (nextSelected: boolean) => void;
+  onBulkDelete: () => void;
 }
 
 export function UnitDetailContentPresenter(
   props: UnitDetailContentPresenterProps,
 ) {
-  const { detail, isLoading, isError } = props;
+  const {
+    detail,
+    isLoading,
+    isError,
+    selectedQuestionIds,
+    isBulkDeleting,
+    onToggleQuestionSelect,
+    onToggleAllQuestions,
+    onBulkDelete,
+  } = props;
 
   if (isLoading) {
     return (
@@ -53,6 +69,7 @@ export function UnitDetailContentPresenter(
     updatedAt: question.updatedAt,
   }));
   const parentChapterId = currentChapter?.id ?? detail.unit.chapterId;
+  const selectedCount = selectedQuestionIds.length;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-10 px-6 py-10">
@@ -150,21 +167,52 @@ export function UnitDetailContentPresenter(
       </section>
 
       <section className="space-y-4">
-        <header className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">問題の並び順</h2>
-          <UnitQuestionCsvImporter
-            unitId={detail.unit.id}
-            unitName={detail.unit.name}
-            materialId={detail.material.id}
-            chapterId={parentChapterId}
-            existingQuestionCount={questionCount}
-          />
+        <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-xl font-semibold text-gray-900">
+              問題の並び順
+            </h2>
+            {selectedCount > 0 ? (
+              <p className="text-xs text-red-600">
+                {selectedCount} 件の問題が選択されています。
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="destructive"
+              onClick={onBulkDelete}
+              disabled={selectedCount === 0 || isBulkDeleting}
+              className="gap-2"
+            >
+              {isBulkDeleting ? (
+                <>
+                  <Spinner className="text-white" />
+                  <span>削除中...</span>
+                </>
+              ) : (
+                <span>選択した問題を削除</span>
+              )}
+            </Button>
+            <UnitQuestionCsvImporter
+              unitId={detail.unit.id}
+              unitName={detail.unit.name}
+              materialId={detail.material.id}
+              chapterId={parentChapterId}
+              existingQuestionCount={questionCount}
+            />
+          </div>
         </header>
         <QuestionReorderTable
           unitId={detail.unit.id}
           materialId={detail.material.id}
           chapterIds={detail.chapterPath.map((chapter) => chapter.id)}
           questions={unitQuestions}
+          selectable
+          selectedIds={selectedQuestionIds}
+          onToggleSelect={onToggleQuestionSelect}
+          onToggleSelectAll={onToggleAllQuestions}
+          disabled={isBulkDeleting}
         />
       </section>
 

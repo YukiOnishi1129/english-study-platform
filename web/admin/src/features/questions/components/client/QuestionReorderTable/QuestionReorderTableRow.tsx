@@ -12,10 +12,19 @@ import type { QuestionReorderTableItem } from "./types";
 interface QuestionReorderTableRowProps {
   item: QuestionReorderTableItem;
   disabled: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (questionId: string, nextSelected: boolean) => void;
 }
 
 export function QuestionReorderTableRow(props: QuestionReorderTableRowProps) {
-  const { item, disabled } = props;
+  const {
+    item,
+    disabled,
+    selectable = false,
+    selected = false,
+    onToggleSelect,
+  } = props;
   const {
     setNodeRef,
     attributes,
@@ -35,8 +44,22 @@ export function QuestionReorderTableRow(props: QuestionReorderTableRowProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[auto_1fr_auto] items-start gap-4 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm transition ${isDragging ? "ring-2 ring-indigo-400" : "hover:border-indigo-200"}`}
+      className={`grid ${selectable ? "grid-cols-[auto_auto_1fr_auto]" : "grid-cols-[auto_1fr_auto]"} items-start gap-4 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm transition ${isDragging ? "ring-2 ring-indigo-400" : "hover:border-indigo-200"}`}
     >
+      {selectable ? (
+        <div className="flex h-8 items-center">
+          <input
+            type="checkbox"
+            className="size-4 cursor-pointer rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            checked={selected}
+            disabled={disabled}
+            onChange={(event) =>
+              onToggleSelect?.(item.id, event.currentTarget.checked)
+            }
+            aria-label="問題を選択"
+          />
+        </div>
+      ) : null}
       <button
         type="button"
         className="flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-500 transition hover:bg-gray-100 focus:outline-none"

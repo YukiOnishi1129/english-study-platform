@@ -12,6 +12,11 @@ export interface QuestionReorderTableProps {
   unitId: string;
   materialId: string;
   chapterIds: string[];
+  disabled?: boolean;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onToggleSelect?: (questionId: string, nextSelected: boolean) => void;
+  onToggleSelectAll?: (nextSelected: boolean) => void;
 }
 
 export interface QuestionReorderTablePresenterProps {
@@ -23,4 +28,8 @@ export interface QuestionReorderTablePresenterProps {
   errorMessage: string | null;
   sensors: Array<SensorDescriptor<Record<string, unknown>>>;
   onDragEnd: (event: DragEndEvent) => void;
+  selectable: boolean;
+  selectedIds: string[];
+  onToggleSelect?: (questionId: string, nextSelected: boolean) => void;
+  onToggleSelectAll?: (nextSelected: boolean) => void;
 }
