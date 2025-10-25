@@ -65,12 +65,17 @@ export function ChapterUnitListPresenter(props: ChapterUnitListPresenterProps) {
                   <span className="text-lg leading-none">⋮⋮</span>
                 </div>
                 <div className="flex flex-1 flex-col">
-                  <Link
-                    href={toUnitDetailPath(unit.id)}
-                    className="text-sm font-medium text-indigo-700 underline-offset-2 transition hover:text-indigo-900 hover:underline"
-                  >
-                    {unit.name}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-500">
+                      #{unit.order}
+                    </span>
+                    <Link
+                      href={toUnitDetailPath(unit.id)}
+                      className="text-sm font-medium text-indigo-700 underline-offset-2 transition hover:text-indigo-900 hover:underline"
+                    >
+                      {unit.name}
+                    </Link>
+                  </div>
                   {unit.description ? (
                     <p className="text-xs text-gray-500">{unit.description}</p>
                   ) : null}
@@ -93,9 +98,6 @@ export function ChapterUnitListPresenter(props: ChapterUnitListPresenterProps) {
                       {unit.questionCount}
                     </span>
                     <span className="text-[11px] opacity-80">問</span>
-                  </span>
-                  <span className="text-xs font-semibold text-gray-500">
-                    #{unit.order}
                   </span>
                 </div>
               </li>
