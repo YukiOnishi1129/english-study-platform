@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
-import { checkAuthAndRefresh } from "@/features/auth/servers/auth-check.server";
+import { getAuthenticatedAccount } from "@/features/auth/servers/auth-check.server";
+import { AppShell } from "@/shared/components/layout/AppShell";
 
 export default async function AuthenticatedLayout(props: LayoutProps<"/">) {
-  const isAuthenticated = await checkAuthAndRefresh();
+  const account = await getAuthenticatedAccount();
 
-  // If not authenticated or token refresh failed, redirect to login
-  if (!isAuthenticated) {
+  if (!account) {
     redirect("/login");
   }
 
-  return <>{props.children}</>;
+  return <AppShell account={account}>{props.children}</AppShell>;
 }

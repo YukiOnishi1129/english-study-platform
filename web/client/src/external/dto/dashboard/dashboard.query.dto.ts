@@ -90,4 +90,3 @@ export const DashboardDataSchema: z.ZodType<DashboardDataDto> = z.object({
   studyCalendar: z.array(DashboardStudyCalendarEntrySchema),
   materials: z.array(DashboardMaterialSummarySchema),
 });
-

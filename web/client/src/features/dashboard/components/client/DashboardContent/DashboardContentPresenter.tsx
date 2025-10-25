@@ -2,6 +2,14 @@
 
 import clsx from "clsx";
 import type React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
+import { Separator } from "@/shared/components/ui/separator";
 import type { UseDashboardContentResult } from "./useDashboardContent";
 
 interface LoadingSkeletonProps {
@@ -10,29 +18,36 @@ interface LoadingSkeletonProps {
 
 function LoadingSkeleton({ message }: LoadingSkeletonProps) {
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10">
-      <div className="mb-8 space-y-2">
-        <div className="h-8 w-80 animate-pulse rounded-md bg-gray-200" />
-        <div className="h-4 w-60 animate-pulse rounded-md bg-gray-100" />
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <div className="h-7 w-64 animate-pulse rounded-md bg-slate-200" />
+        <div className="h-4 w-48 animate-pulse rounded bg-slate-100" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[1, 2, 3, 4].map((key) => (
-          <div
-            key={key}
-            className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm"
-          >
-            <div className="h-4 w-24 animate-pulse rounded bg-gray-100" />
-            <div className="mt-3 h-8 w-32 animate-pulse rounded bg-gray-200" />
-            <div className="mt-2 h-3 w-20 animate-pulse rounded bg-gray-100" />
-          </div>
+          <Card key={key} className="border-dashed border-indigo-100/70">
+            <CardHeader className="space-y-3">
+              <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
+              <div className="h-6 w-24 animate-pulse rounded bg-slate-100" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-3 w-24 animate-pulse rounded bg-slate-100" />
+            </CardContent>
+          </Card>
         ))}
       </div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_3fr]">
-        <div className="h-72 animate-pulse rounded-lg border border-gray-100 bg-white" />
-        <div className="h-96 animate-pulse rounded-lg border border-gray-100 bg-white" />
+      <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
+        <Card className="border-dashed border-indigo-100/70">
+          <CardContent className="h-72 animate-pulse rounded-xl bg-slate-100" />
+        </Card>
+        <Card className="border-dashed border-indigo-100/70">
+          <CardContent className="h-96 animate-pulse rounded-xl bg-slate-100" />
+        </Card>
       </div>
-      {message ? <p className="mt-6 text-sm text-gray-500">{message}</p> : null}
-    </main>
+      {message ? (
+        <p className="text-sm text-muted-foreground">{message}</p>
+      ) : null}
+    </div>
   );
 }
 
@@ -42,17 +57,17 @@ interface ErrorStateProps {
 
 function ErrorState({ message }: ErrorStateProps) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-16">
-      <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-red-700 shadow-sm">
-        <h2 className="text-xl font-semibold">
-          ダッシュボードを読み込めませんでした
-        </h2>
-        <p className="mt-3 text-sm leading-relaxed">{message}</p>
-        <p className="mt-2 text-xs text-red-600/80">
+    <Card className="border-red-200 bg-red-50 text-red-700">
+      <CardHeader>
+        <CardTitle>ダッシュボードを読み込めませんでした</CardTitle>
+        <CardDescription className="text-red-600/80">
           ページを再読み込みしても解消しない場合は、時間をおいて再度お試しください。
-        </p>
-      </div>
-    </main>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm leading-relaxed">{message}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -88,25 +103,29 @@ function renderChapterList(
     const units = chapter.units;
     const nextDepth = depth + 1;
     const baseClasses = clsx(
-      "rounded-md border border-gray-100 bg-white/60 p-3",
+      "rounded-2xl border border-indigo-100/70 bg-white/80 p-3 shadow-sm",
       depth > 0 && "border-dashed",
     );
 
     const node = (
       <li key={chapter.id} className={baseClasses}>
         <div className="flex items-baseline justify-between gap-2">
-          <p className="text-sm font-semibold text-gray-800">{chapter.name}</p>
-          <span className="text-xs text-gray-500">UNIT {units.length}</span>
+          <p className="text-sm font-semibold text-indigo-900">
+            {chapter.name}
+          </p>
+          <span className="text-xs text-indigo-600">UNIT {units.length}</span>
         </div>
         {chapter.description ? (
-          <p className="mt-1 text-xs text-gray-500">{chapter.description}</p>
+          <p className="mt-1 text-xs text-indigo-600/80">
+            {chapter.description}
+          </p>
         ) : null}
         {units.length > 0 ? (
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-2 space-y-1.5">
             {units.map((unit) => (
               <li
                 key={unit.id}
-                className="flex items-center justify-between rounded-md bg-indigo-50/60 px-2 py-1 text-xs text-indigo-700"
+                className="flex items-center justify-between rounded-xl bg-indigo-50/70 px-3 py-1.5 text-xs text-indigo-700"
               >
                 <span className="truncate pr-2 font-medium">{unit.name}</span>
                 <span className="shrink-0 text-[11px] text-indigo-600">
@@ -116,12 +135,12 @@ function renderChapterList(
             ))}
           </ul>
         ) : (
-          <p className="mt-2 rounded bg-slate-50 px-2 py-1 text-xs text-slate-500">
+          <p className="mt-2 rounded-xl bg-slate-50 px-3 py-1.5 text-xs text-slate-500">
             UNITがまだ登録されていません。
           </p>
         )}
         {chapter.children.length > 0 ? (
-          <ul className="mt-3 space-y-2 pl-3 border-l-2 border-dashed border-indigo-100">
+          <ul className="mt-3 space-y-2 border-l-2 border-dashed border-indigo-100/70 pl-3">
             {renderChapterList(chapter.children, nextDepth)}
           </ul>
         ) : null}
@@ -141,7 +160,11 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   }
 
   if (isError) {
-    return <ErrorState message="学習データの取得中に問題が発生しました。" />;
+    return (
+      <div className="max-w-3xl">
+        <ErrorState message="学習データの取得中に問題が発生しました。" />
+      </div>
+    );
   }
 
   const totalQuestionCount = materials.reduce(
@@ -150,148 +173,160 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   );
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-6 py-10">
-      <header className="mb-8 space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">
-          {greetingName}さん、おかえりなさい！
-        </h1>
-        <p className="text-sm text-gray-600">
-          利用可能な問題は {totalQuestionCount}{" "}
-          問です。今日もコツコツ積み重ねていきましょう。
-        </p>
-      </header>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-3 rounded-3xl border border-indigo-100/70 bg-white/90 p-6 shadow-sm backdrop-blur">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              {greetingName}さん、おかえりなさい！
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              利用可能な問題は {totalQuestionCount}{" "}
+              問です。今日もコツコツ積み重ねていきましょう。
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-indigo-600">
+            <span className="rounded-full bg-indigo-100 px-3 py-1 font-semibold">
+              学習記録を更新中
+            </span>
+            <span className="text-muted-foreground">
+              前回の学習：昨日 22:15
+            </span>
+          </div>
+        </div>
+      </div>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statsCards.map((card) => (
-          <article
-            key={card.id}
-            className="rounded-xl border border-indigo-100 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-              {card.label}
-            </p>
-            <p className="mt-3 text-2xl font-bold text-gray-900">
-              {card.value}
-            </p>
-            <p className="mt-2 text-xs text-gray-500">{card.helperText}</p>
-          </article>
+          <Card key={card.id} className="border border-indigo-100/60">
+            <CardHeader>
+              <CardDescription className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
+                {card.label}
+              </CardDescription>
+              <CardTitle className="text-2xl text-slate-900">
+                {card.value}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{card.helperText}</p>
+            </CardContent>
+          </Card>
         ))}
       </section>
 
-      <section className="mt-8 grid gap-6 lg:grid-cols-[2fr_3fr]">
-        <article className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+      <section className="grid gap-6 lg:grid-cols-[2fr_3fr]">
+        <Card className="border border-indigo-100/70">
+          <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                学習カレンダー
-              </h2>
-              <p className="text-xs text-gray-500">
-                最近の学習量を振り返りましょう
-              </p>
+              <CardTitle className="text-lg">学習カレンダー</CardTitle>
+              <CardDescription>
+                最近の学習量をヒートマップで確認しましょう
+              </CardDescription>
             </div>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-muted-foreground">
               合計 {calendar.days.length} 日分
             </span>
-          </div>
-
-          {calendar.days.length === 0 ? (
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-sm text-gray-500">
-              <p>まだ学習履歴がありません。</p>
-              <p className="text-xs">
-                UNIT詳細画面から学習を開始すると、ここに履歴が表示されます。
-              </p>
-            </div>
-          ) : (
-            <div className="mt-6 grid grid-cols-7 gap-2">
-              {calendar.days.map((day) => (
-                <div
-                  key={day.date}
-                  className="flex flex-col items-center gap-1"
-                  title={`${day.date} / ${day.totalAnswers}問`}
-                >
-                  <span className="text-[11px] text-gray-400">
-                    {formatDateLabel(day.date)}
-                  </span>
-                  <span
-                    className={clsx(
-                      "flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold",
-                      heatmapCellClass(day.intensity),
-                    )}
+          </CardHeader>
+          <CardContent>
+            {calendar.days.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
+                <p>まだ学習履歴がありません。</p>
+                <p className="text-xs">
+                  UNIT詳細画面から学習を開始すると、ここに履歴が表示されます。
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-7 gap-2">
+                {calendar.days.map((day) => (
+                  <div
+                    key={day.date}
+                    className="flex flex-col items-center gap-1"
+                    title={`${day.date} / ${day.totalAnswers}問`}
                   >
-                    {day.totalAnswers}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </article>
+                    <span className="text-[11px] text-muted-foreground">
+                      {formatDateLabel(day.date)}
+                    </span>
+                    <span
+                      className={clsx(
+                        "flex h-10 w-10 items-center justify-center rounded-xl text-xs font-semibold",
+                        heatmapCellClass(day.intensity),
+                      )}
+                    >
+                      {day.totalAnswers}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <article className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
+        <Card className="border border-indigo-100/70">
+          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">教材一覧</h2>
-              <p className="text-xs text-gray-500">
+              <CardTitle className="text-lg">教材一覧</CardTitle>
+              <CardDescription>
                 学習したい教材とUNITを選択しましょう
-              </p>
+              </CardDescription>
             </div>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-muted-foreground">
               全 {materials.length} 件
             </span>
-          </div>
-
-          {materials.length === 0 ? (
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-6 py-12 text-sm text-gray-500">
-              <p>まだ教材が登録されていません。</p>
-              <p className="text-xs">
-                管理画面から教材を追加すると、ここに表示されます。
-              </p>
-            </div>
-          ) : (
-            <div className="mt-6 space-y-6">
-              {materials.map((material) => (
-                <section
-                  key={material.id}
-                  className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-5 shadow-sm"
-                >
-                  <header className="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-indigo-900">
-                        {material.name}
-                      </h3>
-                      {material.description ? (
-                        <p className="text-xs text-indigo-600/80">
-                          {material.description}
-                        </p>
-                      ) : null}
+          </CardHeader>
+          <CardContent>
+            {materials.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
+                <p>まだ教材が登録されていません。</p>
+                <p className="text-xs">
+                  管理画面から教材を追加すると、ここに表示されます。
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {materials.map((material) => (
+                  <div
+                    key={material.id}
+                    className="rounded-2xl border border-indigo-100/70 bg-gradient-to-br from-white via-white to-indigo-50/60 p-5 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-indigo-900">
+                          {material.name}
+                        </h3>
+                        {material.description ? (
+                          <p className="text-xs text-indigo-700/80">
+                            {material.description}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center gap-3 rounded-full bg-white/80 px-3 py-1 text-xs text-indigo-700 shadow-sm">
+                        <span>UNIT {material.totalUnitCount}</span>
+                        <Separator orientation="vertical" className="h-4" />
+                        <span>章 {material.chapterCount}</span>
+                        <Separator orientation="vertical" className="h-4" />
+                        <span>問題 {material.totalQuestionCount}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-indigo-700">
-                      <span>UNIT {material.totalUnitCount}</span>
-                      <span>章 {material.chapterCount}</span>
-                      <span>問題 {material.totalQuestionCount}</span>
+                    <div className="mt-4 h-2 rounded-full bg-indigo-100/70">
+                      <div
+                        className="h-2 rounded-full bg-indigo-500 transition-all"
+                        style={{ width: `${material.progressRatePercent}%` }}
+                      />
                     </div>
-                  </header>
+                    <p className="mt-1 text-[11px] text-indigo-700/80">
+                      学習進捗 {material.progressRatePercent}%
+                    </p>
 
-                  <div className="mt-4 h-2 rounded-full bg-indigo-100">
-                    <div
-                      className="h-2 rounded-full bg-indigo-500 transition-all"
-                      style={{ width: `${material.progressRatePercent}%` }}
-                    />
-                  </div>
-                  <p className="mt-1 text-[11px] text-indigo-600/80">
-                    学習進捗 {material.progressRatePercent}%
-                  </p>
-
-                  <div className="mt-4">
-                    <ul className="space-y-3">
+                    <div className="mt-4 space-y-3">
                       {renderChapterList(material.chapters)}
-                    </ul>
+                    </div>
                   </div>
-                </section>
-              ))}
-            </div>
-          )}
-        </article>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </section>
-    </main>
+    </div>
   );
 }
