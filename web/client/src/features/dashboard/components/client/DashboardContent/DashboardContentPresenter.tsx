@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import type React from "react";
+import type { ReactElement } from "react";
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ interface LoadingSkeletonProps {
 
 function LoadingSkeleton({ message }: LoadingSkeletonProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="space-y-2">
         <div className="h-7 w-64 animate-pulse rounded-md bg-slate-200" />
         <div className="h-4 w-48 animate-pulse rounded bg-slate-100" />
@@ -36,12 +36,12 @@ function LoadingSkeleton({ message }: LoadingSkeletonProps) {
           </Card>
         ))}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-dashed border-indigo-100/70">
-          <CardContent className="h-72 animate-pulse rounded-xl bg-slate-100" />
+          <CardContent className="h-64 animate-pulse rounded-xl bg-slate-100" />
         </Card>
         <Card className="border-dashed border-indigo-100/70">
-          <CardContent className="h-96 animate-pulse rounded-xl bg-slate-100" />
+          <CardContent className="h-64 animate-pulse rounded-xl bg-slate-100" />
         </Card>
       </div>
       {message ? (
@@ -72,18 +72,10 @@ function ErrorState({ message }: ErrorStateProps) {
 }
 
 function heatmapCellClass(intensity: number) {
-  if (intensity <= 0) {
-    return "bg-slate-100 text-slate-500";
-  }
-  if (intensity < 0.25) {
-    return "bg-indigo-100 text-indigo-800";
-  }
-  if (intensity < 0.5) {
-    return "bg-indigo-200 text-indigo-800";
-  }
-  if (intensity < 0.75) {
-    return "bg-indigo-400 text-white";
-  }
+  if (intensity <= 0) return "bg-slate-100 text-slate-500";
+  if (intensity < 0.25) return "bg-indigo-100 text-indigo-800";
+  if (intensity < 0.5) return "bg-indigo-200 text-indigo-800";
+  if (intensity < 0.75) return "bg-indigo-400 text-white";
   return "bg-indigo-600 text-white";
 }
 
@@ -95,59 +87,70 @@ function formatDateLabel(dateString: string) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
-function renderChapterList(
-  chapters: UseDashboardContentResult["materials"][number]["chapters"],
-  depth = 0,
-): React.ReactElement[] {
-  return chapters.flatMap((chapter) => {
-    const units = chapter.units;
-    const nextDepth = depth + 1;
-    const baseClasses = clsx(
-      "rounded-2xl border border-indigo-100/70 bg-white/80 p-3 shadow-sm",
-      depth > 0 && "border-dashed",
+function renderUnitPreview(
+  materials: UseDashboardContentResult["materials"],
+): ReactElement[] {
+  return materials.map((material) => {
+    const firstUnits = material.chapters.flatMap((chapter) =>
+      chapter.units.slice(0, 2),
     );
+    const unitPreview = firstUnits.slice(0, 3);
 
-    const node = (
-      <li key={chapter.id} className={baseClasses}>
-        <div className="flex items-baseline justify-between gap-2">
-          <p className="text-sm font-semibold text-indigo-900">
-            {chapter.name}
-          </p>
-          <span className="text-xs text-indigo-600">UNIT {units.length}</span>
+    return (
+      <div
+        key={material.id}
+        className="rounded-2xl border border-indigo-100/70 bg-white/90 p-4 shadow-sm"
+      >
+        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-indigo-900">
+              {material.name}
+            </p>
+            {material.description ? (
+              <p className="text-xs text-muted-foreground">
+                {material.description}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span>UNIT {material.totalUnitCount}</span>
+            <Separator orientation="vertical" className="h-3" />
+            <span>問題 {material.totalQuestionCount}</span>
+          </div>
         </div>
-        {chapter.description ? (
-          <p className="mt-1 text-xs text-indigo-600/80">
-            {chapter.description}
-          </p>
-        ) : null}
-        {units.length > 0 ? (
-          <ul className="mt-2 space-y-1.5">
-            {units.map((unit) => (
-              <li
-                key={unit.id}
-                className="flex items-center justify-between rounded-xl bg-indigo-50/70 px-3 py-1.5 text-xs text-indigo-700"
-              >
-                <span className="truncate pr-2 font-medium">{unit.name}</span>
-                <span className="shrink-0 text-[11px] text-indigo-600">
+        <div className="mt-3 h-2 rounded-full bg-indigo-100/70">
+          <div
+            className="h-full rounded-full bg-indigo-500"
+            style={{ width: `${material.progressRatePercent}%` }}
+          />
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          学習進捗 {material.progressRatePercent}%
+        </p>
+        {unitPreview.length > 0 ? (
+          <ul className="mt-3 space-y-1 text-xs text-indigo-800">
+            {unitPreview.map((unit) => (
+              <li key={unit.id} className="flex items-center gap-2">
+                <span className="size-1.5 rounded-full bg-indigo-400" />
+                <span className="truncate">{unit.name}</span>
+                <span className="text-[11px] text-indigo-500">
                   {unit.questionCount}問
                 </span>
               </li>
             ))}
+            {material.totalUnitCount > unitPreview.length ? (
+              <li className="text-[11px] text-muted-foreground">
+                ほか {material.totalUnitCount - unitPreview.length} UNIT…
+              </li>
+            ) : null}
           </ul>
         ) : (
-          <p className="mt-2 rounded-xl bg-slate-50 px-3 py-1.5 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             UNITがまだ登録されていません。
           </p>
         )}
-        {chapter.children.length > 0 ? (
-          <ul className="mt-3 space-y-2 border-l-2 border-dashed border-indigo-100/70 pl-3">
-            {renderChapterList(chapter.children, nextDepth)}
-          </ul>
-        ) : null}
-      </li>
+      </div>
     );
-
-    return [node];
   });
 }
 
@@ -173,48 +176,70 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   );
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-3 rounded-3xl border border-indigo-100/70 bg-white/90 p-6 shadow-sm backdrop-blur">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+    <div className="space-y-6">
+      <Card className="border border-indigo-100/70 bg-white/95">
+        <CardHeader className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">
+            <CardTitle className="text-2xl font-bold text-slate-900">
               {greetingName}さん、おかえりなさい！
-            </h1>
-            <p className="text-sm text-muted-foreground">
+            </CardTitle>
+            <CardDescription className="text-sm text-muted-foreground leading-relaxed">
               利用可能な問題は {totalQuestionCount}{" "}
-              問です。今日もコツコツ積み重ねていきましょう。
-            </p>
+              問です。今日も無理なく学習を続けましょう。
+            </CardDescription>
           </div>
-          <div className="flex items-center gap-2 text-xs text-indigo-600">
-            <span className="rounded-full bg-indigo-100 px-3 py-1 font-semibold">
-              学習記録を更新中
-            </span>
-            <span className="text-muted-foreground">
-              前回の学習：昨日 22:15
-            </span>
+          <div className="text-sm text-muted-foreground">
+            前回の学習：昨日 22:15
           </div>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {statsCards.map((card) => (
-          <Card key={card.id} className="border border-indigo-100/60">
-            <CardHeader>
-              <CardDescription className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-                {card.label}
-              </CardDescription>
-              <CardTitle className="text-2xl text-slate-900">
-                {card.value}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">{card.helperText}</p>
-            </CardContent>
-          </Card>
-        ))}
+      <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <Card className="border border-indigo-100/70">
+          <CardHeader>
+            <CardTitle className="text-lg">学習サマリー</CardTitle>
+            <CardDescription>
+              これまでの進捗を一目で確認できます
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {statsCards.map((card) => (
+                <div
+                  key={card.id}
+                  className="rounded-xl border border-indigo-100/70 bg-indigo-50/70 px-4 py-3 text-sm text-indigo-900"
+                >
+                  <p className="text-xs font-medium text-indigo-500">
+                    {card.label}
+                  </p>
+                  <p className="mt-1 text-xl font-semibold">{card.value}</p>
+                  <p className="mt-1 text-[11px] text-indigo-700/80">
+                    {card.helperText}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-indigo-100/70">
+          <CardHeader>
+            <CardTitle className="text-lg">今日のおすすめ</CardTitle>
+            <CardDescription>
+              昨日解いた内容を軽く復習してウォームアップしましょう
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              英会話フレーズ大特訓：第1章
+              定型フレーズ編の復習から始めると効果的です。
+            </p>
+            <p>3問だけ解いて感覚を取り戻したら、新しい教材に進みましょう。</p>
+          </CardContent>
+        </Card>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[2fr_3fr]">
+      <section className="grid gap-6 lg:grid-cols-2">
         <Card className="border border-indigo-100/70">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -262,67 +287,26 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
         </Card>
 
         <Card className="border border-indigo-100/70">
-          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle className="text-lg">教材一覧</CardTitle>
-              <CardDescription>
-                学習したい教材とUNITを選択しましょう
-              </CardDescription>
+          <CardHeader className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">教材一覧</CardTitle>
+                <CardDescription>
+                  学習したい教材とUNITを確認しましょう
+                </CardDescription>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                全 {materials.length} 件
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground">
-              全 {materials.length} 件
-            </span>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {materials.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
-                <p>まだ教材が登録されていません。</p>
-                <p className="text-xs">
-                  管理画面から教材を追加すると、ここに表示されます。
-                </p>
+              <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-5 py-10 text-center text-sm text-indigo-600">
+                まだ教材が登録されていません。管理画面から追加すると、ここに表示されます。
               </div>
             ) : (
-              <div className="space-y-6">
-                {materials.map((material) => (
-                  <div
-                    key={material.id}
-                    className="rounded-2xl border border-indigo-100/70 bg-gradient-to-br from-white via-white to-indigo-50/60 p-5 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-indigo-900">
-                          {material.name}
-                        </h3>
-                        {material.description ? (
-                          <p className="text-xs text-indigo-700/80">
-                            {material.description}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center gap-3 rounded-full bg-white/80 px-3 py-1 text-xs text-indigo-700 shadow-sm">
-                        <span>UNIT {material.totalUnitCount}</span>
-                        <Separator orientation="vertical" className="h-4" />
-                        <span>章 {material.chapterCount}</span>
-                        <Separator orientation="vertical" className="h-4" />
-                        <span>問題 {material.totalQuestionCount}</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 h-2 rounded-full bg-indigo-100/70">
-                      <div
-                        className="h-2 rounded-full bg-indigo-500 transition-all"
-                        style={{ width: `${material.progressRatePercent}%` }}
-                      />
-                    </div>
-                    <p className="mt-1 text-[11px] text-indigo-700/80">
-                      学習進捗 {material.progressRatePercent}%
-                    </p>
-
-                    <div className="mt-4 space-y-3">
-                      {renderChapterList(material.chapters)}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              renderUnitPreview(materials)
             )}
           </CardContent>
         </Card>

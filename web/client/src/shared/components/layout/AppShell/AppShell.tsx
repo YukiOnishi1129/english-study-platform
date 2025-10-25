@@ -1,7 +1,6 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import type { Route } from "next";
 import {
   BarChart3,
   BookOpen,
@@ -12,6 +11,7 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
