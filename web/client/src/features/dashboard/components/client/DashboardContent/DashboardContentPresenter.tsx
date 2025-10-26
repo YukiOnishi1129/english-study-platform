@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import Link from "next/link";
 import type { ReactElement } from "react";
 import {
   Card,
@@ -132,7 +133,12 @@ function renderUnitPreview(
             {unitPreview.map((unit) => (
               <li key={unit.id} className="flex items-center gap-2">
                 <span className="size-1.5 rounded-full bg-indigo-400" />
-                <span className="truncate">{unit.name}</span>
+                <Link
+                  href={`/units/${unit.id}`}
+                  className="truncate text-indigo-700 hover:underline"
+                >
+                  {unit.name}
+                </Link>
                 <span className="text-[11px] text-indigo-500">
                   {unit.questionCount}問
                 </span>
