@@ -22,6 +22,15 @@ export const UnitDetailQuestionSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   correctAnswers: z.array(UnitDetailCorrectAnswerSchema),
+  statistics: z
+    .object({
+      totalAttempts: z.number().int().nonnegative(),
+      correctCount: z.number().int().nonnegative(),
+      incorrectCount: z.number().int().nonnegative(),
+      accuracy: z.number().min(0).max(1),
+      lastAttemptedAt: z.string().nullable(),
+    })
+    .nullable(),
 });
 
 export type UnitDetailQuestionDto = z.infer<typeof UnitDetailQuestionSchema>;

@@ -5,6 +5,7 @@ import {
   CorrectAnswerRepositoryImpl,
   MaterialRepositoryImpl,
   QuestionRepositoryImpl,
+  QuestionStatisticsRepositoryImpl,
   UnitRepositoryImpl,
 } from "@acme/shared/db";
 import { z } from "zod";
@@ -16,9 +17,11 @@ const chapterRepository = new ChapterRepositoryImpl();
 const materialRepository = new MaterialRepositoryImpl();
 const questionRepository = new QuestionRepositoryImpl();
 const correctAnswerRepository = new CorrectAnswerRepositoryImpl();
+const questionStatisticsRepository = new QuestionStatisticsRepositoryImpl();
 
 const RequestSchema = z.object({
   unitId: z.string().min(1, "unitId is required"),
+  accountId: z.string().min(1).optional(),
 });
 
 function serialize(date: Date) {
@@ -54,8 +57,9 @@ async function buildChapterPath(chapterId: string) {
 
 export async function getUnitDetail(request: {
   unitId: string;
+  accountId?: string | null;
 }): Promise<UnitDetailDto> {
-  const { unitId } = RequestSchema.parse(request);
+  const { unitId, accountId } = RequestSchema.parse(request);
 
   const unit = await unitRepository.findById(unitId);
   if (!unit) {
@@ -75,6 +79,17 @@ export async function getUnitDetail(request: {
   const chapterPath = await buildChapterPath(chapter.id);
 
   const questions = await questionRepository.findByUnitId(unit.id);
+  const questionIds = questions.map((question) => question.id);
+  const statisticsMap = accountId
+    ? await questionStatisticsRepository
+        .findByUserAndQuestionIds(accountId, questionIds)
+        .then((stats) =>
+          stats.reduce<Record<string, (typeof stats)[number]>>((acc, item) => {
+            acc[item.questionId] = item;
+            return acc;
+          }, {}),
+        )
+    : {};
   const questionDtos = await Promise.all(
     questions.map(async (question) => {
       const answers = await correctAnswerRepository.findByQuestionId(
@@ -97,6 +112,21 @@ export async function getUnitDetail(request: {
           createdAt: serialize(answer.createdAt),
           updatedAt: serialize(answer.updatedAt),
         })),
+        statistics: (() => {
+          const stat = accountId ? statisticsMap[question.id] : undefined;
+          if (!stat) {
+            return null;
+          }
+          return {
+            totalAttempts: stat.totalAttempts,
+            correctCount: stat.correctCount,
+            incorrectCount: stat.incorrectCount,
+            accuracy: stat.accuracy,
+            lastAttemptedAt: stat.lastAttemptedAt
+              ? serialize(stat.lastAttemptedAt)
+              : null,
+          };
+        })(),
       };
     }),
   );

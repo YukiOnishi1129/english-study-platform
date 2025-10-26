@@ -5,9 +5,9 @@ import { UnitDetailSchema } from "@/external/dto/unit/unit.query.dto";
 import { getUnitDetailAction } from "@/external/handler/unit/unit.query.action";
 import { unitKeys } from "./keys";
 
-export function useUnitDetailQuery(unitId: string) {
+export function useUnitDetailQuery(unitId: string, accountId: string | null) {
   return useQuery({
-    queryKey: unitKeys.detail(unitId),
+    queryKey: unitKeys.detail(unitId, accountId),
     queryFn: async () => {
       const response = await getUnitDetailAction({ unitId });
       if (!response) {

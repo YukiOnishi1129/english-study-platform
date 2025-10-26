@@ -133,6 +133,13 @@ function renderQuestion(question: UnitQuestionViewModel) {
           例: {question.answerSamples.join(", ")}
         </p>
       ) : null}
+      {question.statistics ? (
+        <p className="mt-1 text-xs text-muted-foreground">
+          通算 {question.statistics.totalAttempts} 回 / 正解{" "}
+          {question.statistics.correctCount} 回 （
+          {Math.round(question.statistics.accuracy * 100)}%）
+        </p>
+      ) : null}
     </li>
   );
 }

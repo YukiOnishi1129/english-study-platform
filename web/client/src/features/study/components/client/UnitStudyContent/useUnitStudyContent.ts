@@ -1,18 +1,31 @@
 "use client";
 
 import type * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
+import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
 import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
+import { unitKeys } from "@/features/units/queries/keys";
 
 interface UseUnitStudyContentOptions {
   unitId: string;
+  accountId: string | null;
 }
 
 export interface UnitStudyBreadcrumbItem {
   id: string;
   label: string;
   href: string | null;
+}
+
+export interface UnitStudyQuestionStatisticsViewModel {
+  totalAttempts: number;
+  correctCount: number;
+  incorrectCount: number;
+  accuracy: number;
+  lastAttemptedAt: string | null;
 }
 
 export interface UnitStudyQuestionViewModel {
@@ -22,6 +35,7 @@ export interface UnitStudyQuestionViewModel {
   hint: string | null;
   explanation: string | null;
   acceptableAnswers: string[];
+  statistics: UnitStudyQuestionStatisticsViewModel | null;
 }
 
 type StudyStatus = "idle" | "correct" | "incorrect";
@@ -29,6 +43,7 @@ type StudyStatus = "idle" | "correct" | "incorrect";
 export interface UseUnitStudyContentResult {
   isLoading: boolean;
   isError: boolean;
+  isSubmitting: boolean;
   unit: UnitDetailDto["unit"] | null;
   material: UnitDetailDto["material"] | null;
   breadcrumb: UnitStudyBreadcrumbItem[];
@@ -39,20 +54,24 @@ export interface UseUnitStudyContentResult {
   currentIndex: number;
   progressLabel: string;
   currentQuestion: UnitStudyQuestionViewModel | null;
+  currentStatistics: UnitStudyQuestionStatisticsViewModel | null;
   inputValue: string;
   status: StudyStatus;
   isHintVisible: boolean;
   isAnswerVisible: boolean;
+  isAutoAdvancing: boolean;
+  autoAdvanceSeconds: number;
+  errorMessage: string | null;
   onInputChange: (value: string) => void;
   onToggleHint: () => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
   onNext: () => void;
   onReset: () => void;
 }
 
-function buildBreadcrumb(
-  detail: UnitDetailDto | null,
-): UnitStudyBreadcrumbItem[] {
+const AUTO_ADVANCE_DELAY_MS = 2000;
+
+function buildBreadcrumb(detail: UnitDetailDto | null): UnitStudyBreadcrumbItem[] {
   if (!detail) {
     return [];
   }
@@ -88,35 +107,83 @@ function buildBreadcrumb(
   return items;
 }
 
-function normalizeAnswer(value: string) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
+function mapStatistics(
+  stats: UnitDetailDto["questions"][number]["statistics"],
+): UnitStudyQuestionStatisticsViewModel | null {
+  if (!stats) {
+    return null;
+  }
+
+  return {
+    totalAttempts: stats.totalAttempts,
+    correctCount: stats.correctCount,
+    incorrectCount: stats.incorrectCount,
+    accuracy: stats.accuracy,
+    lastAttemptedAt: stats.lastAttemptedAt,
+  };
+}
+
+interface SubmitUnitAnswerVariables {
+  unitId: string;
+  questionId: string;
+  answerText: string;
+}
+
+interface SubmitUnitAnswerResult {
+  isCorrect: boolean;
+  statistics: {
+    totalAttempts: number;
+    correctCount: number;
+    incorrectCount: number;
+    accuracy: number;
+    lastAttemptedAt: string | null;
+  };
 }
 
 export function useUnitStudyContent(
   options: UseUnitStudyContentOptions,
 ): UseUnitStudyContentResult {
-  const { unitId } = options;
-  const { data, isLoading, isError } = useUnitDetailQuery(unitId);
+  const { unitId, accountId } = options;
+  const queryClient = useQueryClient();
+  const { data, isLoading, isError } = useUnitDetailQuery(unitId, accountId);
 
   const questions = useMemo<UnitStudyQuestionViewModel[]>(() => {
     if (!data) {
       return [];
     }
 
-    return data.questions.map((question) => ({
-      id: question.id,
-      title: `Q${question.order}`,
-      japanese: question.japanese,
-      hint: question.hint,
-      explanation: question.explanation,
-      acceptableAnswers: question.correctAnswers.map(
-        (answer) => answer.answerText,
-      ),
-    }));
+    return data.questions
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((question) => ({
+        id: question.id,
+        title: `Q${question.order}`,
+        japanese: question.japanese,
+        hint: question.hint,
+        explanation: question.explanation,
+        acceptableAnswers: question.correctAnswers.map((answer) => answer.answerText),
+        statistics: mapStatistics(question.statistics),
+      }));
+  }, [data]);
+
+  const [questionStatisticsMap, setQuestionStatisticsMap] = useState<
+    Record<string, UnitStudyQuestionStatisticsViewModel | null>
+  >({});
+
+  useEffect(() => {
+    if (!data) {
+      setQuestionStatisticsMap({});
+      return;
+    }
+
+    const next: Record<string, UnitStudyQuestionStatisticsViewModel | null> = {};
+    data.questions.forEach((question) => {
+      next[question.id] = mapStatistics(question.statistics);
+    });
+    setQuestionStatisticsMap(next);
   }, [data]);
 
   const questionCount = questions.length;
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputValue, setInputValue] = useState("");
   const [status, setStatus] = useState<StudyStatus>("idle");
@@ -124,6 +191,19 @@ export function useUnitStudyContent(
   const [isAnswerVisible, setAnswerVisible] = useState(false);
   const [answeredCount, setAnsweredCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearAutoAdvance = useCallback(() => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+    setIsAutoAdvancing(false);
+  }, []);
+
+  useEffect(() => () => clearAutoAdvance(), [clearAutoAdvance]);
 
   useEffect(() => {
     if (questionCount === 0) {
@@ -134,6 +214,8 @@ export function useUnitStudyContent(
       setAnswerVisible(false);
       setAnsweredCount(0);
       setCorrectCount(0);
+      setErrorMessage(null);
+      clearAutoAdvance();
       return;
     }
 
@@ -143,10 +225,15 @@ export function useUnitStudyContent(
       setHintVisible(false);
       setAnswerVisible(false);
       setInputValue("");
+      clearAutoAdvance();
     }
-  }, [questionCount, currentIndex]);
+  }, [questionCount, currentIndex, clearAutoAdvance]);
 
   const currentQuestion = questions[currentIndex] ?? null;
+  const currentStatistics = currentQuestion
+    ? questionStatisticsMap[currentQuestion.id] ?? null
+    : null;
+
   const progressLabel =
     questionCount > 0 ? `${currentIndex + 1} / ${questionCount}` : "0 / 0";
   const accuracyRate =
@@ -161,56 +248,142 @@ export function useUnitStudyContent(
     setStatus("idle");
     setHintVisible(false);
     setAnswerVisible(false);
+    setErrorMessage(null);
   }, []);
 
+  const moveToNextQuestion = useCallback(() => {
+    if (questionCount === 0) {
+      return;
+    }
+    setCurrentIndex((prev) => (prev + 1) % questionCount);
+    resetStateForNextQuestion();
+  }, [questionCount, resetStateForNextQuestion]);
+
+  const handleNext = useCallback(() => {
+    clearAutoAdvance();
+    moveToNextQuestion();
+  }, [clearAutoAdvance, moveToNextQuestion]);
+
+  const scheduleAutoAdvance = useCallback(() => {
+    if (questionCount === 0) {
+      return;
+    }
+    clearAutoAdvance();
+    setIsAutoAdvancing(true);
+    autoAdvanceTimerRef.current = setTimeout(() => {
+      autoAdvanceTimerRef.current = null;
+      setIsAutoAdvancing(false);
+      moveToNextQuestion();
+    }, AUTO_ADVANCE_DELAY_MS);
+  }, [clearAutoAdvance, moveToNextQuestion, questionCount]);
+
+  const submitAnswer = useMutation({
+    mutationFn: async (
+      variables: SubmitUnitAnswerVariables,
+    ): Promise<SubmitUnitAnswerResult> => submitUnitAnswerAction(variables),
+  });
+
   const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (!currentQuestion) {
         return;
       }
 
-      const normalizedInput = normalizeAnswer(inputValue);
-      if (!normalizedInput) {
+      const trimmed = inputValue.trim();
+      if (!trimmed) {
         setStatus("idle");
         return;
       }
 
-      const isCorrect = currentQuestion.acceptableAnswers.some(
-        (answer) => normalizeAnswer(answer) === normalizedInput,
-      );
+      clearAutoAdvance();
 
-      setStatus(isCorrect ? "correct" : "incorrect");
-      setAnswerVisible(true);
-      setAnsweredCount((prev) => prev + 1);
-      if (isCorrect) {
-        setCorrectCount((prev) => prev + 1);
+      try {
+        const result = await submitAnswer.mutateAsync({
+          unitId,
+          questionId: currentQuestion.id,
+          answerText: trimmed,
+        });
+
+        setStatus(result.isCorrect ? "correct" : "incorrect");
+        setAnswerVisible(true);
+        setAnsweredCount((prev) => prev + 1);
+        if (result.isCorrect) {
+          setCorrectCount((prev) => prev + 1);
+        }
+        setErrorMessage(null);
+
+        const statsViewModel: UnitStudyQuestionStatisticsViewModel = {
+          totalAttempts: result.statistics.totalAttempts,
+          correctCount: result.statistics.correctCount,
+          incorrectCount: result.statistics.incorrectCount,
+          accuracy: result.statistics.accuracy,
+          lastAttemptedAt: result.statistics.lastAttemptedAt,
+        };
+
+        setQuestionStatisticsMap((prev) => ({
+          ...prev,
+          [currentQuestion.id]: statsViewModel,
+        }));
+
+        queryClient.setQueryData<UnitDetailDto | undefined>(
+          unitKeys.detail(unitId, accountId ?? null),
+          (prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return {
+              ...prev,
+              questions: prev.questions.map((question) =>
+                question.id === currentQuestion.id
+                  ? {
+                      ...question,
+                      statistics: {
+                        totalAttempts: statsViewModel.totalAttempts,
+                        correctCount: statsViewModel.correctCount,
+                        incorrectCount: statsViewModel.incorrectCount,
+                        accuracy: statsViewModel.accuracy,
+                        lastAttemptedAt: statsViewModel.lastAttemptedAt,
+                      },
+                    }
+                  : question,
+              ),
+            };
+          },
+        );
+
+        scheduleAutoAdvance();
+      } catch (error) {
+        console.error("Failed to submit answer", error);
+        setErrorMessage("解答の送信に失敗しました。時間をおいて再度お試しください。");
+        setStatus("idle");
+        setAnswerVisible(false);
       }
     },
-    [currentQuestion, inputValue],
+    [
+      accountId,
+      clearAutoAdvance,
+      currentQuestion,
+      inputValue,
+      queryClient,
+      scheduleAutoAdvance,
+      submitAnswer,
+      unitId,
+    ],
   );
 
-  const handleNext = useCallback(() => {
-    if (questionCount === 0) {
-      return;
-    }
-    setCurrentIndex((prev) => {
-      const nextIndex = prev + 1;
-      return nextIndex >= questionCount ? 0 : nextIndex;
-    });
-    resetStateForNextQuestion();
-  }, [questionCount, resetStateForNextQuestion]);
-
   const handleReset = useCallback(() => {
+    clearAutoAdvance();
     setCurrentIndex(0);
     setAnsweredCount(0);
     setCorrectCount(0);
     resetStateForNextQuestion();
-  }, [resetStateForNextQuestion]);
+  }, [clearAutoAdvance, resetStateForNextQuestion]);
 
   return {
     isLoading,
     isError,
+    isSubmitting: submitAnswer.isPending,
     unit: data?.unit ?? null,
     material: data?.material ?? null,
     breadcrumb: buildBreadcrumb(data ?? null),
@@ -221,10 +394,14 @@ export function useUnitStudyContent(
     currentIndex,
     progressLabel,
     currentQuestion,
+    currentStatistics,
     inputValue,
     status,
     isHintVisible,
     isAnswerVisible,
+    isAutoAdvancing,
+    autoAdvanceSeconds: AUTO_ADVANCE_DELAY_MS / 1000,
+    errorMessage,
     onInputChange: handleInputChange,
     onToggleHint: () => setHintVisible((prev) => !prev),
     onSubmit: handleSubmit,

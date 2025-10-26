@@ -6,6 +6,7 @@ import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery"
 
 interface UseUnitDetailContentOptions {
   unitId: string;
+  accountId: string | null;
 }
 
 export interface UnitBreadcrumbItem {
@@ -22,6 +23,13 @@ export interface UnitQuestionViewModel {
   hint: string | null;
   explanation: string | null;
   answerSamples: string[];
+  statistics: {
+    totalAttempts: number;
+    correctCount: number;
+    incorrectCount: number;
+    accuracy: number;
+    lastAttemptedAt: string | null;
+  } | null;
 }
 
 export interface UseUnitDetailContentResult {
@@ -68,8 +76,8 @@ function buildBreadcrumb(detail: UnitDetailDto | null): UnitBreadcrumbItem[] {
 export function useUnitDetailContent(
   options: UseUnitDetailContentOptions,
 ): UseUnitDetailContentResult {
-  const { unitId } = options;
-  const { data, isLoading, isError } = useUnitDetailQuery(unitId);
+  const { unitId, accountId } = options;
+  const { data, isLoading, isError } = useUnitDetailQuery(unitId, accountId);
 
   const breadcrumb = useMemo(() => buildBreadcrumb(data ?? null), [data]);
 
@@ -88,6 +96,15 @@ export function useUnitDetailContent(
       answerSamples: question.correctAnswers
         .map((answer) => answer.answerText)
         .slice(0, 3),
+      statistics: question.statistics
+        ? {
+            totalAttempts: question.statistics.totalAttempts,
+            correctCount: question.statistics.correctCount,
+            incorrectCount: question.statistics.incorrectCount,
+            accuracy: question.statistics.accuracy,
+            lastAttemptedAt: question.statistics.lastAttemptedAt,
+          }
+        : null,
     }));
   }, [data]);
 

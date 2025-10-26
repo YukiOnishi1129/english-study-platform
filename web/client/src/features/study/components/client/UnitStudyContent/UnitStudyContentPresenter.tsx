@@ -98,6 +98,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
   const {
     isLoading,
     isError,
+    isSubmitting,
     unit,
     material,
     breadcrumb,
@@ -108,10 +109,14 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     currentIndex,
     progressLabel,
     currentQuestion,
+    currentStatistics,
     inputValue,
     status,
     isHintVisible,
     isAnswerVisible,
+    isAutoAdvancing,
+    autoAdvanceSeconds,
+    errorMessage,
     onInputChange,
     onToggleHint,
     onSubmit,
@@ -201,11 +206,40 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
                 </span>
               </p>
             </div>
+            <Separator className="my-2" />
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p className="font-semibold text-slate-900">この問題の学習記録</p>
+              {currentStatistics ? (
+                <>
+                  <p>
+                    通算解答回数:{" "}
+                    <span className="font-semibold text-slate-900">
+                      {currentStatistics.totalAttempts} 回
+                    </span>
+                  </p>
+                  <p>
+                    通算正解数:{" "}
+                    <span className="font-semibold text-slate-900">
+                      {currentStatistics.correctCount} 回
+                    </span>
+                  </p>
+                  <p>
+                    通算正答率:{" "}
+                    <span className="font-semibold text-slate-900">
+                      {Math.round(currentStatistics.accuracy * 100)}%
+                    </span>
+                  </p>
+                </>
+              ) : (
+                <p>まだこの問題の解答履歴はありません。</p>
+              )}
+            </div>
             <Button
               type="button"
               variant="outline"
               className="mt-2 gap-2 text-xs"
               onClick={onReset}
+              disabled={isSubmitting}
             >
               <RotateCcw className="size-4" />
               セッションをリセット
@@ -272,20 +306,38 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
               onChange={(event) => onInputChange(event.target.value)}
               placeholder="Enter your answer..."
               autoFocus
+              disabled={isSubmitting}
             />
             <div className="flex flex-wrap gap-3">
-              <Button type="submit" className="flex-1 min-w-[140px]">
-                回答する
+              <Button
+                type="submit"
+                className="flex-1 min-w-[140px]"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "判定中..." : "回答する"}
               </Button>
               <Button
                 type="button"
                 variant="secondary"
                 className="flex-1 min-w-[140px]"
                 onClick={onNext}
+                disabled={isSubmitting}
               >
-                次の問題へ
+                次の問題に進む
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Enterキーで回答すると約{autoAdvanceSeconds}
+              秒後に自動で次の問題へ移動します。
+            </p>
+            {isAutoAdvancing ? (
+              <p className="text-xs font-medium text-indigo-600">
+                {autoAdvanceSeconds}秒後に次の問題へ移動します...
+              </p>
+            ) : null}
+            {errorMessage ? (
+              <p className="text-xs font-medium text-red-600">{errorMessage}</p>
+            ) : null}
           </form>
 
           <Separator />
@@ -321,16 +373,42 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
                   解説: {currentQuestion.explanation}
                 </p>
               ) : null}
-              <div className="flex flex-wrap gap-2 text-xs text-indigo-700/80">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled
-                  className="gap-1 px-2"
-                >
-                  「正解にする」機能は準備中
-                </Button>
-              </div>
+              {currentStatistics ? (
+                <div className="grid gap-2 rounded-lg border border-indigo-100 bg-white/70 p-3 text-xs text-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span>解答回数</span>
+                    <span className="font-semibold text-slate-900">
+                      {currentStatistics.totalAttempts} 回
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>正解数</span>
+                    <span className="font-semibold text-slate-900">
+                      {currentStatistics.correctCount} 回
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>正答率</span>
+                    <span className="font-semibold text-slate-900">
+                      {Math.round(currentStatistics.accuracy * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>最終解答日</span>
+                    <span>
+                      {currentStatistics.lastAttemptedAt
+                        ? new Date(
+                            currentStatistics.lastAttemptedAt,
+                          ).toLocaleString()
+                        : "--"}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-indigo-700/80">
+                  まだこの問題の学習履歴はありません。
+                </p>
+              )}
             </div>
           ) : null}
         </CardContent>

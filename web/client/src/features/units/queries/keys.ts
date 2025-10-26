@@ -1,3 +1,4 @@
 export const unitKeys = {
-  detail: (unitId: string) => ["unit", unitId] as const,
+  detail: (unitId: string, accountId: string | null) =>
+    ["unit", unitId, accountId ?? "anon"] as const,
 };
