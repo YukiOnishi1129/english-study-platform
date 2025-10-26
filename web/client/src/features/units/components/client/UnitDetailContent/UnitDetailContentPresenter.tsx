@@ -157,6 +157,8 @@ export function UnitDetailContentPresenter(props: UseUnitDetailContentResult) {
     return <ErrorState />;
   }
 
+  const studyHref: `/units/${string}/study` = `/units/${unit.id}/study`;
+
   return (
     <div className="space-y-6">
       {renderBreadcrumb(breadcrumb)}
@@ -178,14 +180,7 @@ export function UnitDetailContentPresenter(props: UseUnitDetailContentResult) {
             )}
           </div>
           <Button asChild size="lg">
-            <Link
-              href={{
-                pathname: "/units/[unitId]/study",
-                query: { unitId: unit.id },
-              }}
-            >
-              このUNITで学習を開始
-            </Link>
+            <Link href={studyHref}>このUNITで学習を開始</Link>
           </Button>
         </CardHeader>
       </Card>
