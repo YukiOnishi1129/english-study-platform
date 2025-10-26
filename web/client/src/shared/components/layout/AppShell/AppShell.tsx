@@ -161,7 +161,7 @@ function NavigationList({
 }
 
 export function AppShell({ account, children }: AppShellProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const displayName = useMemo(() => {

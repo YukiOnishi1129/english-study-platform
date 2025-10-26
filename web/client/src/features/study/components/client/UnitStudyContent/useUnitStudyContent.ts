@@ -1,13 +1,13 @@
 "use client";
 
-import type * as React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type * as React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
-import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 import { unitKeys } from "@/features/units/queries/keys";
+import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 
 interface UseUnitStudyContentOptions {
   unitId: string;
@@ -59,8 +59,6 @@ export interface UseUnitStudyContentResult {
   status: StudyStatus;
   isHintVisible: boolean;
   isAnswerVisible: boolean;
-  isAutoAdvancing: boolean;
-  autoAdvanceSeconds: number;
   errorMessage: string | null;
   onInputChange: (value: string) => void;
   onToggleHint: () => void;
@@ -69,9 +67,9 @@ export interface UseUnitStudyContentResult {
   onReset: () => void;
 }
 
-const AUTO_ADVANCE_DELAY_MS = 2000;
-
-function buildBreadcrumb(detail: UnitDetailDto | null): UnitStudyBreadcrumbItem[] {
+function buildBreadcrumb(
+  detail: UnitDetailDto | null,
+): UnitStudyBreadcrumbItem[] {
   if (!detail) {
     return [];
   }
@@ -161,7 +159,9 @@ export function useUnitStudyContent(
         japanese: question.japanese,
         hint: question.hint,
         explanation: question.explanation,
-        acceptableAnswers: question.correctAnswers.map((answer) => answer.answerText),
+        acceptableAnswers: question.correctAnswers.map(
+          (answer) => answer.answerText,
+        ),
         statistics: mapStatistics(question.statistics),
       }));
   }, [data]);
@@ -176,7 +176,8 @@ export function useUnitStudyContent(
       return;
     }
 
-    const next: Record<string, UnitStudyQuestionStatisticsViewModel | null> = {};
+    const next: Record<string, UnitStudyQuestionStatisticsViewModel | null> =
+      {};
     data.questions.forEach((question) => {
       next[question.id] = mapStatistics(question.statistics);
     });
@@ -192,19 +193,6 @@ export function useUnitStudyContent(
   const [answeredCount, setAnsweredCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isAutoAdvancing, setIsAutoAdvancing] = useState(false);
-  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const clearAutoAdvance = useCallback(() => {
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
-    setIsAutoAdvancing(false);
-  }, []);
-
-  useEffect(() => () => clearAutoAdvance(), [clearAutoAdvance]);
-
   useEffect(() => {
     if (questionCount === 0) {
       setCurrentIndex(0);
@@ -215,7 +203,6 @@ export function useUnitStudyContent(
       setAnsweredCount(0);
       setCorrectCount(0);
       setErrorMessage(null);
-      clearAutoAdvance();
       return;
     }
 
@@ -225,13 +212,12 @@ export function useUnitStudyContent(
       setHintVisible(false);
       setAnswerVisible(false);
       setInputValue("");
-      clearAutoAdvance();
     }
-  }, [questionCount, currentIndex, clearAutoAdvance]);
+  }, [questionCount, currentIndex]);
 
   const currentQuestion = questions[currentIndex] ?? null;
   const currentStatistics = currentQuestion
-    ? questionStatisticsMap[currentQuestion.id] ?? null
+    ? (questionStatisticsMap[currentQuestion.id] ?? null)
     : null;
 
   const progressLabel =
@@ -260,22 +246,8 @@ export function useUnitStudyContent(
   }, [questionCount, resetStateForNextQuestion]);
 
   const handleNext = useCallback(() => {
-    clearAutoAdvance();
     moveToNextQuestion();
-  }, [clearAutoAdvance, moveToNextQuestion]);
-
-  const scheduleAutoAdvance = useCallback(() => {
-    if (questionCount === 0) {
-      return;
-    }
-    clearAutoAdvance();
-    setIsAutoAdvancing(true);
-    autoAdvanceTimerRef.current = setTimeout(() => {
-      autoAdvanceTimerRef.current = null;
-      setIsAutoAdvancing(false);
-      moveToNextQuestion();
-    }, AUTO_ADVANCE_DELAY_MS);
-  }, [clearAutoAdvance, moveToNextQuestion, questionCount]);
+  }, [moveToNextQuestion]);
 
   const submitAnswer = useMutation({
     mutationFn: async (
@@ -290,13 +262,15 @@ export function useUnitStudyContent(
         return;
       }
 
+      if (status !== "idle") {
+        return;
+      }
+
       const trimmed = inputValue.trim();
       if (!trimmed) {
         setStatus("idle");
         return;
       }
-
-      clearAutoAdvance();
 
       try {
         const result = await submitAnswer.mutateAsync({
@@ -351,34 +325,32 @@ export function useUnitStudyContent(
             };
           },
         );
-
-        scheduleAutoAdvance();
       } catch (error) {
         console.error("Failed to submit answer", error);
-        setErrorMessage("解答の送信に失敗しました。時間をおいて再度お試しください。");
+        setErrorMessage(
+          "解答の送信に失敗しました。時間をおいて再度お試しください。",
+        );
         setStatus("idle");
         setAnswerVisible(false);
       }
     },
     [
       accountId,
-      clearAutoAdvance,
       currentQuestion,
       inputValue,
       queryClient,
-      scheduleAutoAdvance,
+      status,
       submitAnswer,
       unitId,
     ],
   );
 
   const handleReset = useCallback(() => {
-    clearAutoAdvance();
     setCurrentIndex(0);
     setAnsweredCount(0);
     setCorrectCount(0);
     resetStateForNextQuestion();
-  }, [clearAutoAdvance, resetStateForNextQuestion]);
+  }, [resetStateForNextQuestion]);
 
   return {
     isLoading,
@@ -399,8 +371,6 @@ export function useUnitStudyContent(
     status,
     isHintVisible,
     isAnswerVisible,
-    isAutoAdvancing,
-    autoAdvanceSeconds: AUTO_ADVANCE_DELAY_MS / 1000,
     errorMessage,
     onInputChange: handleInputChange,
     onToggleHint: () => setHintVisible((prev) => !prev),
