@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+export const MaterialDetailUnitSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().nullable(),
+  order: z.number().int().nonnegative(),
+  questionCount: z.number().int().nonnegative(),
+  solvedQuestionCount: z.number().int().nonnegative(),
+});
+
+export type MaterialDetailUnitDto = z.infer<typeof MaterialDetailUnitSchema>;
+
 export const MaterialDetailChapterSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -8,6 +19,8 @@ export const MaterialDetailChapterSchema = z.object({
   questionCount: z.number().int().nonnegative(),
   level: z.number().int().nonnegative(),
   parentChapterId: z.string().nullable(),
+  order: z.number().int().nonnegative(),
+  units: z.array(MaterialDetailUnitSchema),
 });
 
 export type MaterialDetailChapterDto = z.infer<
@@ -22,6 +35,7 @@ export const MaterialDetailSchema = z.object({
     totalUnits: z.number().int().nonnegative(),
     totalQuestions: z.number().int().nonnegative(),
     updatedAt: z.string(),
+    nextUnitId: z.string().min(1).nullable(),
   }),
   chapters: z.array(MaterialDetailChapterSchema),
 });

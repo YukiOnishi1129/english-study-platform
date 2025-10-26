@@ -1,0 +1,1 @@
+export { MaterialListPageContent } from "./MaterialListPageContent";

@@ -348,8 +348,14 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
 
             <Separator />
 
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-inner">
-              <StatusIcon className="size-5 text-indigo-600" />
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm shadow-inner transition-all">
+              <StatusIcon
+                className={cn(
+                  "size-5 text-indigo-600 transition-all duration-300",
+                  status === "correct" && "text-green-600 animate-bounce",
+                  status === "incorrect" && "text-red-600",
+                )}
+              />
               <span
                 className={cn(
                   "font-semibold",

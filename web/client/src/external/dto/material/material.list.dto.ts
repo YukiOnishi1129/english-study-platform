@@ -7,6 +7,7 @@ export const MaterialListItemSchema = z.object({
   unitCount: z.number().int().nonnegative(),
   questionCount: z.number().int().nonnegative(),
   updatedAt: z.string(),
+  nextUnitId: z.string().min(1).nullable(),
 });
 
 export type MaterialListItemDto = z.infer<typeof MaterialListItemSchema>;
