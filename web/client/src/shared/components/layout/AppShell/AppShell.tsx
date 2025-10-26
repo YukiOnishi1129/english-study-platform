@@ -61,8 +61,8 @@ const mainNavigation: NavigationItem[] = [
   },
   {
     label: "教材一覧",
+    href: "/materials",
     icon: BookOpen,
-    comingSoon: true,
   },
   {
     label: "学習する",
