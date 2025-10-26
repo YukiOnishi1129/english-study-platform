@@ -115,7 +115,6 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     onInputChange,
     onToggleHint,
     onSubmit,
-    onRevealAnswer,
     onNext,
     onReset,
   } = props;
@@ -277,14 +276,6 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
             <div className="flex flex-wrap gap-3">
               <Button type="submit" className="flex-1 min-w-[140px]">
                 回答する
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 min-w-[140px]"
-                onClick={onRevealAnswer}
-              >
-                正解を表示
               </Button>
               <Button
                 type="button"

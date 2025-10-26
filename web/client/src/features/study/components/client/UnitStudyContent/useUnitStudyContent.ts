@@ -46,7 +46,6 @@ export interface UseUnitStudyContentResult {
   onInputChange: (value: string) => void;
   onToggleHint: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-  onRevealAnswer: () => void;
   onNext: () => void;
   onReset: () => void;
 }
@@ -191,15 +190,6 @@ export function useUnitStudyContent(
     [currentQuestion, inputValue],
   );
 
-  const handleReveal = useCallback(() => {
-    if (!currentQuestion) {
-      return;
-    }
-    setStatus("incorrect");
-    setAnswerVisible(true);
-    setAnsweredCount((prev) => (status === "idle" ? prev + 1 : prev));
-  }, [currentQuestion, status]);
-
   const handleNext = useCallback(() => {
     if (questionCount === 0) {
       return;
@@ -238,7 +228,6 @@ export function useUnitStudyContent(
     onInputChange: handleInputChange,
     onToggleHint: () => setHintVisible((prev) => !prev),
     onSubmit: handleSubmit,
-    onRevealAnswer: handleReveal,
     onNext: handleNext,
     onReset: handleReset,
   };
