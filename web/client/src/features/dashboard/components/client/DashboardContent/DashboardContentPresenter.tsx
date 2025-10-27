@@ -2,7 +2,11 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { type ReactElement, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { type ReactElement, useCallback, useMemo, useTransition } from "react";
+import type { Route } from "next";
+import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
+import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,
@@ -173,6 +177,8 @@ function renderUnitPreview(
 export function DashboardContentPresenter(props: UseDashboardContentResult) {
   const { greetingName, statsCards, calendar, materials, isLoading, isError } =
     props;
+  const router = useRouter();
+  const [isStartingStudy, startStudyTransition] = useTransition();
   const todayLabel = formatDateKey(startOfUtcDay(new Date()));
   const isCompactCalendar = useMediaQuery("(max-width: 640px)");
   const displayedWeeks = useMemo(() => {
@@ -212,6 +218,27 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   const displayedDayCount = displayedWeeks.length * 7;
   const isShowingSubsetOfCalendar =
     displayedWeeks.length !== calendar.weeks.length;
+  const handleStartStudy = useCallback(() => {
+    startStudyTransition(() => {
+      void (async () => {
+        try {
+          const target = await getNextStudyTargetAction();
+          if (target) {
+            const search = target.questionId
+              ? `?questionId=${target.questionId}`
+              : "";
+            router.push(
+              `/units/${target.unitId}/study${search}` as Route,
+            );
+          } else {
+            router.push("/materials");
+          }
+        } catch (_error) {
+          router.push("/materials");
+        }
+      })();
+    });
+  }, [router]);
 
   if (isLoading) {
     return (
@@ -237,18 +264,30 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   return (
     <div className="mx-auto w-full max-w-[992px] space-y-6 px-4 sm:px-6">
       <Card className="border border-indigo-100/70 bg-white/95">
-        <CardHeader className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-          <div>
-            <CardTitle className="text-2xl font-bold text-slate-900">
-              {greetingName}さん、おかえりなさい！
-            </CardTitle>
-            <CardDescription className="text-sm text-muted-foreground leading-relaxed">
-              利用可能な問題は {totalQuestionCount}{" "}
-              問です。今日も無理なく学習を続けましょう。
-            </CardDescription>
+        <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          <div className="flex flex-1 flex-col gap-2">
+            <div>
+              <CardTitle className="text-2xl font-bold text-slate-900">
+                {greetingName}さん、おかえりなさい！
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground leading-relaxed">
+                利用可能な問題は {totalQuestionCount}{" "}
+                問です。今日も無理なく学習を続けましょう。
+              </CardDescription>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              前回の学習：昨日 22:15
+            </div>
           </div>
-          <div className="text-sm text-muted-foreground">
-            前回の学習：昨日 22:15
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              type="button"
+              onClick={handleStartStudy}
+              disabled={isStartingStudy}
+              className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+            >
+              問題を解く
+            </Button>
           </div>
         </CardHeader>
       </Card>
@@ -283,16 +322,24 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
 
         <Card className="border border-indigo-100/70">
           <CardHeader className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg">教材一覧</CardTitle>
                 <CardDescription>
                   学習したい教材とUNITを確認しましょう
                 </CardDescription>
               </div>
-              <span className="text-xs text-muted-foreground">
-                全 {materials.length} 件
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">
+                  全 {materials.length} 件
+                </span>
+                <Link
+                  href="/materials"
+                  className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-500"
+                >
+                  すべての教材を見る
+                </Link>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

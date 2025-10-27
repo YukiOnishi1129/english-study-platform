@@ -10,10 +10,11 @@ import {
   PlayCircle,
   Settings,
 } from "lucide-react";
-import type { Route } from "next";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import type { Route } from "next";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useMemo, useState, useTransition } from "react";
+import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
 import type { Account } from "@/features/account/types/account";
 import { LogoutButton } from "@/features/auth/components/client/LogoutButton";
 import {
@@ -162,7 +163,32 @@ function NavigationList({
 
 export function AppShell({ account, children }: AppShellProps) {
   const pathname = usePathname() ?? "";
+  const router = useRouter();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [isStartingStudy, startStudyTransition] = useTransition();
+
+  const handleStartStudy = useCallback(() => {
+    setMobileNavOpen(false);
+    startStudyTransition(() => {
+      void (async () => {
+        try {
+          const target = await getNextStudyTargetAction();
+          if (target) {
+            const search = target.questionId
+              ? `?questionId=${target.questionId}`
+              : "";
+            router.push(
+              `/units/${target.unitId}/study${search}` as Route,
+            );
+          } else {
+            router.push("/materials");
+          }
+        } catch (_error) {
+          router.push("/materials");
+        }
+      })();
+    });
+  }, [router]);
 
   const displayName = useMemo(() => {
     if (account.fullName) {
@@ -252,7 +278,12 @@ export function AppShell({ account, children }: AppShellProps) {
                         「基本挨拶」を3問だけ復習してウォームアップしましょう。
                       </p>
                       <SheetClose asChild>
-                        <Button className="mt-4 w-full justify-center">
+                        <Button
+                          className="mt-4 w-full justify-center"
+                          type="button"
+                          onClick={handleStartStudy}
+                          disabled={isStartingStudy}
+                        >
                           復習する
                         </Button>
                       </SheetClose>
@@ -271,7 +302,14 @@ export function AppShell({ account, children }: AppShellProps) {
               </div>
 
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden sm:flex"
+                  type="button"
+                  onClick={handleStartStudy}
+                  disabled={isStartingStudy}
+                >
                   今日の学習をはじめる
                 </Button>
                 <DropdownMenu>
