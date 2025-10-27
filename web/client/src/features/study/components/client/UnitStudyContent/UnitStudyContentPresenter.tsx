@@ -128,7 +128,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
   const isAnswered = status !== "idle";
   const disableSubmit = isSubmitting || isAnswered;
   const disableNext = isSubmitting || status === "idle";
-  const progressPercent =
+  const _progressPercent =
     questionCount > 0 ? Math.round((currentIndex / questionCount) * 100) : 0;
   const encouragement =
     status === "correct"
@@ -181,55 +181,34 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     <div className="space-y-6">
       {renderBreadcrumb(breadcrumb)}
 
-      <section className="space-y-4 rounded-3xl bg-gradient-to-br from-sky-50 via-white to-indigo-50/60 p-6 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
-              {material.name}
-            </p>
-            <h1 className="flex items-center gap-2 text-3xl font-bold text-slate-900">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-white/90 px-4 py-3 shadow-sm">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
+            {material.name}
+          </p>
+          <div className="flex items-center gap-2">
+            <h1 className="truncate text-xl font-semibold text-slate-900">
               {unit.name}
-              <Sparkles className="size-6 text-indigo-500" />
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {encouragement}
-            </p>
+            <Sparkles className="size-5 text-indigo-500" />
           </div>
-          <div className="w-full max-w-xs space-y-3 rounded-2xl border border-indigo-100/80 bg-white/80 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">
-              今日のがんばり
-            </p>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">解いた数</span>
-              <span className="font-semibold text-slate-900">
-                {answeredCount} / {questionCount} 問
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">正解</span>
-              <span className="font-semibold text-slate-900">
-                {correctCount} 問
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">正答率</span>
-              <span className="font-semibold text-slate-900">
-                {accuracyRate !== null ? `${accuracyRate}%` : "--"}
-              </span>
-            </div>
-            <Separator />
-            <div className="h-2 rounded-full bg-indigo-100">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500 transition-all"
-                style={{ width: `${Math.min(progressPercent, 100)}%` }}
-              />
-            </div>
-            <p className="text-right text-xs text-muted-foreground">
-              {progressLabel}（{progressPercent}%）
-            </p>
-          </div>
+          <p className="mt-1 text-xs text-muted-foreground">{encouragement}</p>
         </div>
-      </section>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+            {progressLabel}
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+            解いた数 {answeredCount}/{questionCount}
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+            正解 {correctCount} 問
+          </span>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
+            正答率 {accuracyRate !== null ? `${accuracyRate}%` : "--"}
+          </span>
+        </div>
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
         <Card className="border border-indigo-200/70 bg-white/95 shadow-md">
