@@ -45,7 +45,7 @@ export function NavigatorContent(props: NavigatorContentProps) {
           </p>
         ) : null}
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="space-y-4 pr-2">
           {chapters.map((chapter) => (
             <div key={chapter.id} className="space-y-2">

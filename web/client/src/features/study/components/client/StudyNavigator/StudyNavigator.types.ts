@@ -51,6 +51,7 @@ export interface NavigatorQuestion {
   id: string;
   label: string;
   japanese: string;
+  statistics: UnitStudyQuestionViewModel["statistics"] | null;
   order: number;
 }
 

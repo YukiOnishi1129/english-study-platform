@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 import { cn } from "@/shared/lib/utils";
@@ -29,12 +29,21 @@ export function UnitNavigatorNode(props: UnitNavigatorNodeProps) {
     enabled: isExpanded && !isCurrentUnit,
   });
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (isCurrentUnit && containerRef.current) {
+      containerRef.current.scrollIntoView({ block: "start" });
+    }
+  }, [isCurrentUnit]);
+
   const questionItems = useMemo<NavigatorQuestion[]>(() => {
     if (isCurrentUnit) {
       return currentUnitQuestions.map((question) => ({
         id: question.id,
         label: question.title,
         japanese: question.japanese,
+        statistics: question.statistics,
         order: extractOrderFromTitle(question.title),
       }));
     }
@@ -52,7 +61,10 @@ export function UnitNavigatorNode(props: UnitNavigatorNodeProps) {
       : 0;
 
   return (
-    <div className="rounded-lg border border-slate-200/70 bg-white/90 shadow-sm">
+    <div
+      ref={containerRef}
+      className="rounded-lg border border-slate-200/70 bg-white/90 shadow-sm"
+    >
       <button
         type="button"
         onClick={onToggle}
@@ -94,17 +106,22 @@ export function UnitNavigatorNode(props: UnitNavigatorNodeProps) {
                         : onNavigateUnit(unit.id, question.id)
                     }
                     className={cn(
-                      "w-full rounded-md px-3 py-2 text-left text-xs transition hover:bg-indigo-100/80",
+                      "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs transition hover:bg-indigo-100/80",
                       isCurrentUnit && currentQuestionId === question.id
                         ? "bg-indigo-100 text-indigo-700"
                         : "text-slate-600",
                     )}
                   >
-                    <span className="font-semibold text-indigo-600">
-                      {question.label}
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="font-semibold text-indigo-600">
+                        {question.label}
+                      </span>
+                      <span className="ml-2 text-[11px] text-slate-500">
+                        {question.japanese}
+                      </span>
                     </span>
-                    <span className="ml-2 text-[11px] text-slate-500">
-                      {question.japanese}
+                    <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">
+                      {formatAccuracy(question.statistics?.accuracy)}
                     </span>
                   </button>
                 </li>
@@ -139,6 +156,7 @@ function mapQuestionToNavigator(
     id: question.id,
     label: `Q${question.order}`,
     japanese: question.japanese,
+    statistics: question.statistics,
     order: question.order,
   };
 }
@@ -146,4 +164,11 @@ function mapQuestionToNavigator(
 function extractOrderFromTitle(title: string) {
   const match = title.match(/^Q(\d+)/);
   return match ? Number.parseInt(match[1], 10) : 0;
+}
+
+function formatAccuracy(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return "--";
+  }
+  return `${Math.round(value * 100)}%`;
 }

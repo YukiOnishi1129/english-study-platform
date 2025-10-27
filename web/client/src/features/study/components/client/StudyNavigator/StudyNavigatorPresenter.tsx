@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
+import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -64,20 +65,23 @@ export function StudyNavigatorPresenter(props: StudyNavigatorPresenterProps) {
             学習マップを開く
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-full max-w-sm bg-white/95 p-0">
+        <SheetContent
+          side="left"
+          className="w-full max-w-sm bg-white/95 gap-0 p-0"
+        >
           <SheetHeader className="border-b border-indigo-100 bg-indigo-50/60">
             <SheetTitle className="flex items-center gap-2 text-base text-indigo-700">
               <BookOpen className="size-4" />
               学習マップ
             </SheetTitle>
           </SheetHeader>
-          <div className="flex h-full flex-col overflow-hidden p-4">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
             {navigatorContent}
           </div>
         </SheetContent>
       </Sheet>
 
-      <div className="hidden w-64 shrink-0 xl:block">
+      <div className="hidden xl:block">
         <Card className="border border-indigo-100 bg-white/95 shadow-sm">
           <CardHeader className="flex flex-row items-center gap-2 border-b border-indigo-50 pb-3">
             <div className="rounded-lg bg-indigo-50 p-2 text-indigo-600">
@@ -87,8 +91,10 @@ export function StudyNavigatorPresenter(props: StudyNavigatorPresenterProps) {
               学習マップ
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="p-3">{navigatorContent}</div>
+          <CardContent className="h-[calc(100vh-8rem)] p-0">
+            <ScrollArea className="h-full">
+              <div className="p-3">{navigatorContent}</div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
