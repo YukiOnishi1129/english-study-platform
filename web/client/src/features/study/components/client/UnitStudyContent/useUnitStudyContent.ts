@@ -1,10 +1,12 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import type { Route } from "next";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { MaterialDetailDto } from "@/external/dto/material/material.detail.dto";
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
 import { useMaterialDetailQuery } from "@/features/materials/queries";
@@ -47,6 +49,7 @@ export interface UseUnitStudyContentResult {
   isError: boolean;
   isSubmitting: boolean;
   unit: UnitDetailDto["unit"] | null;
+  materialDetail: MaterialDetailDto | null;
   material: UnitDetailDto["material"] | null;
   breadcrumb: UnitStudyBreadcrumbItem[];
   questionCount: number;
@@ -55,18 +58,23 @@ export interface UseUnitStudyContentResult {
   accuracyRate: number | null;
   currentIndex: number;
   progressLabel: string;
+  questions: UnitStudyQuestionViewModel[];
   currentQuestion: UnitStudyQuestionViewModel | null;
+  currentQuestionId: string | null;
   currentStatistics: UnitStudyQuestionStatisticsViewModel | null;
   inputValue: string;
   status: StudyStatus;
   isHintVisible: boolean;
   isAnswerVisible: boolean;
   errorMessage: string | null;
+  accountId: string | null;
   onInputChange: (value: string) => void;
   onToggleHint: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
   onNext: () => void;
   onReset: () => void;
+  onSelectQuestion: (questionId: string) => void;
+  onNavigateUnit: (unitId: string, questionId?: string) => void;
 }
 
 function buildBreadcrumb(
@@ -146,6 +154,8 @@ export function useUnitStudyContent(
   const { unitId, accountId } = options;
   const queryClient = useQueryClient();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data, isLoading, isError } = useUnitDetailQuery(unitId, accountId);
   const { data: materialDetail } = useMaterialDetailQuery(
     data?.material.id ?? null,
@@ -200,6 +210,8 @@ export function useUnitStudyContent(
   const [answeredCount, setAnsweredCount] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const initializedFromQueryRef = useRef(false);
+  const lastSyncedQuestionIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (questionCount === 0) {
       setCurrentIndex(0);
@@ -227,6 +239,57 @@ export function useUnitStudyContent(
     ? (questionStatisticsMap[currentQuestion.id] ?? null)
     : null;
 
+  const handleInputChange = useCallback((value: string) => {
+    setInputValue(value);
+  }, []);
+
+  const resetStateForNextQuestion = useCallback(() => {
+    setInputValue("");
+    setStatus("idle");
+    setHintVisible(false);
+    setAnswerVisible(false);
+    setErrorMessage(null);
+  }, []);
+
+  useEffect(() => {
+    if (initializedFromQueryRef.current) {
+      return;
+    }
+
+    if (!searchParams) {
+      initializedFromQueryRef.current = true;
+      return;
+    }
+
+    const requestedQuestionId = searchParams.get("questionId");
+    if (!requestedQuestionId) {
+      initializedFromQueryRef.current = true;
+      return;
+    }
+
+    const index = questions.findIndex(
+      (question) => question.id === requestedQuestionId,
+    );
+    if (index >= 0) {
+      setCurrentIndex(index);
+      resetStateForNextQuestion();
+    }
+    initializedFromQueryRef.current = true;
+  }, [questions, resetStateForNextQuestion, searchParams]);
+
+  useEffect(() => {
+    const currentId = currentQuestion?.id ?? null;
+    if (lastSyncedQuestionIdRef.current === currentId) {
+      return;
+    }
+    lastSyncedQuestionIdRef.current = currentId;
+
+    const nextUrl = (currentId !== null
+      ? `${pathname}?questionId=${currentId}`
+      : pathname) as Route;
+    router.replace(nextUrl, { scroll: false });
+  }, [currentQuestion?.id, pathname, router]);
+
   const nextUnitId = useMemo(() => {
     if (!materialDetail) {
       return null;
@@ -252,18 +315,6 @@ export function useUnitStudyContent(
     questionCount > 0 ? `${currentIndex + 1} / ${questionCount}` : "0 / 0";
   const accuracyRate =
     answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : null;
-
-  const handleInputChange = useCallback((value: string) => {
-    setInputValue(value);
-  }, []);
-
-  const resetStateForNextQuestion = useCallback(() => {
-    setInputValue("");
-    setStatus("idle");
-    setHintVisible(false);
-    setAnswerVisible(false);
-    setErrorMessage(null);
-  }, []);
 
   const moveToNextQuestion = useCallback(() => {
     if (questionCount === 0) {
@@ -388,11 +439,40 @@ export function useUnitStudyContent(
     resetStateForNextQuestion();
   }, [resetStateForNextQuestion]);
 
+  const handleSelectQuestion = useCallback(
+    (questionId: string) => {
+      const index = questions.findIndex(
+        (question) => question.id === questionId,
+      );
+      if (index === -1) {
+        return;
+      }
+      setCurrentIndex(index);
+      resetStateForNextQuestion();
+    },
+    [questions, resetStateForNextQuestion],
+  );
+
+  const handleNavigateUnit = useCallback(
+    (targetUnitId: string, targetQuestionId?: string) => {
+      if (targetUnitId === unitId) {
+        if (targetQuestionId) {
+          handleSelectQuestion(targetQuestionId);
+        }
+        return;
+      }
+      const search = targetQuestionId ? `?questionId=${targetQuestionId}` : "";
+      router.push((`/units/${targetUnitId}/study${search}`) as Route);
+    },
+    [handleSelectQuestion, router, unitId],
+  );
+
   return {
     isLoading,
     isError,
     isSubmitting: submitAnswer.isPending,
     unit: data?.unit ?? null,
+    materialDetail: materialDetail ?? null,
     material: data?.material ?? null,
     breadcrumb: buildBreadcrumb(data ?? null),
     questionCount,
@@ -401,17 +481,22 @@ export function useUnitStudyContent(
     accuracyRate,
     currentIndex,
     progressLabel,
+    questions,
     currentQuestion,
+    currentQuestionId: currentQuestion?.id ?? null,
     currentStatistics,
     inputValue,
     status,
     isHintVisible,
     isAnswerVisible,
     errorMessage,
+    accountId,
     onInputChange: handleInputChange,
     onToggleHint: () => setHintVisible((prev) => !prev),
     onSubmit: handleSubmit,
     onNext: handleNext,
     onReset: handleReset,
+    onSelectQuestion: handleSelectQuestion,
+    onNavigateUnit: handleNavigateUnit,
   };
 }
