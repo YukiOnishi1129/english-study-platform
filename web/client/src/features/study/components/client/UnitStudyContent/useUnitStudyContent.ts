@@ -73,6 +73,7 @@ export interface UseUnitStudyContentResult {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
   onNext: () => void;
   onReset: () => void;
+  onRetryCurrent: () => void;
   onSelectQuestion: (questionId: string) => void;
   onNavigateUnit: (unitId: string, questionId?: string) => void;
 }
@@ -284,9 +285,9 @@ export function useUnitStudyContent(
     }
     lastSyncedQuestionIdRef.current = currentId;
 
-    const nextUrl = (currentId !== null
-      ? `${pathname}?questionId=${currentId}`
-      : pathname) as Route;
+    const nextUrl = (
+      currentId !== null ? `${pathname}?questionId=${currentId}` : pathname
+    ) as Route;
     router.replace(nextUrl, { scroll: false });
   }, [currentQuestion?.id, pathname, router]);
 
@@ -439,6 +440,10 @@ export function useUnitStudyContent(
     resetStateForNextQuestion();
   }, [resetStateForNextQuestion]);
 
+  const handleRetryCurrent = useCallback(() => {
+    resetStateForNextQuestion();
+  }, [resetStateForNextQuestion]);
+
   const handleSelectQuestion = useCallback(
     (questionId: string) => {
       const index = questions.findIndex(
@@ -462,7 +467,7 @@ export function useUnitStudyContent(
         return;
       }
       const search = targetQuestionId ? `?questionId=${targetQuestionId}` : "";
-      router.push((`/units/${targetUnitId}/study${search}`) as Route);
+      router.push(`/units/${targetUnitId}/study${search}` as Route);
     },
     [handleSelectQuestion, router, unitId],
   );
@@ -496,6 +501,7 @@ export function useUnitStudyContent(
     onSubmit: handleSubmit,
     onNext: handleNext,
     onReset: handleReset,
+    onRetryCurrent: handleRetryCurrent,
     onSelectQuestion: handleSelectQuestion,
     onNavigateUnit: handleNavigateUnit,
   };

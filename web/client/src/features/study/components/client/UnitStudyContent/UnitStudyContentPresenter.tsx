@@ -32,7 +32,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
-import { StudyNavigator } from "./StudyNavigator";
+import { StudyNavigator } from "../StudyNavigator";
 import type { UseUnitStudyContentResult } from "./useUnitStudyContent";
 
 function LoadingSkeleton() {
@@ -127,6 +127,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     onSubmit,
     onNext,
     onReset,
+    onRetryCurrent,
     onSelectQuestion,
     onNavigateUnit,
   } = props;
@@ -326,6 +327,15 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
                     >
                       次の問題へ進む
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 min-w-[140px] rounded-xl border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                      onClick={onRetryCurrent}
+                      disabled={status === "idle"}
+                    >
+                      この問題をやり直す
+                    </Button>
                   </div>
                   {status === "idle" ? (
                     <p className="text-xs text-muted-foreground">
@@ -437,13 +447,15 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
                   <div className="flex items-center justify-between">
                     <span>通算解答回数</span>
                     <span className="text-base font-semibold text-slate-900">
-                      {currentStatistics ? currentStatistics.totalAttempts : 0} 回
+                      {currentStatistics ? currentStatistics.totalAttempts : 0}{" "}
+                      回
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span>通算正解数</span>
                     <span className="text-base font-semibold text-slate-900">
-                      {currentStatistics ? currentStatistics.correctCount : 0} 回
+                      {currentStatistics ? currentStatistics.correctCount : 0}{" "}
+                      回
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
