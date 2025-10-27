@@ -35,6 +35,8 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import { cn } from "@/shared/lib/utils";
@@ -202,6 +204,9 @@ export function AppShell({ account, children }: AppShellProps) {
                     side="left"
                     className="w-[85vw] max-w-sm border-r border-border/60 bg-white/90 px-5 py-6 backdrop-blur-xl"
                   >
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>ナビゲーションメニュー</SheetTitle>
+                    </SheetHeader>
                     <div className="flex items-center gap-3">
                       <span className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-400 to-sky-400 text-lg font-semibold text-white shadow-lg">
                         ES
