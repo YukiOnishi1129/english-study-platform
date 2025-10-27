@@ -16,6 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
+import { useMediaQuery } from "@/shared/lib/useMediaQuery";
 import { formatDateKey, startOfUtcDay } from "./calendarUtils";
 import type { UseDashboardContentResult } from "./useDashboardContent";
 
@@ -173,10 +174,44 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   const { greetingName, statsCards, calendar, materials, isLoading, isError } =
     props;
   const todayLabel = formatDateKey(startOfUtcDay(new Date()));
+  const isCompactCalendar = useMediaQuery("(max-width: 640px)");
+  const displayedWeeks = useMemo(() => {
+    if (!isCompactCalendar) {
+      return calendar.weeks;
+    }
+    const sliceCount = 24;
+    return calendar.weeks.slice(-sliceCount);
+  }, [calendar.weeks, isCompactCalendar]);
   const monthLabels = useMemo(
-    () => buildMonthLabels(calendar.weeks),
-    [calendar.weeks],
+    () => buildMonthLabels(displayedWeeks),
+    [displayedWeeks],
   );
+  const calendarColumnGapClass = isCompactCalendar ? "gap-[2px]" : "gap-[3px]";
+  const calendarCellSizeClass = isCompactCalendar
+    ? "h-[10px] w-[10px]"
+    : "h-[13px] w-[13px]";
+  const calendarMonthHeightClass = isCompactCalendar ? "h-[16px]" : "h-[18px]";
+  const calendarMonthTextClass = isCompactCalendar
+    ? "text-[9px]"
+    : "text-[10px]";
+  const calendarDayLabelWidthClass = isCompactCalendar
+    ? "w-[20px]"
+    : "w-[18px]";
+  const calendarColumnWidthClass = isCompactCalendar ? "w-[10px]" : "w-[13px]";
+  const calendarDayHeightClass = isCompactCalendar ? "h-[11px]" : "h-[13px]";
+  const calendarDayTextClass = isCompactCalendar
+    ? "text-[10px]"
+    : "text-[11px]";
+  const calendarDayLeadingClass = isCompactCalendar
+    ? "leading-[11px]"
+    : "leading-[13px]";
+  const calendarWrapperPaddingClass = isCompactCalendar ? "pr-2" : "pr-3";
+  const todayRingClass = isCompactCalendar
+    ? "ring-1 ring-offset-[1px] ring-indigo-400"
+    : "ring-2 ring-offset-1 ring-indigo-400";
+  const displayedDayCount = displayedWeeks.length * 7;
+  const isShowingSubsetOfCalendar =
+    displayedWeeks.length !== calendar.weeks.length;
 
   if (isLoading) {
     return (
@@ -200,7 +235,7 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[992px] space-y-6 px-6">
+    <div className="mx-auto w-full max-w-[992px] space-y-6 px-4 sm:px-6">
       <Card className="border border-indigo-100/70 bg-white/95">
         <CardHeader className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div>
@@ -282,11 +317,17 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
               </CardDescription>
             </div>
             <span className="text-xs text-muted-foreground">
-              合計 {calendar.days.length} 日分
+              {isShowingSubsetOfCalendar ? (
+                <>
+                  表示 {displayedDayCount} 日分 / 全 {calendar.days.length} 日分
+                </>
+              ) : (
+                <>合計 {calendar.days.length} 日分</>
+              )}
             </span>
           </CardHeader>
           <CardContent>
-            {calendar.weeks.length === 0 ? (
+            {displayedWeeks.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
                 <p>まだ学習履歴がありません。</p>
                 <p className="text-xs">
@@ -294,92 +335,127 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
                 </p>
               </div>
             ) : (
-              <div className="flex items-start gap-3">
-                <div className="flex flex-col items-end text-muted-foreground">
-                  <div className="h-[18px]" />
-                  <div className="mt-[2px] flex flex-col gap-[3px] text-[11px]">
-                    {WEEKDAY_LABELS.map((label) => (
-                      <span
-                        key={label}
-                        className="h-[13px] w-[18px] text-right leading-[13px]"
-                      >
-                        {label}
-                      </span>
-                    ))}
+              <div className="overflow-x-auto pb-2">
+                <div
+                  className={clsx(
+                    "flex min-w-max items-start",
+                    calendarColumnGapClass,
+                    calendarWrapperPaddingClass,
+                  )}
+                >
+                  <div className="flex flex-col items-end text-muted-foreground">
+                    <div className={calendarMonthHeightClass} />
+                    <div
+                      className={clsx(
+                        "mt-[2px] flex flex-col",
+                        calendarColumnGapClass,
+                        calendarDayTextClass,
+                      )}
+                    >
+                      {WEEKDAY_LABELS.map((label) => (
+                        <span
+                          key={label}
+                          className={clsx(
+                            calendarDayHeightClass,
+                            calendarDayLabelWidthClass,
+                            "text-right",
+                            calendarDayLeadingClass,
+                          )}
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex gap-[3px]">
-                    {monthLabels.map((item) => (
-                      <div
-                        key={item.key}
-                        className="relative h-[18px] w-[13px]"
-                      >
-                        {item.label ? (
-                          <span className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap text-[10px] leading-none text-muted-foreground">
-                            {item.label}
-                          </span>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-[2px] flex gap-[3px]">
-                    {calendar.weeks.map((week, weekIndex) => (
-                      <div
-                        key={calendarWeekKey(week, weekIndex)}
-                        className="flex flex-col gap-[3px]"
-                      >
-                        {week.map((day, dayIndex) => {
-                          const key = calendarDayKey(
-                            weekIndex,
-                            dayIndex,
-                            day.date,
-                          );
-                          const baseClasses = clsx(
-                            "h-[13px] w-[13px] rounded-[3px]",
-                            heatmapCellClass(day.intensity),
-                            day.date === todayLabel &&
-                              "ring-2 ring-offset-1 ring-indigo-400",
-                          );
-
-                          if (!day.date) {
-                            return (
-                              <div
-                                key={key}
-                                className={clsx(
-                                  baseClasses,
-                                  "opacity-60 pointer-events-none",
-                                )}
-                              />
+                  <div className="flex flex-col">
+                    <div className={clsx("flex", calendarColumnGapClass)}>
+                      {monthLabels.map((item) => (
+                        <div
+                          key={item.key}
+                          className={clsx(
+                            "relative",
+                            calendarMonthHeightClass,
+                            calendarColumnWidthClass,
+                          )}
+                        >
+                          {item.label ? (
+                            <span
+                              className={clsx(
+                                "pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap leading-none text-muted-foreground",
+                                calendarMonthTextClass,
+                              )}
+                            >
+                              {item.label}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                    <div
+                      className={clsx("mt-[2px] flex", calendarColumnGapClass)}
+                    >
+                      {displayedWeeks.map((week, weekIndex) => (
+                        <div
+                          key={calendarWeekKey(week, weekIndex)}
+                          className={clsx(
+                            "flex flex-col",
+                            calendarColumnGapClass,
+                          )}
+                        >
+                          {week.map((day, dayIndex) => {
+                            const key = calendarDayKey(
+                              weekIndex,
+                              dayIndex,
+                              day.date,
                             );
-                          }
+                            const baseClasses = clsx(
+                              calendarCellSizeClass,
+                              isCompactCalendar
+                                ? "rounded-[2px]"
+                                : "rounded-[3px]",
+                              heatmapCellClass(day.intensity),
+                              day.date === todayLabel && todayRingClass,
+                            );
 
-                          return (
-                            <Tooltip key={key}>
-                              <TooltipTrigger asChild>
+                            if (!day.date) {
+                              return (
                                 <div
+                                  key={key}
                                   className={clsx(
                                     baseClasses,
-                                    "cursor-pointer",
+                                    "pointer-events-none opacity-60",
                                   )}
                                 />
-                              </TooltipTrigger>
-                              <TooltipContent side="top" sideOffset={6}>
-                                <div className="space-y-1">
-                                  <p className="font-semibold">
-                                    {formatDateLabel(day.date)}
-                                  </p>
-                                  <p className="text-xs">
-                                    解答 {day.totalAnswers}問 / 正解{" "}
-                                    {day.correctAnswers}問
-                                  </p>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
-                    ))}
+                              );
+                            }
+
+                            return (
+                              <Tooltip key={key}>
+                                <TooltipTrigger asChild>
+                                  <div
+                                    className={clsx(
+                                      baseClasses,
+                                      "cursor-pointer",
+                                    )}
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" sideOffset={6}>
+                                  <div className="space-y-1">
+                                    <p className="font-semibold">
+                                      {formatDateLabel(day.date)}
+                                    </p>
+                                    <p className="text-xs">
+                                      解答 {day.totalAnswers}問 / 正解{" "}
+                                      {day.correctAnswers}問
+                                    </p>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
