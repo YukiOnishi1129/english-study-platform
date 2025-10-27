@@ -7,7 +7,12 @@ import type {
   DashboardStudyCalendarEntryDto,
 } from "@/external/dto/dashboard/dashboard.query.dto";
 import { useDashboardQuery } from "@/features/dashboard/queries/useDashboardQuery";
-import { addUtcDays, formatDateKey, startOfUtcDay, startOfWeek } from "./calendarUtils";
+import {
+  addUtcDays,
+  formatDateKey,
+  startOfUtcDay,
+  startOfWeek,
+} from "./calendarUtils";
 
 interface UseDashboardContentOptions {
   accountId: string;

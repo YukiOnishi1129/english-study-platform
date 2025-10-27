@@ -11,6 +11,11 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 import { formatDateKey, startOfUtcDay } from "./calendarUtils";
 import type { UseDashboardContentResult } from "./useDashboardContent";
 
@@ -174,12 +179,16 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   );
 
   if (isLoading) {
-    return <LoadingSkeleton message="学習状況を準備しています..." />;
+    return (
+      <div className="mx-auto w-full max-w-[992px] px-6">
+        <LoadingSkeleton message="学習状況を準備しています..." />
+      </div>
+    );
   }
 
   if (isError) {
     return (
-      <div className="max-w-3xl">
+      <div className="mx-auto w-full max-w-[992px] px-6">
         <ErrorState message="学習データの取得中に問題が発生しました。" />
       </div>
     );
@@ -191,7 +200,7 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-[992px] space-y-6 px-6">
       <Card className="border border-indigo-100/70 bg-white/95">
         <CardHeader className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div>
@@ -238,97 +247,6 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
         </Card>
 
         <Card className="border border-indigo-100/70">
-          <CardHeader>
-            <CardTitle className="text-lg">今日のおすすめ</CardTitle>
-            <CardDescription>
-              昨日解いた内容を軽く復習してウォームアップしましょう
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>
-              英会話フレーズ大特訓：第1章
-              定型フレーズ編の復習から始めると効果的です。
-            </p>
-            <p>3問だけ解いて感覚を取り戻したら、新しい教材に進みましょう。</p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="border border-indigo-100/70">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">学習カレンダー</CardTitle>
-              <CardDescription>
-                最近の学習量をヒートマップで確認しましょう
-              </CardDescription>
-            </div>
-            <span className="text-xs text-muted-foreground">
-              合計 {calendar.days.length} 日分
-            </span>
-          </CardHeader>
-          <CardContent>
-            {calendar.weeks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
-                <p>まだ学習履歴がありません。</p>
-                <p className="text-xs">
-                  UNIT詳細画面から学習を開始すると、ここに履歴が表示されます。
-                </p>
-              </div>
-            ) : (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                <div className="flex flex-col gap-1 text-[11px] text-muted-foreground">
-                  {WEEKDAY_LABELS.map((label) => (
-                    <span key={label}>{label}</span>
-                  ))}
-                </div>
-                <div className="flex flex-col">
-                  <div className="ml-6 flex gap-[4px] text-[11px] text-muted-foreground">
-                    {monthLabels.map((item) => (
-                      <span key={item.key} className="w-6 text-center">
-                        {item.label}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex gap-[2px]">
-                    {calendar.weeks.map((week, weekIndex) => (
-                      <div
-                        key={calendarWeekKey(week, weekIndex)}
-                        className="grid grid-cols-1 gap-[2px]"
-                      >
-                        {week.map((day, dayIndex) => (
-                          <div
-                            key={calendarDayKey(weekIndex, dayIndex, day.date)}
-                            className={clsx(
-                              "relative h-6 w-6 rounded-[3px]",
-                              heatmapCellClass(day.intensity),
-                              day.date === todayLabel &&
-                                "ring-2 ring-offset-1 ring-indigo-400",
-                            )}
-                            title={
-                              day.date
-                                ? `${day.date} / ${day.totalAnswers}問`
-                                : undefined
-                            }
-                          >
-                            {day.date ? (
-                              <span className="sr-only">
-                                {formatDateLabel(day.date)}: {day.totalAnswers}
-                                問
-                              </span>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border border-indigo-100/70">
           <CardHeader className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
@@ -353,10 +271,183 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
           </CardContent>
         </Card>
       </section>
+
+      <section>
+        <Card className="border border-indigo-100/70">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">学習カレンダー</CardTitle>
+              <CardDescription>
+                最近の学習量をヒートマップで確認しましょう
+              </CardDescription>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              合計 {calendar.days.length} 日分
+            </span>
+          </CardHeader>
+          <CardContent>
+            {calendar.weeks.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
+                <p>まだ学習履歴がありません。</p>
+                <p className="text-xs">
+                  UNIT詳細画面から学習を開始すると、ここに履歴が表示されます。
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3">
+                <div className="flex flex-col items-end text-muted-foreground">
+                  <div className="h-[18px]" />
+                  <div className="mt-[2px] flex flex-col gap-[3px] text-[11px]">
+                    {WEEKDAY_LABELS.map((label) => (
+                      <span
+                        key={label}
+                        className="h-[13px] w-[18px] text-right leading-[13px]"
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex gap-[3px]">
+                    {monthLabels.map((item) => (
+                      <div
+                        key={item.key}
+                        className="relative h-[18px] w-[13px]"
+                      >
+                        {item.label ? (
+                          <span className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 whitespace-nowrap text-[10px] leading-none text-muted-foreground">
+                            {item.label}
+                          </span>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-[2px] flex gap-[3px]">
+                    {calendar.weeks.map((week, weekIndex) => (
+                      <div
+                        key={calendarWeekKey(week, weekIndex)}
+                        className="flex flex-col gap-[3px]"
+                      >
+                        {week.map((day, dayIndex) => {
+                          const key = calendarDayKey(
+                            weekIndex,
+                            dayIndex,
+                            day.date,
+                          );
+                          const baseClasses = clsx(
+                            "h-[13px] w-[13px] rounded-[3px]",
+                            heatmapCellClass(day.intensity),
+                            day.date === todayLabel &&
+                              "ring-2 ring-offset-1 ring-indigo-400",
+                          );
+
+                          if (!day.date) {
+                            return (
+                              <div
+                                key={key}
+                                className={clsx(
+                                  baseClasses,
+                                  "opacity-60 pointer-events-none",
+                                )}
+                              />
+                            );
+                          }
+
+                          return (
+                            <Tooltip key={key}>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className={clsx(
+                                    baseClasses,
+                                    "cursor-pointer",
+                                  )}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" sideOffset={6}>
+                                <div className="space-y-1">
+                                  <p className="font-semibold">
+                                    {formatDateLabel(day.date)}
+                                  </p>
+                                  <p className="text-xs">
+                                    解答 {day.totalAnswers}問 / 正解{" "}
+                                    {day.correctAnswers}問
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }
 const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
+interface MonthLabelItem {
+  key: string;
+  label: string;
+}
+
+function _buildMonthLabels(
+  weeks: UseDashboardContentResult["calendar"]["weeks"],
+): MonthLabelItem[] {
+  const labels: MonthLabelItem[] = [];
+  let lastMonth: number | null = null;
+  weeks.forEach((week, index) => {
+    const firstDayWithDate = week.find((day) => day.date && !day.isPlaceholder);
+    if (!firstDayWithDate?.date) {
+      labels.push({ key: calendarWeekKey(week, index), label: "" });
+      return;
+    }
+    const date = new Date(firstDayWithDate.date);
+    const month = date.getMonth();
+    if (lastMonth === null || month !== lastMonth) {
+      labels.push({
+        key: calendarWeekKey(week, index),
+        label: `${month + 1}月`,
+      });
+      lastMonth = month;
+    } else {
+      labels.push({ key: calendarWeekKey(week, index), label: "" });
+    }
+  });
+  return labels;
+}
+
+// function _calendarWeekKey(
+//   week: UseDashboardContentResult["calendar"]["weeks"][number],
+//   fallbackIndex: number,
+// ): string {
+//   const firstDayWithDate = week.find((day) => day.date && !day.isPlaceholder);
+//   if (firstDayWithDate?.date) {
+//     return `week-${firstDayWithDate.date}`;
+//   }
+//   const lastDayWithDate = [...week].reverse().find((day) => day.date);
+//   if (lastDayWithDate?.date) {
+//     return `week-${lastDayWithDate.date}`;
+//   }
+//   return `week-${fallbackIndex}`;
+// }
+
+// function _calendarDayKey(
+//   weekIndex: number,
+//   dayIndex: number,
+//   date: string | null | undefined,
+// ) {
+//   if (date) {
+//     return `day-${date}`;
+//   }
+//   return `day-${weekIndex}-${dayIndex}`;
+// }
 
 interface MonthLabelItem {
   key: string;
@@ -394,23 +485,34 @@ function buildMonthLabels(
 ): MonthLabelItem[] {
   const labels: MonthLabelItem[] = [];
   let lastMonth: number | null = null;
-  weeks.forEach((week) => {
-    const firstDayWithDate = week.find((day) => day.date && !day.isPlaceholder);
+  weeks.forEach((week, index) => {
+    const firstDayWithDate = week.find((day) => day.date);
     if (!firstDayWithDate?.date) {
-      labels.push({ key: calendarWeekKey(week, labels.length), label: "" });
+      labels.push({ key: calendarWeekKey(week, index), label: "" });
       return;
     }
-    const date = new Date(firstDayWithDate.date);
-    const month = date.getMonth();
-    if (lastMonth === null || month !== lastMonth) {
-      labels.push({
-        key: calendarWeekKey(week, labels.length),
-        label: `${month + 1}月`,
-      });
-      lastMonth = month;
-    } else {
-      labels.push({ key: calendarWeekKey(week, labels.length), label: "" });
-    }
+
+    const firstDayOfMonth = week.find((day) => {
+      if (!day.date) return false;
+      const date = new Date(day.date);
+      return date.getDate() === 1;
+    });
+
+    const monthForLabel = firstDayOfMonth
+      ? new Date(firstDayOfMonth.date).getMonth()
+      : new Date(firstDayWithDate.date).getMonth();
+
+    const shouldShowLabel =
+      Boolean(firstDayOfMonth) ||
+      lastMonth === null ||
+      monthForLabel !== lastMonth;
+
+    labels.push({
+      key: calendarWeekKey(week, index),
+      label: shouldShowLabel ? `${monthForLabel + 1}月` : "",
+    });
+
+    lastMonth = monthForLabel;
   });
   return labels;
 }

@@ -9,7 +9,6 @@ import {
   Menu,
   PlayCircle,
   Settings,
-  Sparkles,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
@@ -23,7 +22,6 @@ import {
   AvatarImage,
 } from "@/shared/components/ui/avatar";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -186,55 +184,6 @@ export function AppShell({ account, children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/40">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-border/60 bg-white/80 px-6 py-8 backdrop-blur-xl md:flex">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-400 to-sky-400 text-lg font-semibold text-white shadow-lg">
-              ES
-            </span>
-            <div>
-              <p className="text-base font-semibold text-slate-900">
-                English Study
-              </p>
-              <p className="text-xs text-slate-500">
-                あなた専用の学習コンパニオン
-              </p>
-            </div>
-          </Link>
-
-          <nav className="mt-8 flex-1 space-y-6 overflow-y-auto">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                ナビゲーション
-              </p>
-              <NavigationList items={mainNavigation} pathname={pathname} />
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                サポート
-              </p>
-              <NavigationList items={secondaryNavigation} pathname={pathname} />
-            </div>
-          </nav>
-
-          <Card className="mt-6 border-none bg-gradient-to-br from-indigo-500 via-indigo-400 to-sky-400 text-white shadow-xl">
-            <CardContent className="space-y-3 px-5 py-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">今日のおすすめ</p>
-                <Sparkles className="size-4 opacity-80" />
-              </div>
-              <p className="text-sm leading-relaxed text-indigo-50/90">
-                昨日学習した「基本挨拶」の復習を始めましょう。3問だけでウォームアップ！
-              </p>
-              <Button
-                variant="secondary"
-                className="w-full justify-center bg-white/90 text-indigo-600 hover:bg-white"
-              >
-                復習する
-              </Button>
-            </CardContent>
-          </Card>
-        </aside>
-
         <div className="flex flex-1 flex-col">
           <header className="sticky top-0 z-40 border-b border-border/60 bg-white/80 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -244,7 +193,6 @@ export function AppShell({ account, children }: AppShellProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="md:hidden"
                       aria-label="Open navigation"
                     >
                       <Menu className="size-5" />
