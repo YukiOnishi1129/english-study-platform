@@ -1,11 +1,13 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import type * as React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
+import { useMaterialDetailQuery } from "@/features/materials/queries";
 import { unitKeys } from "@/features/units/queries/keys";
 import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 
@@ -143,7 +145,12 @@ export function useUnitStudyContent(
 ): UseUnitStudyContentResult {
   const { unitId, accountId } = options;
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { data, isLoading, isError } = useUnitDetailQuery(unitId, accountId);
+  const { data: materialDetail } = useMaterialDetailQuery(
+    data?.material.id ?? null,
+    accountId ?? null,
+  );
 
   const questions = useMemo<UnitStudyQuestionViewModel[]>(() => {
     if (!data) {
@@ -220,6 +227,27 @@ export function useUnitStudyContent(
     ? (questionStatisticsMap[currentQuestion.id] ?? null)
     : null;
 
+  const nextUnitId = useMemo(() => {
+    if (!materialDetail) {
+      return null;
+    }
+    const orderedUnitIds = materialDetail.chapters.flatMap((chapter) =>
+      chapter.units.map((unit) => unit.id),
+    );
+    const current = orderedUnitIds.indexOf(unitId);
+    if (current === -1) {
+      return null;
+    }
+    return orderedUnitIds[current + 1] ?? null;
+  }, [materialDetail, unitId]);
+
+  useEffect(() => {
+    if (!nextUnitId) {
+      return;
+    }
+    router.prefetch(`/units/${nextUnitId}/study`);
+  }, [nextUnitId, router]);
+
   const progressLabel =
     questionCount > 0 ? `${currentIndex + 1} / ${questionCount}` : "0 / 0";
   const accuracyRate =
@@ -246,8 +274,16 @@ export function useUnitStudyContent(
   }, [questionCount, resetStateForNextQuestion]);
 
   const handleNext = useCallback(() => {
+    if (questionCount === 0) {
+      return;
+    }
+    const isLastQuestion = currentIndex >= questionCount - 1;
+    if (isLastQuestion && nextUnitId) {
+      router.push(`/units/${nextUnitId}/study`);
+      return;
+    }
     moveToNextQuestion();
-  }, [moveToNextQuestion]);
+  }, [currentIndex, moveToNextQuestion, nextUnitId, questionCount, router]);
 
   const submitAnswer = useMutation({
     mutationFn: async (

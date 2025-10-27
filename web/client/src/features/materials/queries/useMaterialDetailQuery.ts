@@ -6,17 +6,23 @@ import { getMaterialDetailAction } from "@/external/handler/material/material.qu
 import { materialKeys } from "./keys";
 
 export function useMaterialDetailQuery(
-  materialId: string,
+  materialId: string | null,
   accountId: string | null,
 ) {
   return useQuery({
-    queryKey: materialKeys.detail(materialId, accountId),
-    queryFn: () =>
-      getMaterialDetailAction({ materialId, accountId }).then((data) => {
-        if (!data) {
-          throw new Error("MATERIAL_NOT_FOUND");
-        }
-        return data;
-      }),
+    queryKey: materialId
+      ? materialKeys.detail(materialId, accountId)
+      : (["material", "placeholder", accountId ?? "anon"] as const),
+    enabled: Boolean(materialId),
+    queryFn: async () => {
+      if (!materialId) {
+        throw new Error("MATERIAL_ID_REQUIRED");
+      }
+      const data = await getMaterialDetailAction({ materialId, accountId });
+      if (!data) {
+        throw new Error("MATERIAL_NOT_FOUND");
+      }
+      return data;
+    },
   });
 }
