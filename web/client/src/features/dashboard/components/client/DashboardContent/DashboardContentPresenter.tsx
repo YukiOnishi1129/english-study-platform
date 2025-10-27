@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import type { ReactElement } from "react";
+import { type ReactElement, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import { formatDateKey, startOfUtcDay } from "./calendarUtils";
 import type { UseDashboardContentResult } from "./useDashboardContent";
 
 interface LoadingSkeletonProps {
@@ -81,6 +82,9 @@ function heatmapCellClass(intensity: number) {
 }
 
 function formatDateLabel(dateString: string) {
+  if (!dateString) {
+    return "";
+  }
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
     return dateString;
@@ -163,6 +167,11 @@ function renderUnitPreview(
 export function DashboardContentPresenter(props: UseDashboardContentResult) {
   const { greetingName, statsCards, calendar, materials, isLoading, isError } =
     props;
+  const todayLabel = formatDateKey(startOfUtcDay(new Date()));
+  const monthLabels = useMemo(
+    () => buildMonthLabels(calendar.weeks),
+    [calendar.weeks],
+  );
 
   if (isLoading) {
     return <LoadingSkeleton message="学習状況を準備しています..." />;
@@ -259,7 +268,7 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
             </span>
           </CardHeader>
           <CardContent>
-            {calendar.days.length === 0 ? (
+            {calendar.weeks.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-6 py-12 text-sm text-indigo-600">
                 <p>まだ学習履歴がありません。</p>
                 <p className="text-xs">
@@ -267,26 +276,53 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-7 gap-2">
-                {calendar.days.map((day) => (
-                  <div
-                    key={day.date}
-                    className="flex flex-col items-center gap-1"
-                    title={`${day.date} / ${day.totalAnswers}問`}
-                  >
-                    <span className="text-[11px] text-muted-foreground">
-                      {formatDateLabel(day.date)}
-                    </span>
-                    <span
-                      className={clsx(
-                        "flex h-10 w-10 items-center justify-center rounded-xl text-xs font-semibold",
-                        heatmapCellClass(day.intensity),
-                      )}
-                    >
-                      {day.totalAnswers}
-                    </span>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                <div className="flex flex-col gap-1 text-[11px] text-muted-foreground">
+                  {WEEKDAY_LABELS.map((label) => (
+                    <span key={label}>{label}</span>
+                  ))}
+                </div>
+                <div className="flex flex-col">
+                  <div className="ml-6 flex gap-[4px] text-[11px] text-muted-foreground">
+                    {monthLabels.map((item) => (
+                      <span key={item.key} className="w-6 text-center">
+                        {item.label}
+                      </span>
+                    ))}
                   </div>
-                ))}
+                  <div className="flex gap-[2px]">
+                    {calendar.weeks.map((week, weekIndex) => (
+                      <div
+                        key={calendarWeekKey(week, weekIndex)}
+                        className="grid grid-cols-1 gap-[2px]"
+                      >
+                        {week.map((day, dayIndex) => (
+                          <div
+                            key={calendarDayKey(weekIndex, dayIndex, day.date)}
+                            className={clsx(
+                              "relative h-6 w-6 rounded-[3px]",
+                              heatmapCellClass(day.intensity),
+                              day.date === todayLabel &&
+                                "ring-2 ring-offset-1 ring-indigo-400",
+                            )}
+                            title={
+                              day.date
+                                ? `${day.date} / ${day.totalAnswers}問`
+                                : undefined
+                            }
+                          >
+                            {day.date ? (
+                              <span className="sr-only">
+                                {formatDateLabel(day.date)}: {day.totalAnswers}
+                                問
+                              </span>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
@@ -319,4 +355,62 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
       </section>
     </div>
   );
+}
+const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"];
+
+interface MonthLabelItem {
+  key: string;
+  label: string;
+}
+
+function calendarWeekKey(
+  week: UseDashboardContentResult["calendar"]["weeks"][number],
+  fallbackIndex: number,
+): string {
+  const firstDayWithDate = week.find((day) => day.date && !day.isPlaceholder);
+  if (firstDayWithDate?.date) {
+    return `week-${firstDayWithDate.date}`;
+  }
+  const lastDayWithDate = [...week].reverse().find((day) => day.date);
+  if (lastDayWithDate?.date) {
+    return `week-${lastDayWithDate.date}`;
+  }
+  return `week-${fallbackIndex}`;
+}
+
+function calendarDayKey(
+  weekIndex: number,
+  dayIndex: number,
+  date: string | null | undefined,
+) {
+  if (date) {
+    return `day-${date}`;
+  }
+  return `day-${weekIndex}-${dayIndex}`;
+}
+
+function buildMonthLabels(
+  weeks: UseDashboardContentResult["calendar"]["weeks"],
+): MonthLabelItem[] {
+  const labels: MonthLabelItem[] = [];
+  let lastMonth: number | null = null;
+  weeks.forEach((week) => {
+    const firstDayWithDate = week.find((day) => day.date && !day.isPlaceholder);
+    if (!firstDayWithDate?.date) {
+      labels.push({ key: calendarWeekKey(week, labels.length), label: "" });
+      return;
+    }
+    const date = new Date(firstDayWithDate.date);
+    const month = date.getMonth();
+    if (lastMonth === null || month !== lastMonth) {
+      labels.push({
+        key: calendarWeekKey(week, labels.length),
+        label: `${month + 1}月`,
+      });
+      lastMonth = month;
+    } else {
+      labels.push({ key: calendarWeekKey(week, labels.length), label: "" });
+    }
+  });
+  return labels;
 }

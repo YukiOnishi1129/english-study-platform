@@ -184,8 +184,8 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     <div className="space-y-6">
       {renderBreadcrumb(breadcrumb)}
 
-      <div className="flex flex-col xl:flex-row xl:items-start xl:gap-6">
-        <div className="flex-1 space-y-6">
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr),320px] xl:items-start xl:gap-6">
+        <div className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-white/90 px-4 py-3 shadow-sm">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
@@ -474,18 +474,16 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
           </div>
         </div>
 
-        <div className="mt-6 xl:mt-0 xl:ml-6 xl:w-80 xl:flex-none">
-          <div className="xl:sticky xl:top-24">
-            <StudyNavigator
-              materialDetail={materialDetail}
-              currentUnitId={unit.id}
-              currentQuestionId={currentQuestionId}
-              questions={questions}
-              accountId={accountId}
-              onSelectQuestion={onSelectQuestion}
-              onNavigateUnit={onNavigateUnit}
-            />
-          </div>
+        <div className="xl:sticky xl:top-20">
+          <StudyNavigator
+            materialDetail={materialDetail}
+            currentUnitId={unit.id}
+            currentQuestionId={currentQuestionId}
+            questions={questions}
+            accountId={accountId}
+            onSelectQuestion={onSelectQuestion}
+            onNavigateUnit={onNavigateUnit}
+          />
         </div>
       </div>
     </div>

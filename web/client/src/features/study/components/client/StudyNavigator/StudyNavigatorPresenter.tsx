@@ -91,8 +91,8 @@ export function StudyNavigatorPresenter(props: StudyNavigatorPresenterProps) {
               学習マップ
             </CardTitle>
           </CardHeader>
-          <CardContent className="h-[calc(100vh-8rem)] p-0">
-            <ScrollArea className="h-full">
+          <CardContent className="max-h-[calc(100vh-12rem)] p-0">
+            <ScrollArea className="max-h-[calc(100vh-12rem)]">
               <div className="p-3">{navigatorContent}</div>
             </ScrollArea>
           </CardContent>

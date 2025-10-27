@@ -7,6 +7,7 @@ import type {
   DashboardStudyCalendarEntryDto,
 } from "@/external/dto/dashboard/dashboard.query.dto";
 import { useDashboardQuery } from "@/features/dashboard/queries/useDashboardQuery";
+import { addUtcDays, formatDateKey, startOfUtcDay, startOfWeek } from "./calendarUtils";
 
 interface UseDashboardContentOptions {
   accountId: string;
@@ -23,6 +24,7 @@ export interface DashboardStatCardViewModel {
 export interface DashboardCalendarDayViewModel
   extends DashboardStudyCalendarEntryDto {
   intensity: number;
+  isPlaceholder: boolean;
 }
 
 export interface DashboardMaterialCardViewModel
@@ -31,9 +33,12 @@ export interface DashboardMaterialCardViewModel
   chapterCount: number;
 }
 
+type DashboardCalendarWeek = DashboardCalendarDayViewModel[];
+
 interface DashboardCalendarViewModel {
   days: DashboardCalendarDayViewModel[];
   maxCount: number;
+  weeks: DashboardCalendarWeek[];
 }
 
 export interface UseDashboardContentResult {
@@ -59,7 +64,7 @@ function buildCalendarViewModel(
   calendar: DashboardStudyCalendarEntryDto[],
 ): DashboardCalendarViewModel {
   if (calendar.length === 0) {
-    return { days: [], maxCount: 0 };
+    return { days: [], maxCount: 0, weeks: [] };
   }
 
   const maxCount = calendar.reduce(
@@ -72,10 +77,44 @@ function buildCalendarViewModel(
     return {
       ...entry,
       intensity,
+      isPlaceholder: false,
     } satisfies DashboardCalendarDayViewModel;
   });
 
-  return { days, maxCount };
+  const today = startOfUtcDay(new Date());
+  const daysMap = new Map<string, DashboardCalendarDayViewModel>();
+  days.forEach((day) => {
+    daysMap.set(day.date, day);
+  });
+
+  const weeks: DashboardCalendarWeek[] = [];
+  const completeDays: DashboardCalendarDayViewModel[] = [];
+
+  const startWeek = addUtcDays(startOfWeek(today), -51 * 7);
+
+  for (let weekIndex = 0; weekIndex < 52; weekIndex += 1) {
+    const weekStart = addUtcDays(startWeek, weekIndex * 7);
+    const week: DashboardCalendarWeek = [];
+    for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+      const current = addUtcDays(weekStart, dayIndex);
+      const dateKey = formatDateKey(current);
+      const existing = daysMap.get(dateKey);
+      const day =
+        existing ??
+        ({
+          date: dateKey,
+          totalAnswers: 0,
+          correctAnswers: 0,
+          intensity: 0,
+          isPlaceholder: true,
+        } satisfies DashboardCalendarDayViewModel);
+      week.push(day);
+      completeDays.push(day);
+    }
+    weeks.push(week);
+  }
+
+  return { days: completeDays, maxCount, weeks };
 }
 
 function buildMaterialCardViewModel(
