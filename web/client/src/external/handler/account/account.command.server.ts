@@ -1,22 +1,24 @@
 import "server-only";
-import { mapAccountToFeature } from "@/external/mapper/account.mapper";
 import {
-  AccountService,
-  type CreateAccountInput,
-} from "@/external/service/account/account.service";
-import type { Account } from "@/features/account/types/account";
+  type CreateOrGetAccountRequest,
+  CreateOrGetAccountRequestSchema,
+  type CreateOrGetAccountResponse,
+  toAccountResponse,
+} from "@/external/dto/account/account.mutation.dto";
+import { AccountService } from "@/external/service/account/account.service";
 
 const accountService = new AccountService();
 
 export async function createOrGetAccount(
-  provider: string,
-  providerAccountId: string,
-  createInput: CreateAccountInput,
-): Promise<Account> {
+  request: CreateOrGetAccountRequest,
+): Promise<CreateOrGetAccountResponse> {
+  const validated = CreateOrGetAccountRequestSchema.parse(request);
+
   const domainAccount = await accountService.createOrGet(
-    provider,
-    providerAccountId,
-    createInput,
+    validated.provider,
+    validated.providerAccountId,
+    validated,
   );
-  return mapAccountToFeature(domainAccount);
+
+  return toAccountResponse(domainAccount);
 }
