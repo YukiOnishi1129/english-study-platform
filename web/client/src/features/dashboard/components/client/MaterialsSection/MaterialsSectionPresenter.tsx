@@ -12,14 +12,16 @@ import {
 } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 
-import type { DashboardMaterialCardViewModel } from "../DashboardContent/useDashboardContent";
+import type { MaterialsSectionView } from "./useMaterialsSection";
 
-interface MaterialsSectionProps {
-  items: DashboardMaterialCardViewModel[];
+export interface MaterialsSectionPresenterProps {
+  view: MaterialsSectionView;
 }
 
-export function MaterialsSection({ items }: MaterialsSectionProps) {
-  if (items.length === 0) {
+export function MaterialsSectionPresenter({
+  view,
+}: MaterialsSectionPresenterProps) {
+  if (view.isEmpty) {
     return (
       <Card className="border border-indigo-100/70">
         <CardHeader className="space-y-2">
@@ -41,7 +43,7 @@ export function MaterialsSection({ items }: MaterialsSectionProps) {
     );
   }
 
-  const totalCount = items.length;
+  const { items, totalCount } = view;
 
   return (
     <Card className="border border-indigo-100/70">

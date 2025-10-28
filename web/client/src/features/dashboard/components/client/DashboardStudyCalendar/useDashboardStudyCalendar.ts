@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-
+import { formatDateKey, startOfUtcDay } from "@/shared/lib/date";
 import { useMediaQuery } from "@/shared/lib/useMediaQuery";
-
-import { formatDateKey, startOfUtcDay } from "@/shared/utils/date";
 import type { DashboardCalendarViewModel } from "../DashboardContent/useDashboardContent";
 
 export const WEEKDAY_LABELS = [
@@ -37,7 +35,7 @@ export interface CalendarStyles {
   isCompact: boolean;
 }
 
-export interface DashboardStudyCalendarPresenter {
+export interface DashboardStudyCalendarPresenterView {
   weeks: DashboardCalendarViewModel["weeks"];
   monthLabels: MonthLabelItem[];
   styles: CalendarStyles;
@@ -64,7 +62,7 @@ export function calendarWeekKey(
 
 export function useDashboardStudyCalendar(
   calendar: DashboardCalendarViewModel,
-): DashboardStudyCalendarPresenter {
+): DashboardStudyCalendarPresenterView {
   const isCompactCalendar = useMediaQuery("(max-width: 640px)");
 
   const weeks = useMemo(() => {
@@ -120,7 +118,7 @@ export function useDashboardStudyCalendar(
     totalDayCount: calendar.days.length,
     isSubset: weeks.length !== calendar.weeks.length,
     todayLabel: formatDateKey(startOfUtcDay(new Date())),
-  };
+  } satisfies DashboardStudyCalendarPresenterView;
 }
 
 function buildMonthLabels(

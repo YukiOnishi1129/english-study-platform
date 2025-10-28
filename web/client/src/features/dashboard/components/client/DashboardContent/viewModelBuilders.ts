@@ -11,7 +11,7 @@ import {
   formatDateKey,
   startOfUtcDay,
   startOfWeek,
-} from "@/shared/utils/date";
+} from "@/shared/lib/date";
 import type {
   DashboardCalendarDayViewModel,
   DashboardCalendarViewModel,

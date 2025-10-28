@@ -10,19 +10,19 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 
-import { useDashboardHeader } from "./useDashboardHeader";
-
-interface DashboardHeaderProps {
+export interface DashboardHeaderPresenterProps {
   greetingName: string;
   totalQuestionCount: number;
+  onStartStudy: () => void;
+  isStartingStudy: boolean;
 }
 
-export function DashboardHeader({
+export function DashboardHeaderPresenter({
   greetingName,
   totalQuestionCount,
-}: DashboardHeaderProps) {
-  const { onStartStudy, isStartingStudy } = useDashboardHeader();
-
+  onStartStudy,
+  isStartingStudy,
+}: DashboardHeaderPresenterProps) {
   return (
     <Card className="border border-indigo-100/70 bg-white/95">
       <CardHeader className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">

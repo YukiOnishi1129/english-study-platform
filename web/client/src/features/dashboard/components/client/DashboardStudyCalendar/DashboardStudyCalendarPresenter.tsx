@@ -19,20 +19,18 @@ import type { DashboardCalendarViewModel } from "../DashboardContent/useDashboar
 import {
   type CalendarStyles,
   calendarWeekKey,
+  type DashboardStudyCalendarPresenterView,
   type MonthLabelItem,
-  useDashboardStudyCalendar,
   WEEKDAY_LABELS,
 } from "./useDashboardStudyCalendar";
 
-interface DashboardStudyCalendarProps {
-  calendar: DashboardCalendarViewModel;
+export interface DashboardStudyCalendarPresenterProps {
+  presenter: DashboardStudyCalendarPresenterView;
 }
 
-export function DashboardStudyCalendar({
-  calendar,
-}: DashboardStudyCalendarProps) {
-  const presenter = useDashboardStudyCalendar(calendar);
-
+export function DashboardStudyCalendarPresenter({
+  presenter,
+}: DashboardStudyCalendarPresenterProps) {
   if (presenter.weeks.length === 0) {
     return (
       <section>

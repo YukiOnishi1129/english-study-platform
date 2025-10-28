@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 
-import type { DashboardStatCardViewModel } from "../DashboardContent/useDashboardContent";
+import type { DashboardStatCardViewModel } from "../DashboardContent";
 
 interface StatsSummaryProps {
   cards: DashboardStatCardViewModel[];
