@@ -1,12 +1,12 @@
 "use client";
 
 import clsx from "clsx";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactElement, useCallback, useMemo, useTransition } from "react";
-import type { Route } from "next";
-import { Button } from "@/shared/components/ui/button";
 import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
+import { Button } from "@/shared/components/ui/button";
 import {
   Card,
   CardContent,

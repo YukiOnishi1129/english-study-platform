@@ -1,8 +1,8 @@
 "use client";
 
+import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import type { Route } from "next";
 import type { ReviewQuestionDto } from "@/external/dto/review/review.query.dto";
 import { useReviewQuery } from "@/features/review/queries";
 import { Badge } from "@/shared/components/ui/badge";
@@ -86,9 +86,20 @@ export function ReviewPageContent({ accountId }: ReviewPageContentProps) {
     router.replace(`/review?${params.toString()}`, { scroll: false });
   };
 
-  const handleStartQuestion = (unitId: string, questionId: string) => {
-    const search = `?questionId=${questionId}`;
-    router.push(`/units/${unitId}/study${search}` as Route);
+  const handleStartQuestion = (
+    groupKey: "weak" | "lowAttempts" | "unattempted",
+    questionId: string,
+  ) => {
+    const materialIdForLink =
+      effectiveSelectedMaterialId ?? selectedMaterialSummary?.id;
+    if (!materialIdForLink) {
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set("materialId", materialIdForLink);
+    params.set("group", groupKey);
+    params.set("questionId", questionId);
+    router.push(`/review/study?${params.toString()}` as Route);
   };
 
   if (!accountId) {
@@ -140,9 +151,10 @@ export function ReviewPageContent({ accountId }: ReviewPageContentProps) {
     );
   }
 
-  const selectedMaterialSummary = data.materials.find(
-    (material) => material.id === effectiveSelectedMaterialId,
-  );
+  const selectedMaterialSummary =
+    data.materials.find(
+      (material) => material.id === effectiveSelectedMaterialId,
+    ) ?? null;
 
   return (
     <div className="space-y-6">
@@ -204,7 +216,9 @@ export function ReviewPageContent({ accountId }: ReviewPageContentProps) {
             未満の問題です。
           </CardDescription>
         </CardHeader>
-        <CardContent>{renderQuestionGroup(data.groups.weak)}</CardContent>
+        <CardContent>
+          {renderQuestionGroup("weak", data.groups.weak)}
+        </CardContent>
       </Card>
 
       <Card className="border border-indigo-100/70">
@@ -215,7 +229,7 @@ export function ReviewPageContent({ accountId }: ReviewPageContentProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {renderQuestionGroup(data.groups.lowAttempts)}
+          {renderQuestionGroup("lowAttempts", data.groups.lowAttempts)}
         </CardContent>
       </Card>
 
@@ -227,13 +241,16 @@ export function ReviewPageContent({ accountId }: ReviewPageContentProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {renderQuestionGroup(data.groups.unattempted)}
+          {renderQuestionGroup("unattempted", data.groups.unattempted)}
         </CardContent>
       </Card>
     </div>
   );
 
-  function renderQuestionGroup(questions: ReviewQuestionDto[]) {
+  function renderQuestionGroup(
+    groupKey: "weak" | "lowAttempts" | "unattempted",
+    questions: ReviewQuestionDto[],
+  ) {
     if (questions.length === 0) {
       return (
         <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 px-5 py-8 text-sm text-indigo-600">
@@ -281,7 +298,7 @@ export function ReviewPageContent({ accountId }: ReviewPageContentProps) {
                 size="sm"
                 className="self-start rounded-full bg-indigo-600 px-4 text-white hover:bg-indigo-500"
                 onClick={() =>
-                  handleStartQuestion(question.unitId, question.questionId)
+                  handleStartQuestion(groupKey, question.questionId)
                 }
               >
                 この問題を復習する
