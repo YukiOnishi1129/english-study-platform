@@ -51,6 +51,73 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     );
   }
 
+  async findByUnitIds(unitIds: string[]): Promise<DomainQuestion[]> {
+    if (unitIds.length === 0) {
+      return [];
+    }
+
+    const results = await db
+      .select()
+      .from(questions)
+      .where(inArray(questions.unitId, unitIds))
+      .orderBy(questions.unitId, questions.order);
+
+    return results.map(
+      (data) =>
+        new DomainQuestion({
+          id: data.id,
+          unitId: data.unitId,
+          japanese: data.japanese,
+          hint: data.hint ?? undefined,
+          explanation: data.explanation ?? undefined,
+          order: data.order,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        }),
+    );
+  }
+
+  async findByIds(ids: string[]): Promise<DomainQuestion[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const results = await db.select().from(questions).where(inArray(questions.id, ids));
+
+    return results.map(
+      (data) =>
+        new DomainQuestion({
+          id: data.id,
+          unitId: data.unitId,
+          japanese: data.japanese,
+          hint: data.hint ?? undefined,
+          explanation: data.explanation ?? undefined,
+          order: data.order,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        }),
+    );
+  }
+
+  async findFirstByCreatedAt(): Promise<DomainQuestion | null> {
+    const [row] = await db.select().from(questions).orderBy(questions.createdAt).limit(1);
+
+    if (!row) {
+      return null;
+    }
+
+    return new DomainQuestion({
+      id: row.id,
+      unitId: row.unitId,
+      japanese: row.japanese,
+      hint: row.hint ?? undefined,
+      explanation: row.explanation ?? undefined,
+      order: row.order,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+    });
+  }
+
   async save(question: DomainQuestion): Promise<DomainQuestion> {
     const [result] = await db
       .insert(questions)

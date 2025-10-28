@@ -3,7 +3,7 @@ import {
   CorrectAnswer as DomainCorrectAnswer,
 } from "@acme/shared/domain";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../client";
 import { correctAnswers } from "../schema/correct-answers";
 
@@ -36,6 +36,30 @@ export class CorrectAnswerRepositoryImpl implements CorrectAnswerRepository {
       .from(correctAnswers)
       .where(eq(correctAnswers.questionId, questionId))
       .orderBy(correctAnswers.order);
+
+    return results.map(
+      (data) =>
+        new DomainCorrectAnswer({
+          id: data.id,
+          questionId: data.questionId,
+          answerText: data.answerText,
+          order: data.order,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        }),
+    );
+  }
+
+  async findByQuestionIds(questionIds: string[]): Promise<DomainCorrectAnswer[]> {
+    if (questionIds.length === 0) {
+      return [];
+    }
+
+    const results = await db
+      .select()
+      .from(correctAnswers)
+      .where(inArray(correctAnswers.questionId, questionIds))
+      .orderBy(correctAnswers.questionId, correctAnswers.order);
 
     return results.map(
       (data) =>
