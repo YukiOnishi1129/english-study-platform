@@ -9,7 +9,7 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useId } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import {
   Breadcrumb,
@@ -142,6 +142,29 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
       : status === "incorrect"
         ? "大丈夫、もう一度チャレンジしよう 💪"
         : "準備はいい？さあ問題に挑戦！✨";
+  const [speakingAnswer, setSpeakingAnswer] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        window.speechSynthesis.cancel();
+        setSpeakingAnswer(null);
+      }
+    };
+  }, []);
+
+  const handleSpeakAnswer = useCallback((answer: string) => {
+    if (typeof window === "undefined" || !answer) {
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(answer);
+    utterance.lang = "en-US";
+    utterance.onend = () => setSpeakingAnswer(null);
+    utterance.onerror = () => setSpeakingAnswer(null);
+    window.speechSynthesis.cancel();
+    setSpeakingAnswer(answer);
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -258,19 +281,6 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
                   >
                     ヒントを{isHintVisible ? "隠す" : "見る"}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 text-indigo-600 hover:text-indigo-700"
-                    onClick={() => {
-                      // TODO: 実装時に音声再生を接続
-                    }}
-                    disabled
-                  >
-                    <Volume2 className="size-4" />
-                    発音をきく（準備中）
-                  </Button>
                 </div>
 
                 {isHintVisible && currentQuestion.hint ? (
@@ -372,7 +382,20 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
                     </p>
                     <ul className="list-disc space-y-1 pl-5 text-sm text-indigo-900">
                       {currentQuestion.acceptableAnswers.map((answer) => (
-                        <li key={answer}>{answer}</li>
+                        <li key={answer} className="flex items-center gap-2">
+                          <span>{answer}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
+                            onClick={() => handleSpeakAnswer(answer)}
+                            disabled={speakingAnswer === answer}
+                          >
+                            <Volume2 className="size-4" />
+                            {speakingAnswer === answer ? "再生中..." : "音声"}
+                          </Button>
+                        </li>
                       ))}
                     </ul>
                     {currentQuestion.explanation ? (

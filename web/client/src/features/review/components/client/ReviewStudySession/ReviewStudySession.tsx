@@ -1,7 +1,8 @@
 "use client";
 
+import { Volume2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReviewSessionDataDto } from "@/external/dto/review/review.session.dto";
 import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
 import { Badge } from "@/shared/components/ui/badge";
@@ -48,6 +49,7 @@ export function ReviewStudySession({
   const [questionStates, setQuestionStates] = useState(() => questions);
   const [isCompleted, setIsCompleted] = useState(false);
   const [isHintVisible, setHintVisible] = useState(false);
+  const [speakingAnswer, setSpeakingAnswer] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
@@ -57,6 +59,7 @@ export function ReviewStudySession({
     setQuestionStates(questions);
     setIsCompleted(false);
     setHintVisible(false);
+    setSpeakingAnswer(null);
   }, [initialIndex, questions]);
 
   const currentQuestion = questionStates[currentIndex];
@@ -112,7 +115,30 @@ export function ReviewStudySession({
     setStatus("idle");
     setErrorMessage(null);
     setHintVisible(false);
+    setSpeakingAnswer(null);
   };
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        window.speechSynthesis.cancel();
+        setSpeakingAnswer(null);
+      }
+    };
+  }, []);
+
+  const handleSpeakAnswer = useCallback((answer: string) => {
+    if (typeof window === "undefined" || !answer) {
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(answer);
+    utterance.lang = "en-US";
+    utterance.onend = () => setSpeakingAnswer(null);
+    utterance.onerror = () => setSpeakingAnswer(null);
+    window.speechSynthesis.cancel();
+    setSpeakingAnswer(answer);
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   if (questionStates.length === 0) {
     return (
@@ -279,7 +305,20 @@ export function ReviewStudySession({
                 <p className="font-semibold text-slate-900">正解例</p>
                 <ul className="list-inside list-disc space-y-0.5">
                   {currentQuestion.acceptableAnswers.map((answer) => (
-                    <li key={answer}>{answer}</li>
+                    <li key={answer} className="flex items-center gap-2">
+                      <span>{answer}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
+                        onClick={() => handleSpeakAnswer(answer)}
+                        disabled={speakingAnswer === answer}
+                      >
+                        <Volume2 className="size-4" />
+                        {speakingAnswer === answer ? "再生中..." : "音声"}
+                      </Button>
+                    </li>
                   ))}
                 </ul>
                 {currentQuestion.explanation ? (
