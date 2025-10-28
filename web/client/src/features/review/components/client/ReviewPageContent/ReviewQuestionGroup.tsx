@@ -1,6 +1,10 @@
 "use client";
 
 import type { ReviewQuestionDto } from "@/external/dto/review/review.query.dto";
+import {
+  formatReviewAccuracy,
+  formatReviewDate,
+} from "@/features/review/lib/formatters";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -21,28 +25,6 @@ interface ReviewQuestionGroupProps {
     groupKey: "weak" | "lowAttempts" | "unattempted",
     questionId: string,
   ) => void;
-}
-
-function formatAccuracy(value: number | null) {
-  if (value === null) {
-    return "未解答";
-  }
-  return `${Math.round(value * 100)}%`;
-}
-
-function formatDate(value: Date | null) {
-  if (!value) {
-    return "未解答";
-  }
-  try {
-    const formatter = new Intl.DateTimeFormat("ja-JP", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-    return formatter.format(value);
-  } catch (_error) {
-    return value.toString();
-  }
 }
 
 export function ReviewQuestionGroup({
@@ -80,9 +62,11 @@ export function ReviewQuestionGroup({
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                       <span className={badgeClassName}>{title}</span>
                       <span>UNIT: {question.unitName}</span>
-                      <span>正答率: {formatAccuracy(question.accuracy)}</span>
                       <span>
-                        最終解答: {formatDate(question.lastAttemptedAt)}
+                        正答率: {formatReviewAccuracy(question.accuracy)}
+                      </span>
+                      <span>
+                        最終解答: {formatReviewDate(question.lastAttemptedAt)}
                       </span>
                     </div>
                   </div>

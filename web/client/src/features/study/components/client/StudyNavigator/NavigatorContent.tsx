@@ -1,11 +1,9 @@
 "use client";
 
 import { BookMarked } from "lucide-react";
-
+import { UnitNavigatorNode } from "@/features/units/components/client/UnitNavigator";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
-
-import type { NavigatorContentProps } from "./StudyNavigator.types";
-import { UnitNavigatorNode } from "./UnitNavigatorNode";
+import type { NavigatorContentProps } from "./types";
 
 export function NavigatorContent(props: NavigatorContentProps) {
   const {

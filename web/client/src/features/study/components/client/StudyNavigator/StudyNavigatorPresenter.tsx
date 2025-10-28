@@ -19,7 +19,7 @@ import {
 } from "@/shared/components/ui/sheet";
 
 import { NavigatorContent } from "./NavigatorContent";
-import type { StudyNavigatorPresenterProps } from "./StudyNavigator.types";
+import type { StudyNavigatorPresenterProps } from "./types";
 
 export function StudyNavigatorPresenter(props: StudyNavigatorPresenterProps) {
   const {

@@ -1,7 +1,7 @@
 "use client";
 
-import type { StudyNavigatorProps } from "./StudyNavigator.types";
 import { StudyNavigatorPresenter } from "./StudyNavigatorPresenter";
+import type { StudyNavigatorProps } from "./types";
 import { useStudyNavigator } from "./useStudyNavigator";
 
 export function StudyNavigator(props: StudyNavigatorProps) {

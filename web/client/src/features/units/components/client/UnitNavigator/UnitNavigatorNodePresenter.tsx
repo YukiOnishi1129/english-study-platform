@@ -1,64 +1,35 @@
-"use client";
-
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
 
-import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 import { cn } from "@/shared/lib/utils";
 
-import type {
-  NavigatorQuestion,
-  NavigatorQuestionSource,
-  UnitNavigatorNodeProps,
-} from "./StudyNavigator.types";
+import type { UnitNavigatorNodeProps } from "./types";
+import type { useUnitNavigatorNodeView } from "./useUnitNavigatorNode";
 
-export function UnitNavigatorNode(props: UnitNavigatorNodeProps) {
-  const {
-    unit,
-    accountId,
-    isCurrentUnit,
-    isExpanded,
-    currentQuestionId,
-    currentUnitQuestions,
-    onToggle,
-    onSelectQuestion,
-    onNavigateUnit,
-  } = props;
+type UnitNavigatorNodeView = ReturnType<typeof useUnitNavigatorNodeView>;
 
-  const { data, isLoading } = useUnitDetailQuery(unit.id, accountId, {
-    enabled: isExpanded && !isCurrentUnit,
-  });
+interface UnitNavigatorNodePresenterProps extends UnitNavigatorNodeProps {
+  view: UnitNavigatorNodeView;
+}
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
+function formatAccuracy(value: number | null | undefined) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+  return `${Math.round(value * 100)}%`;
+}
 
-  useEffect(() => {
-    if (isCurrentUnit && containerRef.current) {
-      containerRef.current.scrollIntoView({ block: "start" });
-    }
-  }, [isCurrentUnit]);
+export function UnitNavigatorNodePresenter({
+  unit,
+  isCurrentUnit,
+  isExpanded,
+  currentQuestionId,
 
-  const questionItems = useMemo<NavigatorQuestion[]>(() => {
-    if (isCurrentUnit) {
-      return currentUnitQuestions.map((question) => ({
-        id: question.id,
-        label: question.title,
-        japanese: question.japanese,
-        statistics: question.statistics,
-        order: extractOrderFromTitle(question.title),
-      }));
-    }
-
-    if (!data) {
-      return [];
-    }
-
-    return data.questions.map(mapQuestionToNavigator);
-  }, [currentUnitQuestions, data, isCurrentUnit]);
-
-  const solvedRate =
-    unit.questionCount > 0
-      ? Math.round((unit.solvedQuestionCount / unit.questionCount) * 100)
-      : 0;
+  onToggle,
+  onSelectQuestion,
+  onNavigateUnit,
+  view,
+}: UnitNavigatorNodePresenterProps) {
+  const { questionItems, isLoading, solvedRate, containerRef } = view;
 
   return (
     <div
@@ -121,7 +92,7 @@ export function UnitNavigatorNode(props: UnitNavigatorNodeProps) {
                       </span>
                     </span>
                     <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">
-                      {formatAccuracy(question.statistics?.accuracy)}
+                      {formatAccuracy(question.statistics?.accuracy ?? null)}
                     </span>
                   </button>
                 </li>
@@ -147,28 +118,4 @@ export function UnitNavigatorNode(props: UnitNavigatorNodeProps) {
       ) : null}
     </div>
   );
-}
-
-function mapQuestionToNavigator(
-  question: NavigatorQuestionSource,
-): NavigatorQuestion {
-  return {
-    id: question.id,
-    label: `Q${question.order}`,
-    japanese: question.japanese,
-    statistics: question.statistics,
-    order: question.order,
-  };
-}
-
-function extractOrderFromTitle(title: string) {
-  const match = title.match(/^Q(\d+)/);
-  return match ? Number.parseInt(match[1], 10) : 0;
-}
-
-function formatAccuracy(value: number | null | undefined) {
-  if (value === null || value === undefined) {
-    return "--";
-  }
-  return `${Math.round(value * 100)}%`;
 }
