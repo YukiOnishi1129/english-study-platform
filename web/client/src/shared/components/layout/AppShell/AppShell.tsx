@@ -277,12 +277,11 @@ export function AppShell({ account, children }: AppShellProps) {
                       </p>
                       <SheetClose asChild>
                         <Button
+                          asChild
                           className="mt-4 w-full justify-center"
                           type="button"
-                          onClick={handleStartStudy}
-                          disabled={isStartingStudy}
                         >
-                          復習する
+                          <Link href="/review">復習する</Link>
                         </Button>
                       </SheetClose>
                     </div>
