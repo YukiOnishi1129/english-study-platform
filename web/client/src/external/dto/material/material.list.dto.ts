@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const GetMaterialListRequestSchema = z.object({
+  accountId: z.uuid().optional().nullable(),
+});
+
+export type GetMaterialListRequest = z.infer<
+  typeof GetMaterialListRequestSchema
+>;
+
 export const MaterialListItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),

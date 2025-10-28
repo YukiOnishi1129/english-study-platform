@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const GetReviewDataRequestSchema = z.object({
+  accountId: z.uuid(),
+  materialId: z.uuid().optional(),
+});
+
+export type GetReviewDataRequest = z.infer<typeof GetReviewDataRequestSchema>;
+
 export const ReviewQuestionSchema = z.object({
   questionId: z.string().min(1),
   unitId: z.string().min(1),

@@ -2,6 +2,15 @@ import { z } from "zod";
 
 import { ReviewQuestionSchema } from "./review.query.dto";
 
+export const GetReviewSessionDataRequestSchema = z.object({
+  materialId: z.uuid(),
+  group: z.enum(["weak", "lowAttempts", "unattempted"]),
+});
+
+export type GetReviewSessionDataRequest = z.infer<
+  typeof GetReviewSessionDataRequestSchema
+>;
+
 export const ReviewSessionQuestionSchema = ReviewQuestionSchema.extend({
   hint: z.string().nullable(),
   explanation: z.string().nullable(),

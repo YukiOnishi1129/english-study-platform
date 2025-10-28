@@ -86,7 +86,9 @@ export const authOptions: NextAuthOptions = {
       }
 
       try {
-        const refreshed = await refreshGoogleTokens(token.refreshToken);
+        const refreshed = await refreshGoogleTokens({
+          refreshToken: token.refreshToken,
+        });
 
         return {
           ...token,

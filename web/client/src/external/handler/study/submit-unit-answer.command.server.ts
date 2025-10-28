@@ -2,32 +2,32 @@
 
 import "server-only";
 
-import { z } from "zod";
+import {
+  type SubmitUnitAnswerRequest,
+  SubmitUnitAnswerRequestSchema,
+  type SubmitUnitAnswerResponse,
+  SubmitUnitAnswerResponseSchema,
+} from "@/external/dto/study/submit-unit-answer.dto";
 import { StudyService } from "@/external/service/study/study.service";
 import { getAuthenticatedAccount } from "@/features/auth/servers/auth-check.server";
 
-const InputSchema = z.object({
-  unitId: z.string().min(1),
-  questionId: z.string().min(1),
-  answerText: z.string().min(1),
-});
-
-export async function submitUnitAnswerCommand(input: {
-  unitId: string;
-  questionId: string;
-  answerText: string;
-}) {
+export async function submitUnitAnswerCommand(
+  input: SubmitUnitAnswerRequest,
+): Promise<SubmitUnitAnswerResponse> {
   const account = await getAuthenticatedAccount();
   if (!account) {
     throw new Error("UNAUTHORIZED");
   }
 
-  const { unitId, questionId, answerText } = InputSchema.parse(input);
+  const { unitId, questionId, answerText } =
+    SubmitUnitAnswerRequestSchema.parse(input);
   const studyService = new StudyService();
-  return studyService.submitUnitAnswer({
+  const result = await studyService.submitUnitAnswer({
     accountId: account.id,
     unitId,
     questionId,
     answerText,
   });
+
+  return SubmitUnitAnswerResponseSchema.parse(result);
 }

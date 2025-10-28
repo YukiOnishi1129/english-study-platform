@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const GetUnitDetailRequestSchema = z.object({
+  unitId: z.uuid(),
+  accountId: z.uuid().optional().nullable(),
+});
+
+export type GetUnitDetailRequest = z.infer<typeof GetUnitDetailRequestSchema>;
+
 export const UnitDetailCorrectAnswerSchema = z.object({
   id: z.string().min(1),
   answerText: z.string().min(1),

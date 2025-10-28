@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export const GetDashboardDataRequestSchema = z.object({
+  accountId: z.uuid(),
+});
+
+export type GetDashboardDataRequest = z.infer<
+  typeof GetDashboardDataRequestSchema
+>;
+
 export const DashboardStatsSchema = z.object({
   totalAnswerCount: z.number().int().nonnegative(),
   correctAnswerCount: z.number().int().nonnegative(),
