@@ -1,18 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import type {
-  DashboardMaterialChapterDto,
-  DashboardMaterialSummaryDto,
-  DashboardStudyCalendarEntryDto,
-} from "@/external/dto/dashboard/dashboard.query.dto";
+import type { DashboardStudyCalendarEntryDto } from "@/external/dto/dashboard/dashboard.query.dto";
 import { useDashboardQuery } from "@/features/dashboard/queries/useDashboardQuery";
 import {
-  addUtcDays,
-  formatDateKey,
-  startOfUtcDay,
-  startOfWeek,
-} from "./calendarUtils";
+  buildCalendarViewModel,
+  buildMaterialCardViewModel,
+  type DashboardMaterialUnitPreview,
+} from "./viewModelBuilders";
 
 interface UseDashboardContentOptions {
   accountId: string;
@@ -32,111 +27,44 @@ export interface DashboardCalendarDayViewModel
   isPlaceholder: boolean;
 }
 
-export interface DashboardMaterialCardViewModel
-  extends Omit<DashboardMaterialSummaryDto, "progressRate"> {
+export interface DashboardMaterialCardViewModel {
+  id: string;
+  name: string;
+  description: string | null;
+  totalUnitCount: number;
+  totalQuestionCount: number;
   progressRatePercent: number;
-  chapterCount: number;
+  unitPreview: DashboardMaterialUnitPreview[];
+  remainingUnitCount: number;
+  nextUnitId: string | null;
 }
 
-type DashboardCalendarWeek = DashboardCalendarDayViewModel[];
+export type DashboardCalendarWeek = DashboardCalendarDayViewModel[];
 
-interface DashboardCalendarViewModel {
+export interface DashboardCalendarViewModel {
   days: DashboardCalendarDayViewModel[];
   maxCount: number;
   weeks: DashboardCalendarWeek[];
 }
 
-export interface UseDashboardContentResult {
+export interface DashboardHeaderViewModel {
   greetingName: string;
-  statsCards: DashboardStatCardViewModel[];
-  calendar: DashboardCalendarViewModel;
-  materials: DashboardMaterialCardViewModel[];
+  totalQuestionCount: number;
+}
+
+export interface DashboardContentViewModel {
   isLoading: boolean;
   isError: boolean;
-}
-
-function countChapters(chapters: DashboardMaterialChapterDto[]): number {
-  return chapters.reduce((accumulator, chapter) => {
-    return (
-      accumulator +
-      1 +
-      (chapter.children.length > 0 ? countChapters(chapter.children) : 0)
-    );
-  }, 0);
-}
-
-function buildCalendarViewModel(
-  calendar: DashboardStudyCalendarEntryDto[],
-): DashboardCalendarViewModel {
-  if (calendar.length === 0) {
-    return { days: [], maxCount: 0, weeks: [] };
-  }
-
-  const maxCount = calendar.reduce(
-    (max, entry) => Math.max(max, entry.totalAnswers),
-    0,
-  );
-
-  const days = calendar.map((entry) => {
-    const intensity = maxCount === 0 ? 0 : entry.totalAnswers / maxCount;
-    return {
-      ...entry,
-      intensity,
-      isPlaceholder: false,
-    } satisfies DashboardCalendarDayViewModel;
-  });
-
-  const today = startOfUtcDay(new Date());
-  const daysMap = new Map<string, DashboardCalendarDayViewModel>();
-  days.forEach((day) => {
-    daysMap.set(day.date, day);
-  });
-
-  const weeks: DashboardCalendarWeek[] = [];
-  const completeDays: DashboardCalendarDayViewModel[] = [];
-
-  const startWeek = addUtcDays(startOfWeek(today), -51 * 7);
-
-  for (let weekIndex = 0; weekIndex < 52; weekIndex += 1) {
-    const weekStart = addUtcDays(startWeek, weekIndex * 7);
-    const week: DashboardCalendarWeek = [];
-    for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
-      const current = addUtcDays(weekStart, dayIndex);
-      const dateKey = formatDateKey(current);
-      const existing = daysMap.get(dateKey);
-      const day =
-        existing ??
-        ({
-          date: dateKey,
-          totalAnswers: 0,
-          correctAnswers: 0,
-          intensity: 0,
-          isPlaceholder: true,
-        } satisfies DashboardCalendarDayViewModel);
-      week.push(day);
-      completeDays.push(day);
-    }
-    weeks.push(week);
-  }
-
-  return { days: completeDays, maxCount, weeks };
-}
-
-function buildMaterialCardViewModel(
-  material: DashboardMaterialSummaryDto,
-): DashboardMaterialCardViewModel {
-  const chapterCount = countChapters(material.chapters);
-
-  return {
-    ...material,
-    chapterCount,
-    progressRatePercent: Math.round(material.progressRate * 100),
-  } satisfies DashboardMaterialCardViewModel;
+  loadingMessage: string;
+  header: DashboardHeaderViewModel;
+  statsCards: DashboardStatCardViewModel[];
+  materials: DashboardMaterialCardViewModel[];
+  calendar: DashboardCalendarViewModel;
 }
 
 export function useDashboardContent(
   options: UseDashboardContentOptions,
-): UseDashboardContentResult {
+): DashboardContentViewModel {
   const { accountId, displayName } = options;
   const { data, isLoading, isError } = useDashboardQuery(accountId);
 
@@ -191,12 +119,28 @@ export function useDashboardContent(
     );
   }, [data]);
 
+  const totalQuestionCount = useMemo(() => {
+    return materials.reduce(
+      (accumulator, material) => accumulator + material.totalQuestionCount,
+      0,
+    );
+  }, [materials]);
+
+  const header: DashboardHeaderViewModel = useMemo(
+    () => ({
+      greetingName: displayName,
+      totalQuestionCount,
+    }),
+    [displayName, totalQuestionCount],
+  );
+
   return {
-    greetingName: displayName,
-    statsCards,
-    calendar,
-    materials,
     isLoading,
     isError,
-  } satisfies UseDashboardContentResult;
+    loadingMessage: "学習状況を準備しています...",
+    header,
+    statsCards,
+    materials,
+    calendar,
+  };
 }

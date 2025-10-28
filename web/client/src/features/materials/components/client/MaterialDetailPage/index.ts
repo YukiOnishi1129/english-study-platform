@@ -1,1 +1,1 @@
-export { MaterialDetailPageContent } from "./MaterialDetailPageContent";
+export { MaterialDetailPageContent } from "./MaterialDetailPageContainer";

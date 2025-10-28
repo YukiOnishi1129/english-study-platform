@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+
+import type { MaterialDetailDto } from "@/external/dto/material/material.detail.dto";
 import { MaterialNavigator } from "@/features/materials/components/client/MaterialNavigator";
-import { useMaterialDetailQuery } from "@/features/materials/queries";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,20 +23,19 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-interface MaterialDetailPageContentProps {
-  materialId: string;
-  accountId: string | null;
+export interface MaterialDetailPagePresenterProps {
+  material: MaterialDetailDto["material"] | null;
+  chapters: MaterialDetailDto["chapters"];
+  isLoading: boolean;
+  isError: boolean;
 }
 
-export function MaterialDetailPageContent({
-  materialId,
-  accountId,
-}: MaterialDetailPageContentProps) {
-  const { data, isLoading, isError } = useMaterialDetailQuery(
-    materialId,
-    accountId,
-  );
-
+export function MaterialDetailPagePresenter({
+  material,
+  chapters,
+  isLoading,
+  isError,
+}: MaterialDetailPagePresenterProps) {
   if (isLoading) {
     return (
       <div className="space-y-8">
@@ -69,7 +69,7 @@ export function MaterialDetailPageContent({
     );
   }
 
-  if (isError || !data) {
+  if (isError || !material) {
     return (
       <div className="space-y-4">
         <Breadcrumb>
@@ -97,11 +97,9 @@ export function MaterialDetailPageContent({
     );
   }
 
-  const { material, chapters } = data;
   const startHref = material.nextUnitId
     ? (`/units/${material.nextUnitId}/study` as const)
     : null;
-
   const breadcrumbRoot: "/materials" = "/materials";
 
   return (
@@ -206,20 +204,17 @@ export function MaterialDetailPageContent({
                   </CardDescription>
                 ) : null}
               </CardHeader>
-              <CardContent className="space-y-2 text-xs text-slate-700">
-                <div className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2">
-                  <span>UNIT数</span>
-                  <span className="font-semibold text-slate-900">
-                    {chapter.units.length}
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-center justify-between rounded-lg bg-white/80 px-3 py-2">
+                  <span className="text-muted-foreground">UNIT数</span>
+                  <span className="font-semibold text-indigo-800">
+                    {chapter.unitCount}
                   </span>
                 </div>
-                <div className="flex items-center justify-between rounded-xl bg-white/80 px-3 py-2">
-                  <span>問題数</span>
-                  <span className="font-semibold text-slate-900">
-                    {chapter.units.reduce(
-                      (sum, unit) => sum + unit.questionCount,
-                      0,
-                    )}
+                <div className="flex items-center justify-between rounded-lg bg-white/80 px-3 py-2">
+                  <span className="text-muted-foreground">問題数</span>
+                  <span className="font-semibold text-indigo-800">
+                    {chapter.questionCount}
                   </span>
                 </div>
               </CardContent>

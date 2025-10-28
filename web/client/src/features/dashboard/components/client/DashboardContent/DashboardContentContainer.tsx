@@ -9,8 +9,7 @@ interface DashboardContentProps {
 }
 
 export function DashboardContent(props: DashboardContentProps) {
-  const { accountId, displayName } = props;
-  const viewModel = useDashboardContent({ accountId, displayName });
+  const viewModel = useDashboardContent(props);
 
   return <DashboardContentPresenter {...viewModel} />;
 }

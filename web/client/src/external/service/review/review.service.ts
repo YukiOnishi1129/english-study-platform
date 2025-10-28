@@ -172,9 +172,7 @@ export class ReviewService {
           correctCount,
           incorrectCount,
           accuracy,
-          lastAttemptedAt: lastAttemptedAt
-            ? lastAttemptedAt.toISOString()
-            : null,
+          lastAttemptedAt,
         };
 
         if (totalAttempts === 0) {
@@ -198,14 +196,18 @@ export class ReviewService {
       if (accuracyA !== accuracyB) {
         return accuracyA - accuracyB;
       }
-      return (a.lastAttemptedAt ?? "").localeCompare(b.lastAttemptedAt ?? "");
+      const timeA = a.lastAttemptedAt?.getTime() ?? 0;
+      const timeB = b.lastAttemptedAt?.getTime() ?? 0;
+      return timeA - timeB;
     };
 
     const sortByAttempts = (a: ReviewQuestionDto, b: ReviewQuestionDto) => {
       if (a.totalAttempts !== b.totalAttempts) {
         return a.totalAttempts - b.totalAttempts;
       }
-      return (a.lastAttemptedAt ?? "").localeCompare(b.lastAttemptedAt ?? "");
+      const timeA = a.lastAttemptedAt?.getTime() ?? 0;
+      const timeB = b.lastAttemptedAt?.getTime() ?? 0;
+      return timeA - timeB;
     };
 
     const sortByOrder = (a: ReviewQuestionDto, b: ReviewQuestionDto) => {

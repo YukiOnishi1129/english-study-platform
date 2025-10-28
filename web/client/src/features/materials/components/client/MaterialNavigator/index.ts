@@ -1,1 +1,1 @@
-export { MaterialNavigator } from "./MaterialNavigator";
+export { MaterialNavigator } from "./MaterialNavigatorContainer";

@@ -1,1 +1,1 @@
-export { ReviewPageContent } from "./ReviewPageContent";
+export { ReviewPageContent } from "./ReviewPageContentContainer";

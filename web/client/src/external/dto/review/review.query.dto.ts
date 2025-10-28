@@ -18,7 +18,7 @@ export const ReviewQuestionSchema = z.object({
   correctCount: z.number().int().nonnegative(),
   incorrectCount: z.number().int().nonnegative(),
   accuracy: z.number().min(0).max(1).nullable(),
-  lastAttemptedAt: z.string().datetime().nullable(),
+  lastAttemptedAt: z.date().nullable(),
 });
 
 export type ReviewQuestionDto = z.infer<typeof ReviewQuestionSchema>;

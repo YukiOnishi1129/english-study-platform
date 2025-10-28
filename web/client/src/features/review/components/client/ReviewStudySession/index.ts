@@ -1,1 +1,1 @@
-export { ReviewStudySession } from "./ReviewStudySession";
+export { ReviewStudySession } from "./ReviewStudySessionContainer";

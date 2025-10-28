@@ -1,7 +1,8 @@
 export { DashboardContent } from "./DashboardContentContainer";
 export type {
   DashboardCalendarDayViewModel,
+  DashboardContentViewModel,
+  DashboardHeaderViewModel,
   DashboardMaterialCardViewModel,
   DashboardStatCardViewModel,
-  UseDashboardContentResult,
 } from "./useDashboardContent";

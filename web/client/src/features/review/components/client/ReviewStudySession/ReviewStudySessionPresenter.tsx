@@ -2,9 +2,7 @@
 
 import { Volume2 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ReviewSessionDataDto } from "@/external/dto/review/review.session.dto";
-import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
+
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -18,129 +16,58 @@ import { Input } from "@/shared/components/ui/input";
 import { Separator } from "@/shared/components/ui/separator";
 import { cn } from "@/shared/lib/utils";
 
-type StudyStatus = "idle" | "correct" | "incorrect";
+import type { UseReviewStudySessionResult } from "./useReviewStudySession";
 
-interface ReviewStudySessionProps {
-  session: ReviewSessionDataDto;
-  initialQuestionId?: string;
+function formatAccuracy(value: number | null) {
+  if (value === null) {
+    return "未解答";
+  }
+  return `${Math.round(value * 100)}%`;
 }
 
-export function ReviewStudySession({
-  session,
-  initialQuestionId,
-}: ReviewStudySessionProps) {
-  const { questions } = session;
+function formatDate(value: Date | null) {
+  if (!value) {
+    return "未解答";
+  }
+  try {
+    const formatter = new Intl.DateTimeFormat("ja-JP", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+    return formatter.format(value);
+  } catch (_error) {
+    return value.toString();
+  }
+}
 
-  const initialIndex = useMemo(() => {
-    if (!initialQuestionId) {
-      return 0;
-    }
-    const index = questions.findIndex(
-      (question) => question.questionId === initialQuestionId,
-    );
-    return index >= 0 ? index : 0;
-  }, [questions, initialQuestionId]);
+export interface ReviewStudySessionPresenterProps
+  extends UseReviewStudySessionResult {}
 
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [inputValue, setInputValue] = useState("");
-  const [status, setStatus] = useState<StudyStatus>("idle");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [questionStates, setQuestionStates] = useState(() => questions);
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [isHintVisible, setHintVisible] = useState(false);
-  const [speakingAnswer, setSpeakingAnswer] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCurrentIndex(initialIndex);
-    setInputValue("");
-    setStatus("idle");
-    setErrorMessage(null);
-    setQuestionStates(questions);
-    setIsCompleted(false);
-    setHintVisible(false);
-    setSpeakingAnswer(null);
-  }, [initialIndex, questions]);
-
-  const currentQuestion = questionStates[currentIndex];
-  const isAnswered = status !== "idle";
-  const remainingCount = questionStates.length - currentIndex - 1;
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!currentQuestion || isSubmitting || !inputValue.trim()) {
-      return;
-    }
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    try {
-      const result = await submitUnitAnswerAction({
-        unitId: currentQuestion.unitId,
-        questionId: currentQuestion.questionId,
-        answerText: inputValue,
-      });
-
-      setStatus(result.isCorrect ? "correct" : "incorrect");
-      setQuestionStates((prev) =>
-        prev.map((item) =>
-          item.questionId === currentQuestion.questionId
-            ? {
-                ...item,
-                totalAttempts: result.statistics.totalAttempts,
-                correctCount: result.statistics.correctCount,
-                incorrectCount: result.statistics.incorrectCount,
-                accuracy: result.statistics.accuracy,
-                lastAttemptedAt: result.statistics.lastAttemptedAt,
-              }
-            : item,
-        ),
-      );
-    } catch (_error) {
-      setErrorMessage(
-        "回答の送信に失敗しました。時間をおいて再度お試しください。",
-      );
-      setStatus("idle");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex >= questionStates.length - 1) {
-      setIsCompleted(true);
-      return;
-    }
-    setCurrentIndex((prev) => prev + 1);
-    setInputValue("");
-    setStatus("idle");
-    setErrorMessage(null);
-    setHintVisible(false);
-    setSpeakingAnswer(null);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined") {
-        window.speechSynthesis.cancel();
-        setSpeakingAnswer(null);
-      }
-    };
-  }, []);
-
-  const handleSpeakAnswer = useCallback((answer: string) => {
-    if (typeof window === "undefined" || !answer) {
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(answer);
-    utterance.lang = "en-US";
-    utterance.onend = () => setSpeakingAnswer(null);
-    utterance.onerror = () => setSpeakingAnswer(null);
-    window.speechSynthesis.cancel();
-    setSpeakingAnswer(answer);
-    window.speechSynthesis.speak(utterance);
-  }, []);
-
-  if (questionStates.length === 0) {
+export function ReviewStudySessionPresenter({
+  hasQuestions,
+  isCompleted,
+  status,
+  isAnswered,
+  encouragement,
+  materialName,
+  groupLabel,
+  remainingCount,
+  currentIndex,
+  currentQuestion,
+  inputValue,
+  isSubmitting,
+  errorMessage,
+  isHintVisible,
+  speakingAnswer,
+  onInputChange,
+  onSubmit,
+  onFillReferenceAnswer,
+  onToggleHint,
+  onRetryCurrent,
+  onNextQuestion,
+  onSpeakAnswer,
+}: ReviewStudySessionPresenterProps) {
+  if (!hasQuestions) {
     return (
       <Card className="border border-indigo-100/70">
         <CardHeader>
@@ -183,21 +110,13 @@ export function ReviewStudySession({
     return null;
   }
 
-  const encouragement =
-    status === "correct"
-      ? "素晴らしい！その調子です。"
-      : status === "incorrect"
-        ? "気にせず次の問題に挑戦しましょう。"
-        : "集中して復習を進めましょう。";
-
   return (
     <div className="space-y-6">
       <Card className="border border-indigo-100/70">
         <CardHeader className="space-y-2">
-          <CardTitle>{session.material.name}</CardTitle>
+          <CardTitle>{materialName}</CardTitle>
           <CardDescription>
-            {renderGroupLabel(session.group)} を復習しています。残り{" "}
-            {remainingCount} 問。
+            {groupLabel} を復習しています。残り {remainingCount} 問。
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
@@ -227,7 +146,7 @@ export function ReviewStudySession({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <label
                 className="text-sm font-medium text-slate-700"
@@ -237,7 +156,7 @@ export function ReviewStudySession({
               </label>
               <Input
                 value={inputValue}
-                onChange={(event) => setInputValue(event.target.value)}
+                onChange={(event) => onInputChange(event.target.value)}
                 id="review-answer-input"
                 disabled={isSubmitting || isAnswered}
                 placeholder="Your answer"
@@ -259,9 +178,7 @@ export function ReviewStudySession({
                 type="button"
                 variant="outline"
                 className="rounded-full"
-                onClick={() =>
-                  setInputValue(currentQuestion.acceptableAnswers[0] ?? "")
-                }
+                onClick={onFillReferenceAnswer}
                 disabled={
                   isSubmitting ||
                   isAnswered ||
@@ -275,7 +192,7 @@ export function ReviewStudySession({
                   type="button"
                   variant="ghost"
                   className="rounded-full text-indigo-600 hover:text-indigo-500"
-                  onClick={() => setHintVisible((prev) => !prev)}
+                  onClick={onToggleHint}
                   disabled={isSubmitting}
                 >
                   {isHintVisible ? "ヒントを隠す" : "ヒントを見る"}
@@ -312,7 +229,7 @@ export function ReviewStudySession({
                         variant="ghost"
                         size="sm"
                         className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                        onClick={() => handleSpeakAnswer(answer)}
+                        onClick={() => onSpeakAnswer(answer)}
                         disabled={speakingAnswer === answer}
                       >
                         <Volume2 className="size-4" />
@@ -341,11 +258,7 @@ export function ReviewStudySession({
                 type="button"
                 variant="secondary"
                 className="rounded-full"
-                onClick={() => {
-                  setInputValue("");
-                  setStatus("idle");
-                  setErrorMessage(null);
-                }}
+                onClick={onRetryCurrent}
                 disabled={isSubmitting}
               >
                 やり直す
@@ -353,7 +266,7 @@ export function ReviewStudySession({
               <Button
                 type="button"
                 className="rounded-full bg-indigo-600 text-white hover:bg-indigo-500"
-                onClick={handleNext}
+                onClick={onNextQuestion}
                 disabled={status === "idle"}
               >
                 次の問題へ
@@ -375,39 +288,4 @@ export function ReviewStudySession({
       </div>
     </div>
   );
-}
-
-function renderGroupLabel(group: ReviewSessionDataDto["group"]) {
-  switch (group) {
-    case "weak":
-      return "正答率が低い問題";
-    case "lowAttempts":
-      return "解答回数が少ない問題";
-    case "unattempted":
-      return "未解答の問題";
-    default:
-      return "復習対象";
-  }
-}
-
-function formatAccuracy(value: number | null) {
-  if (value === null) {
-    return "未解答";
-  }
-  return `${Math.round(value * 100)}%`;
-}
-
-function formatDate(value: string | null) {
-  if (!value) {
-    return "未解答";
-  }
-  try {
-    const formatter = new Intl.DateTimeFormat("ja-JP", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-    return formatter.format(new Date(value));
-  } catch (_error) {
-    return value;
-  }
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useMaterialListQuery } from "@/features/materials/queries";
+import type { MaterialListItemDto } from "@/external/dto/material/material.list.dto";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -14,15 +14,17 @@ import {
 import { Separator } from "@/shared/components/ui/separator";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-interface MaterialListPageContentProps {
-  accountId: string | null;
+export interface MaterialListPagePresenterProps {
+  materials: MaterialListItemDto[];
+  isLoading: boolean;
+  isError: boolean;
 }
 
-export function MaterialListPageContent({
-  accountId,
-}: MaterialListPageContentProps) {
-  const { data, isLoading, isError } = useMaterialListQuery(accountId);
-
+export function MaterialListPagePresenter({
+  materials,
+  isLoading,
+  isError,
+}: MaterialListPagePresenterProps) {
   if (isLoading) {
     return (
       <div className="space-y-8">
@@ -79,13 +81,11 @@ export function MaterialListPageContent({
     );
   }
 
-  const materials = data ?? [];
-
   return (
     <div className="space-y-8">
       <header className="space-y-3">
         <h1 className="text-2xl font-bold text-slate-900">教材一覧</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
+        <p className="text-sm leading-relaxed text-muted-foreground">
           利用可能な教材の一覧です。各教材を選択すると、章とUNITの構成や問題数の詳細を確認できます。
         </p>
       </header>
