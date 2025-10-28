@@ -1,0 +1,1 @@
+export { ReviewPageTemplate } from "./ReviewPageTemplate";

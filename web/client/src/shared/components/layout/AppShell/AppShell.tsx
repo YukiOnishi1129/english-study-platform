@@ -10,8 +10,8 @@ import {
   PlayCircle,
   Settings,
 } from "lucide-react";
-import Link from "next/link";
 import type { Route } from "next";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
@@ -177,9 +177,7 @@ export function AppShell({ account, children }: AppShellProps) {
             const search = target.questionId
               ? `?questionId=${target.questionId}`
               : "";
-            router.push(
-              `/units/${target.unitId}/study${search}` as Route,
-            );
+            router.push(`/units/${target.unitId}/study${search}` as Route);
           } else {
             router.push("/materials");
           }

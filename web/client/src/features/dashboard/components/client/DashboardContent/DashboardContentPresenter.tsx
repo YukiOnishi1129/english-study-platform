@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type ReactElement, useCallback, useMemo, useTransition } from "react";
 import type { Route } from "next";
-import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
 import { Button } from "@/shared/components/ui/button";
+import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
 import {
   Card,
   CardContent,
@@ -218,6 +218,7 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
   const displayedDayCount = displayedWeeks.length * 7;
   const isShowingSubsetOfCalendar =
     displayedWeeks.length !== calendar.weeks.length;
+
   const handleStartStudy = useCallback(() => {
     startStudyTransition(() => {
       void (async () => {
@@ -227,9 +228,7 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
             const search = target.questionId
               ? `?questionId=${target.questionId}`
               : "";
-            router.push(
-              `/units/${target.unitId}/study${search}` as Route,
-            );
+            router.push(`/units/${target.unitId}/study${search}` as Route);
           } else {
             router.push("/materials");
           }
@@ -279,15 +278,21 @@ export function DashboardContentPresenter(props: UseDashboardContentResult) {
               前回の学習：昨日 22:15
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             <Button
               type="button"
               onClick={handleStartStudy}
               disabled={isStartingStudy}
-              className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
+              className="rounded-full bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2"
             >
-              問題を解く
+              学習をはじめる
             </Button>
+            <Link
+              href="/review"
+              className="text-xs font-semibold text-indigo-600 transition hover:text-indigo-500"
+            >
+              復習ページへ
+            </Link>
           </div>
         </CardHeader>
       </Card>
