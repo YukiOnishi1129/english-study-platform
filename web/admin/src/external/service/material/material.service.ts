@@ -46,6 +46,8 @@ import type {
   UnitDetailMaterialDto,
   UnitDetailQuestionDto,
   UnitDetailUnitDto,
+  VocabularyEntryDetailDto,
+  VocabularyRelationDto,
 } from "@/external/dto/material/material.query.dto";
 
 function serialize(date: Date): string {
@@ -351,13 +353,57 @@ export class MaterialService {
       }))
       .sort((a, b) => a.order - b.order);
 
-    const questionHeadword = question.vocabularyEntryId
-      ? ((
-          await this.vocabularyEntryRepository.findById(
-            question.vocabularyEntryId,
-          )
-        )?.headword ?? null)
-      : null;
+    let vocabularyEntryDto: VocabularyEntryDetailDto | null = null;
+    let questionHeadword: string | null = null;
+
+    if (question.vocabularyEntryId) {
+      const entry = await this.vocabularyEntryRepository.findById(
+        question.vocabularyEntryId,
+      );
+      if (entry) {
+        questionHeadword = entry.headword;
+        const relations = await this.vocabularyRelationRepository.findByEntryId(
+          entry.id,
+        );
+        const relationDtos: VocabularyRelationDto[] = relations
+          .map((relation) => ({
+            id: relation.id,
+            vocabularyEntryId: relation.vocabularyEntryId,
+            relationType: relation.relationType,
+            relatedText: relation.relatedText,
+            note: relation.note ?? null,
+            createdAt: serialize(relation.createdAt),
+            updatedAt: serialize(relation.updatedAt),
+          }))
+          .sort((a, b) => {
+            if (a.relationType === b.relationType) {
+              return a.relatedText.localeCompare(b.relatedText, "ja");
+            }
+            const order: Record<VocabularyRelationDto["relationType"], number> =
+              {
+                synonym: 0,
+                antonym: 1,
+                related: 2,
+              };
+            return order[a.relationType] - order[b.relationType];
+          });
+
+        vocabularyEntryDto = {
+          id: entry.id,
+          materialId: entry.materialId,
+          headword: entry.headword,
+          pronunciation: entry.pronunciation ?? null,
+          partOfSpeech: entry.partOfSpeech ?? null,
+          definitionJa: entry.definitionJa,
+          memo: entry.memo ?? null,
+          exampleSentenceEn: entry.exampleSentenceEn ?? null,
+          exampleSentenceJa: entry.exampleSentenceJa ?? null,
+          createdAt: serialize(entry.createdAt),
+          updatedAt: serialize(entry.updatedAt),
+          relations: relationDtos,
+        };
+      }
+    }
 
     const questionDto: UnitDetailQuestionDto = {
       id: question.id,
@@ -390,6 +436,7 @@ export class MaterialService {
       chapterPath,
       unit: unitDto,
       question: questionDto,
+      vocabularyEntry: vocabularyEntryDto,
     } satisfies QuestionDetailDto;
   }
 
