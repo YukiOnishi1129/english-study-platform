@@ -322,6 +322,9 @@ web/client/
 │       │   ├── question/
 │       │   │   ├── types.ts
 │       │   │   └── ensureQuestionResponse.ts
+│       │   ├── vocabulary/
+│       │   │   ├── types.ts
+│       │   │   └── ensureVocabularyResponse.ts
 │       │   ├── study/
 │       │   │   ├── types.ts
 │       │   │   └── ensureAnswerResponse.ts
@@ -339,6 +342,9 @@ web/client/
 │       │   ├── question/
 │       │   │   ├── query.server.ts
 │       │   │   └── query.action.ts
+│       │   ├── vocabulary/
+│       │   │   ├── query.server.ts
+│       │   │   └── query.action.ts
 │       │   ├── study/
 │       │   │   ├── query.server.ts
 │       │   │   ├── query.action.ts
@@ -351,7 +357,8 @@ web/client/
 │       │   ├── AnswerJudgementService.ts
 │       │   ├── StudyAnalyticsService.ts
 │       │   ├── QuestionRandomizerService.ts
-│       │   └── StatisticsAggregationService.ts
+│       │   ├── StatisticsAggregationService.ts
+│       │   └── VocabularyImportService.ts
 │       │
 │       ├── repository/
 │       │   ├── AccountRepository.ts
@@ -362,7 +369,9 @@ web/client/
 │       │   ├── CorrectAnswerRepository.ts
 │       │   ├── UserAnswerRepository.ts
 │       │   ├── QuestionStatisticsRepository.ts
-│       │   └── DailyStudyLogRepository.ts
+│       │   ├── DailyStudyLogRepository.ts
+│       │   ├── VocabularyEntryRepository.ts
+│       │   └── VocabularyRelationRepository.ts
 │       │
 │       ├── db/
 │       │   ├── schema/
@@ -374,6 +383,8 @@ web/client/
 │       │   │   ├── correct-answers.ts
 │       │   │   ├── user-answers.ts
 │       │   │   ├── question-statistics.ts
+│       │   │   ├── vocabulary-entries.ts
+│       │   │   ├── vocabulary-relations.ts
 │       │   │   └── daily-study-logs.ts
 │       │   ├── migrations/
 │       │   └── client.ts
@@ -551,6 +562,9 @@ web/admin/
 │       │   ├── csv/
 │       │   │   ├── types.ts
 │       │   │   └── ensureCsvResponse.ts
+│       │   ├── vocabulary/
+│       │   │   ├── types.ts
+│       │   │   └── ensureVocabularyResponse.ts
 │       │   └── stats/
 │       │       ├── types.ts
 │       │       └── ensureStatsResponse.ts
@@ -566,12 +580,16 @@ web/admin/
 │       │   ├── csv-import/
 │       │   │   ├── upload.action.ts
 │       │   │   └── import.action.ts
+│       │   ├── vocabulary/
+│       │   │   ├── query.server.ts
+│       │   │   └── mutation.action.ts
 │       │   └── stats/
 │       │       ├── query.server.ts
 │       │       └── query.action.ts
 │       │
 │       ├── service/
 │       │   ├── CsvImportService.ts
+│       │   ├── VocabularyImportService.ts
 │       │   ├── ChapterTreeBuilderService.ts
 │       │   └── MaterialValidationService.ts
 │       │
@@ -581,7 +599,9 @@ web/admin/
 │       │   ├── ChapterRepository.ts
 │       │   ├── UnitRepository.ts
 │       │   ├── QuestionRepository.ts
-│       │   └── CorrectAnswerRepository.ts
+│       │   ├── CorrectAnswerRepository.ts
+│       │   ├── VocabularyEntryRepository.ts
+│       │   └── VocabularyRelationRepository.ts
 │       │
 │       ├── db/
 │       │   ├── schema/
@@ -590,7 +610,9 @@ web/admin/
 │       │   │   ├── chapters.ts
 │       │   │   ├── units.ts
 │       │   │   ├── questions.ts
-│       │   │   └── correct-answers.ts
+│       │   │   ├── correct-answers.ts
+│       │   │   ├── vocabulary-entries.ts
+│       │   │   └── vocabulary-relations.ts
 │       │   ├── migrations/
 │       │   └── client.ts
 │       │
@@ -626,6 +648,8 @@ import { Account, Material, AccountRepository, ... } from "@acme/shared/domain";
 - Unit: ユニット
 - Question: 問題
 - CorrectAnswer: 正解
+- VocabularyEntry: 語彙エントリ（品詞・定義・関連語を保持）
+- VocabularyRelation: 類義語/対義語/関連語のリンク
 
 #### Repository Pattern
 各エンティティに対して：
