@@ -32,7 +32,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 
-import { StudyNavigator } from "../StudyNavigator";
+import { StudyNavigator, StudyNavigatorSidebar } from "../StudyNavigator";
 import type { UseUnitStudyContentResult } from "./useUnitStudyContent";
 
 function LoadingSkeleton() {
@@ -114,7 +114,6 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     progressLabel,
     questions,
     currentQuestion,
-    currentQuestionId,
     currentStatistics,
     inputValue,
     status,
@@ -207,8 +206,20 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     <div className="space-y-6">
       {renderBreadcrumb(breadcrumb)}
 
-      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1fr),320px] xl:items-start xl:gap-6">
-        <div className="space-y-6">
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[320px,minmax(0,1fr)] xl:items-start xl:gap-6">
+        <aside className="hidden xl:sticky xl:top-24 xl:flex xl:w-92 xl:h-[calc(100vh-12rem)] xl:self-start">
+          <StudyNavigatorSidebar
+            materialDetail={materialDetail}
+            currentUnitId={unit.id}
+            currentQuestionId={currentQuestion.id}
+            currentUnitQuestions={questions}
+            accountId={accountId}
+            onSelectQuestion={onSelectQuestion}
+            onNavigateUnit={onNavigateUnit}
+            maxHeight="calc(100vh - 12rem)"
+          />
+        </aside>
+        <div className="space-y-6 xl:col-start-2">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-white/90 px-4 py-3 shadow-sm">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-widest text-indigo-500">
@@ -496,18 +507,18 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
             </Card>
           </div>
         </div>
+      </div>
 
-        <div className="xl:sticky xl:top-20">
-          <StudyNavigator
-            materialDetail={materialDetail}
-            currentUnitId={unit.id}
-            currentQuestionId={currentQuestionId}
-            questions={questions}
-            accountId={accountId}
-            onSelectQuestion={onSelectQuestion}
-            onNavigateUnit={onNavigateUnit}
-          />
-        </div>
+      <div className="xl:hidden">
+        <StudyNavigator
+          materialDetail={materialDetail}
+          currentUnitId={unit.id}
+          currentQuestionId={currentQuestion.id}
+          questions={questions}
+          accountId={accountId}
+          onSelectQuestion={onSelectQuestion}
+          onNavigateUnit={onNavigateUnit}
+        />
       </div>
     </div>
   );
