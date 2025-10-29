@@ -119,10 +119,7 @@ const ImportVocabularyRowSchema = z.object({
   headword: z.string().trim().min(1, "英単語を入力してください。"),
   pronunciation: OPTIONAL_TEXT_SCHEMA,
   partOfSpeech: OPTIONAL_TEXT_SCHEMA,
-  definitionJa: z
-    .string()
-    .trim()
-    .min(1, "日本語訳1を入力してください。"),
+  definitionJa: z.string().trim().min(1, "日本語訳1を入力してください。"),
   definitionVariants: OPTIONAL_TEXT_ARRAY_SCHEMA,
   prompt: OPTIONAL_TEXT_SCHEMA,
   answerCandidates: z
@@ -138,9 +135,7 @@ const ImportVocabularyRowSchema = z.object({
 export const ImportVocabularyEntriesRequestSchema = z.object({
   unitId: z.string().min(1, "unitIdが指定されていません。"),
   materialId: z.string().min(1, "materialIdが指定されていません。"),
-  rows: z
-    .array(ImportVocabularyRowSchema)
-    .min(1, "取り込む語彙がありません。"),
+  rows: z.array(ImportVocabularyRowSchema).min(1, "取り込む語彙がありません。"),
 });
 
 export type ImportVocabularyEntriesRequest = z.infer<

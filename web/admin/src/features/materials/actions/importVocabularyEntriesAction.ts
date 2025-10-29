@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 import {
-  ImportVocabularyEntriesRequestSchema,
   type ImportVocabularyEntriesRequest,
+  ImportVocabularyEntriesRequestSchema,
 } from "@/external/dto/material/material.command.dto";
 import { importVocabularyEntries } from "@/external/handler/material/material.command.server";
 
@@ -45,4 +45,3 @@ export async function importVocabularyEntriesAction(
     };
   }
 }
-

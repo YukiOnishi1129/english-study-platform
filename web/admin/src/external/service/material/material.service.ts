@@ -3,18 +3,18 @@ import {
   CorrectAnswerRepositoryImpl,
   MaterialRepositoryImpl,
   QuestionRepositoryImpl,
+  UnitRepositoryImpl,
   VocabularyEntryRepositoryImpl,
   VocabularyRelationRepositoryImpl,
-  UnitRepositoryImpl,
 } from "@acme/shared/db";
 import {
   Chapter,
   CorrectAnswer,
   Material,
   Question,
+  Unit,
   VocabularyEntry,
   VocabularyRelation,
-  Unit,
 } from "@acme/shared/domain";
 import type {
   CreateChapterRequest,
@@ -691,7 +691,9 @@ export class MaterialService {
     return { createdCount, updatedCount };
   }
 
-  async importVocabularyEntries(payload: ImportVocabularyEntriesRequest): Promise<{
+  async importVocabularyEntries(
+    payload: ImportVocabularyEntriesRequest,
+  ): Promise<{
     createdCount: number;
     updatedCount: number;
   }> {
@@ -707,7 +709,9 @@ export class MaterialService {
 
     const chapter = await this.chapterRepository.findById(unit.chapterId);
     if (!chapter || chapter.materialId !== material.id) {
-      throw new Error("UNITが教材に紐づいていません。再度読み込み直してください。");
+      throw new Error(
+        "UNITが教材に紐づいていません。再度読み込み直してください。",
+      );
     }
 
     const existingQuestions = await this.questionRepository.findByUnitId(
@@ -842,8 +846,7 @@ export class MaterialService {
         });
       }
 
-      const savedEntry =
-        await this.vocabularyEntryRepository.save(entryToSave);
+      const savedEntry = await this.vocabularyEntryRepository.save(entryToSave);
 
       await this.vocabularyRelationRepository.deleteByEntryId(savedEntry.id);
 

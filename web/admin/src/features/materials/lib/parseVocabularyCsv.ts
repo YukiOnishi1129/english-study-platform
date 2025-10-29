@@ -200,7 +200,10 @@ export function parseVocabularyCsv(content: string): ParseVocabularyCsvResult {
     return { rows: [], errors };
   }
 
-  if (definitionColumnIndices.length === 0 && fallbackDefinitionIndex === null) {
+  if (
+    definitionColumnIndices.length === 0 &&
+    fallbackDefinitionIndex === null
+  ) {
     errors.push("日本語訳1の列が見つかりません。");
     return { rows: [], errors };
   }

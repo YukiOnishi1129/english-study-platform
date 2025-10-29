@@ -3,9 +3,6 @@
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { Spinner } from "@/shared/components/ui/spinner";
-import { Button } from "@/shared/components/ui/button";
-import { Card } from "@/shared/components/ui/card";
-import { Spinner } from "@/shared/components/ui/spinner";
 import type { VocabularyCsvImporterPresenterProps } from "./types";
 
 export function VocabularyCsvImporterPresenter(
@@ -32,7 +29,7 @@ export function VocabularyCsvImporterPresenter(
     onNextPage,
   } = props;
 
-  return ( 
+  return (
     <section className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <header className="flex flex-col gap-2">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -53,7 +50,8 @@ export function VocabularyCsvImporterPresenter(
         </div>
         <Card className="bg-slate-50 px-4 py-3 text-xs text-slate-600">
           必須列: 英単語, 日本語訳1, 正解候補1。任意: 語彙ID, 問題ID, 並び順,
-          日本語訳2〜, 品詞, 発音, プロンプト, 正解候補2〜, 類義語/対義語/関連語, 例文(英/和)。
+          日本語訳2〜, 品詞, 発音, プロンプト, 正解候補2〜,
+          類義語/対義語/関連語, 例文(英/和)。
         </Card>
       </header>
 
@@ -155,7 +153,9 @@ export function VocabularyCsvImporterPresenter(
 
           <Card className="space-y-2 border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-700">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="font-semibold">プレビューした内容をDBへ取り込みます。</p>
+              <p className="font-semibold">
+                プレビューした内容をDBへ取り込みます。
+              </p>
               <Button
                 type="button"
                 size="sm"
@@ -199,6 +199,9 @@ export function VocabularyCsvImporterPresenter(
                   <th className="px-4 py-3">語彙ID/問題ID</th>
                   <th className="px-4 py-3">英単語</th>
                   <th className="px-4 py-3">日本語訳</th>
+                  <th className="px-4 py-3">品詞</th>
+                  <th className="px-4 py-3">例文（英）</th>
+                  <th className="px-4 py-3">例文（和）</th>
                   <th className="px-4 py-3">正解候補</th>
                   <th className="px-4 py-3">類義語</th>
                   <th className="px-4 py-3">対義語</th>
@@ -236,11 +239,6 @@ export function VocabularyCsvImporterPresenter(
                             発音: {row.pronunciation}
                           </div>
                         ) : null}
-                        {row.partOfSpeech ? (
-                          <div className="text-xs text-gray-500">
-                            品詞: {row.partOfSpeech}
-                          </div>
-                        ) : null}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-800">
@@ -251,17 +249,28 @@ export function VocabularyCsvImporterPresenter(
                             {row.definitionVariants.join(" / ")}
                           </div>
                         ) : null}
-                        {row.exampleSentenceJa ? (
-                          <div className="text-xs text-gray-500">
-                            和訳例: {row.exampleSentenceJa}
-                          </div>
-                        ) : null}
-                        {row.exampleSentenceEn ? (
-                          <div className="text-xs text-gray-500">
-                            英文例: {row.exampleSentenceEn}
-                          </div>
-                        ) : null}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600">
+                      {row.partOfSpeech ?? "-"}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600">
+                      {row.exampleSentenceEn ? (
+                        <p className="whitespace-pre-wrap">
+                          {row.exampleSentenceEn}
+                        </p>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600">
+                      {row.exampleSentenceJa ? (
+                        <p className="whitespace-pre-wrap">
+                          {row.exampleSentenceJa}
+                        </p>
+                      ) : (
+                        <span>-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600">
                       <ul className="space-y-1">

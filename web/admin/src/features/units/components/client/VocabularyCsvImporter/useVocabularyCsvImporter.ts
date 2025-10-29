@@ -3,12 +3,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+import { chapterKeys } from "@/features/chapters/queries/keys";
 import { importVocabularyEntriesAction } from "@/features/materials/actions/importVocabularyEntriesAction";
 import {
   parseVocabularyCsv,
   type VocabularyCsvRow,
 } from "@/features/materials/lib/parseVocabularyCsv";
-import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import { unitKeys } from "@/features/units/queries/keys";
 import type {
@@ -27,7 +27,8 @@ const INITIAL_PARSE_STATE: ParseState = {
 const INITIAL_IMPORT_STATUS: ImportStatus = { status: "idle" };
 const PAGE_SIZE = 25;
 
-const TEMPLATE_CSV = `語彙ID,問題ID,並び順,英単語,日本語訳1,日本語訳2,品詞,発音,プロンプト,正解候補1,正解候補2,類義語1,対義語1,関連語1,例文(英),例文(和)
+const TEMPLATE_CSV =
+  `語彙ID,問題ID,並び順,英単語,日本語訳1,日本語訳2,品詞,発音,プロンプト,正解候補1,正解候補2,類義語1,対義語1,関連語1,例文(英),例文(和)
 , ,1,accept,受け入れる,受諾する,verb,,この単語を使って英文を作成してください,accept,accept it,receive,refuse,admit,"We must accept the offer immediately.","我々はその提案をすぐに受け入れる必要がある。"`.trim();
 
 export function useVocabularyCsvImporter(
@@ -35,11 +36,11 @@ export function useVocabularyCsvImporter(
 ): VocabularyCsvImporterPresenterProps {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [parseState, setParseState] =
-    useState<ParseState>(INITIAL_PARSE_STATE);
+  const [parseState, setParseState] = useState<ParseState>(INITIAL_PARSE_STATE);
   const [page, setPage] = useState(1);
-  const [importStatus, setImportStatus] =
-    useState<ImportStatus>(INITIAL_IMPORT_STATUS);
+  const [importStatus, setImportStatus] = useState<ImportStatus>(
+    INITIAL_IMPORT_STATUS,
+  );
 
   const totalPages = useMemo(() => {
     if (parseState.status !== "success") {
@@ -70,7 +71,8 @@ export function useVocabularyCsvImporter(
   }, [parseState]);
 
   const templateHref = useMemo(
-    () => `data:text/csv;charset=utf-8,${encodeURIComponent(`${TEMPLATE_CSV}\n`)}`,
+    () =>
+      `data:text/csv;charset=utf-8,${encodeURIComponent(`${TEMPLATE_CSV}\n`)}`,
     [],
   );
 
@@ -127,7 +129,9 @@ export function useVocabularyCsvImporter(
         setParseState({
           status: "error",
           rows: [],
-          errors: ["ファイルの読み込みに失敗しました。もう一度お試しください。"],
+          errors: [
+            "ファイルの読み込みに失敗しました。もう一度お試しください。",
+          ],
         });
         setImportStatus(INITIAL_IMPORT_STATUS);
         setPage(1);
