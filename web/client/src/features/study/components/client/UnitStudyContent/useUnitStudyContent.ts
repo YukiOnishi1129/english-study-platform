@@ -4,7 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Route } from "next";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type * as React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type { MaterialDetailDto } from "@/external/dto/material/material.detail.dto";
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
@@ -12,6 +19,12 @@ import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-ans
 import { useMaterialDetailQuery } from "@/features/materials/queries";
 import { unitKeys } from "@/features/units/queries/keys";
 import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
+import {
+  buildBreadcrumb,
+  buildMaterialDetail,
+  buildUnit,
+  mapStatistics,
+} from "./utils";
 
 interface UseUnitStudyContentOptions {
   unitId: string;
@@ -68,6 +81,14 @@ export interface UseUnitStudyContentResult {
   isAnswerVisible: boolean;
   errorMessage: string | null;
   accountId: string | null;
+  answerInputId: string;
+  speakingAnswer: string | null;
+  isAnswered: boolean;
+  disableSubmit: boolean;
+  disableNext: boolean;
+  encouragement: string;
+  statusLabel: string;
+  remainingCount: number;
   onInputChange: (value: string) => void;
   onToggleHint: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -76,60 +97,7 @@ export interface UseUnitStudyContentResult {
   onRetryCurrent: () => void;
   onSelectQuestion: (questionId: string) => void;
   onNavigateUnit: (unitId: string, questionId?: string) => void;
-}
-
-function buildBreadcrumb(
-  detail: UnitDetailDto | null,
-): UnitStudyBreadcrumbItem[] {
-  if (!detail) {
-    return [];
-  }
-
-  const items: UnitStudyBreadcrumbItem[] = [
-    {
-      id: detail.material.id,
-      label: detail.material.name,
-      href: `/materials/${detail.material.id}`,
-    },
-  ];
-
-  detail.chapterPath.forEach((chapter) => {
-    items.push({
-      id: chapter.id,
-      label: chapter.name,
-      href: null,
-    });
-  });
-
-  items.push({
-    id: detail.unit.id,
-    label: detail.unit.name,
-    href: `/units/${detail.unit.id}`,
-  });
-
-  items.push({
-    id: `${detail.unit.id}-study`,
-    label: "学習",
-    href: null,
-  });
-
-  return items;
-}
-
-function mapStatistics(
-  stats: UnitDetailDto["questions"][number]["statistics"],
-): UnitStudyQuestionStatisticsViewModel | null {
-  if (!stats) {
-    return null;
-  }
-
-  return {
-    totalAttempts: stats.totalAttempts,
-    correctCount: stats.correctCount,
-    incorrectCount: stats.incorrectCount,
-    accuracy: stats.accuracy,
-    lastAttemptedAt: stats.lastAttemptedAt,
-  };
+  onSpeakAnswer: (answer: string) => void;
 }
 
 interface SubmitUnitAnswerVariables {
@@ -212,6 +180,8 @@ export function useUnitStudyContent(
   const [correctCount, setCorrectCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const initializedFromQueryRef = useRef(false);
+  const answerInputId = useId();
+  const [speakingAnswer, setSpeakingAnswer] = useState<string | null>(null);
   const lastSyncedQuestionIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (questionCount === 0) {
@@ -235,10 +205,34 @@ export function useUnitStudyContent(
     }
   }, [questionCount, currentIndex]);
 
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        window.speechSynthesis.cancel();
+        setSpeakingAnswer(null);
+      }
+    };
+  }, []);
+
   const currentQuestion = questions[currentIndex] ?? null;
   const currentStatistics = currentQuestion
     ? (questionStatisticsMap[currentQuestion.id] ?? null)
     : null;
+
+  const isAnswered = status !== "idle";
+  const encouragement =
+    status === "correct"
+      ? "やったね！その調子 🎉"
+      : status === "incorrect"
+        ? "大丈夫、もう一度チャレンジしよう 💪"
+        : "準備はいい？さあ問題に挑戦！✨";
+  const statusLabel =
+    status === "correct"
+      ? "正解です！"
+      : status === "incorrect"
+        ? "また挑戦してみよう"
+        : "解答を待っています";
+  const remainingCount = questionCount - currentIndex - 1;
 
   const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
@@ -250,6 +244,27 @@ export function useUnitStudyContent(
     setHintVisible(false);
     setAnswerVisible(false);
     setErrorMessage(null);
+    setSpeakingAnswer(null);
+    if (typeof window !== "undefined") {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
+  const handleSpeakAnswer = useCallback((answer: string) => {
+    if (typeof window === "undefined" || !answer) {
+      return;
+    }
+
+    const { speechSynthesis } = window;
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(answer);
+    utterance.lang = "en-US";
+    utterance.onend = () => setSpeakingAnswer(null);
+    utterance.onerror = () => setSpeakingAnswer(null);
+
+    setSpeakingAnswer(answer);
+    speechSynthesis.speak(utterance);
   }, []);
 
   useEffect(() => {
@@ -472,13 +487,17 @@ export function useUnitStudyContent(
     [handleSelectQuestion, router, unitId],
   );
 
+  const isSubmitting = submitAnswer.isPending;
+  const disableSubmit = isSubmitting || isAnswered;
+  const disableNext = isSubmitting || status === "idle";
+
   return {
     isLoading,
     isError,
-    isSubmitting: submitAnswer.isPending,
-    unit: data?.unit ?? null,
+    isSubmitting,
+    unit: buildUnit(data ?? null),
     materialDetail: materialDetail ?? null,
-    material: data?.material ?? null,
+    material: buildMaterialDetail(data ?? null),
     breadcrumb: buildBreadcrumb(data ?? null),
     questionCount,
     answeredCount,
@@ -504,5 +523,14 @@ export function useUnitStudyContent(
     onRetryCurrent: handleRetryCurrent,
     onSelectQuestion: handleSelectQuestion,
     onNavigateUnit: handleNavigateUnit,
-  };
+    answerInputId,
+    speakingAnswer,
+    onSpeakAnswer: handleSpeakAnswer,
+    isAnswered,
+    disableSubmit,
+    disableNext,
+    encouragement,
+    statusLabel,
+    remainingCount,
+  } satisfies UseUnitStudyContentResult;
 }
