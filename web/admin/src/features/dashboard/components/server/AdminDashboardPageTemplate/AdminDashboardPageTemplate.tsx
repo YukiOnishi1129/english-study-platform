@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LogoutButton } from "@/features/auth/components/client/LogoutButton";
 import { getAuthenticatedAdmin } from "@/features/auth/servers/auth-check.server";
 
 export async function AdminDashboardPageTemplate() {
@@ -56,14 +55,6 @@ export async function AdminDashboardPageTemplate() {
           </div>
         </article>
       </section>
-      <footer className="mt-auto flex items-center justify-between border-t border-gray-100 pt-6">
-        <p className="text-sm text-gray-500">
-          引き続き管理機能のアイデアを募集中です。
-        </p>
-        <div className="w-40">
-          <LogoutButton />
-        </div>
-      </footer>
     </main>
   );
 }
