@@ -4,6 +4,8 @@ import {
   MaterialRepositoryImpl,
   QuestionRepositoryImpl,
   UnitRepositoryImpl,
+  VocabularyEntryRepositoryImpl,
+  VocabularyRelationRepositoryImpl,
 } from "@acme/shared/db";
 import {
   Chapter,
@@ -11,6 +13,8 @@ import {
   Material,
   Question,
   Unit,
+  VocabularyEntry,
+  VocabularyRelation,
 } from "@acme/shared/domain";
 import type {
   CreateChapterRequest,
@@ -21,6 +25,7 @@ import type {
   DeleteQuestionRequest,
   DeleteUnitRequest,
   ImportUnitQuestionsRequest,
+  ImportVocabularyEntriesRequest,
   UpdateChapterRequest,
   UpdateMaterialRequest,
   UpdateQuestionOrdersRequest,
@@ -41,6 +46,8 @@ import type {
   UnitDetailMaterialDto,
   UnitDetailQuestionDto,
   UnitDetailUnitDto,
+  VocabularyEntryDetailDto,
+  VocabularyRelationDto,
 } from "@/external/dto/material/material.query.dto";
 
 function serialize(date: Date): string {
@@ -104,6 +111,12 @@ export class MaterialService {
   private readonly questionRepository = new QuestionRepositoryImpl();
 
   private readonly correctAnswerRepository = new CorrectAnswerRepositoryImpl();
+
+  private readonly vocabularyEntryRepository =
+    new VocabularyEntryRepositoryImpl();
+
+  private readonly vocabularyRelationRepository =
+    new VocabularyRelationRepositoryImpl();
 
   async listMaterialsHierarchy(): Promise<MaterialHierarchyItemDto[]> {
     const materialEntities = await this.materialRepository.findAll();
@@ -261,12 +274,22 @@ export class MaterialService {
           }))
           .sort((a, b) => a.order - b.order);
 
+        const vocabularyEntry = question.vocabularyEntryId
+          ? await this.vocabularyEntryRepository.findById(
+              question.vocabularyEntryId,
+            )
+          : null;
+
         return {
           id: question.id,
           unitId: question.unitId,
           japanese: question.japanese,
+          prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,
+          questionType: question.questionType,
+          vocabularyEntryId: question.vocabularyEntryId ?? null,
+          headword: vocabularyEntry?.headword ?? null,
           order: question.order,
           createdAt: serialize(question.createdAt),
           updatedAt: serialize(question.updatedAt),
@@ -330,12 +353,68 @@ export class MaterialService {
       }))
       .sort((a, b) => a.order - b.order);
 
+    let vocabularyEntryDto: VocabularyEntryDetailDto | null = null;
+    let questionHeadword: string | null = null;
+
+    if (question.vocabularyEntryId) {
+      const entry = await this.vocabularyEntryRepository.findById(
+        question.vocabularyEntryId,
+      );
+      if (entry) {
+        questionHeadword = entry.headword;
+        const relations = await this.vocabularyRelationRepository.findByEntryId(
+          entry.id,
+        );
+        const relationDtos: VocabularyRelationDto[] = relations
+          .map((relation) => ({
+            id: relation.id,
+            vocabularyEntryId: relation.vocabularyEntryId,
+            relationType: relation.relationType,
+            relatedText: relation.relatedText,
+            note: relation.note ?? null,
+            createdAt: serialize(relation.createdAt),
+            updatedAt: serialize(relation.updatedAt),
+          }))
+          .sort((a, b) => {
+            if (a.relationType === b.relationType) {
+              return a.relatedText.localeCompare(b.relatedText, "ja");
+            }
+            const order: Record<VocabularyRelationDto["relationType"], number> =
+              {
+                synonym: 0,
+                antonym: 1,
+                related: 2,
+              };
+            return order[a.relationType] - order[b.relationType];
+          });
+
+        vocabularyEntryDto = {
+          id: entry.id,
+          materialId: entry.materialId,
+          headword: entry.headword,
+          pronunciation: entry.pronunciation ?? null,
+          partOfSpeech: entry.partOfSpeech ?? null,
+          definitionJa: entry.definitionJa,
+          memo: entry.memo ?? null,
+          exampleSentenceEn: entry.exampleSentenceEn ?? null,
+          exampleSentenceJa: entry.exampleSentenceJa ?? null,
+          createdAt: serialize(entry.createdAt),
+          updatedAt: serialize(entry.updatedAt),
+          relations: relationDtos,
+        };
+      }
+    }
+
     const questionDto: UnitDetailQuestionDto = {
       id: question.id,
       unitId: question.unitId,
       japanese: question.japanese,
+      prompt: question.prompt ?? null,
       hint: question.hint ?? null,
       explanation: question.explanation ?? null,
+      questionType: question.questionType,
+      vocabularyEntryId: question.vocabularyEntryId ?? null,
+      headword: questionHeadword,
       order: question.order,
       createdAt: serialize(question.createdAt),
       updatedAt: serialize(question.updatedAt),
@@ -357,6 +436,7 @@ export class MaterialService {
       chapterPath,
       unit: unitDto,
       question: questionDto,
+      vocabularyEntry: vocabularyEntryDto,
     } satisfies QuestionDetailDto;
   }
 
@@ -674,6 +754,266 @@ export class MaterialService {
     return { createdCount, updatedCount };
   }
 
+  async importVocabularyEntries(
+    payload: ImportVocabularyEntriesRequest,
+  ): Promise<{
+    createdCount: number;
+    updatedCount: number;
+  }> {
+    const material = await this.materialRepository.findById(payload.materialId);
+    if (!material) {
+      throw new Error("指定された教材が見つかりません。");
+    }
+
+    const unit = await this.unitRepository.findById(payload.unitId);
+    if (!unit) {
+      throw new Error("指定されたUNITが見つかりません。");
+    }
+
+    const chapter = await this.chapterRepository.findById(unit.chapterId);
+    if (!chapter || chapter.materialId !== material.id) {
+      throw new Error(
+        "UNITが教材に紐づいていません。再度読み込み直してください。",
+      );
+    }
+
+    const existingQuestions = await this.questionRepository.findByUnitId(
+      unit.id,
+    );
+    const questionMap = new Map(existingQuestions.map((q) => [q.id, q]));
+    const usedOrders = new Set<number>();
+    let maxOrder = 0;
+
+    existingQuestions.forEach((question) => {
+      usedOrders.add(question.order);
+      if (question.order > maxOrder) {
+        maxOrder = question.order;
+      }
+    });
+
+    let nextOrderCandidate = maxOrder + 1;
+    if (nextOrderCandidate < 1) {
+      nextOrderCandidate = 1;
+    }
+
+    const reserveOrder = (desired?: number): number => {
+      let order =
+        typeof desired === "number" && Number.isFinite(desired) && desired > 0
+          ? Math.trunc(desired)
+          : undefined;
+
+      if (!order || order <= 0) {
+        order = nextOrderCandidate > 0 ? nextOrderCandidate : 1;
+      }
+
+      while (usedOrders.has(order)) {
+        order += 1;
+      }
+
+      usedOrders.add(order);
+      if (order >= nextOrderCandidate) {
+        nextOrderCandidate = order + 1;
+      }
+
+      return order;
+    };
+
+    let createdCount = 0;
+    let updatedCount = 0;
+
+    for (const row of payload.rows) {
+      const definitionParts = [
+        row.definitionJa.trim(),
+        ...row.definitionVariants,
+      ]
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0);
+
+      if (definitionParts.length === 0) {
+        throw new Error(`単語「${row.headword}」の日本語訳が空です。`);
+      }
+
+      const definitionText = definitionParts.join(" / ");
+      const answers = row.answerCandidates
+        .map((answer) => answer.trim())
+        .filter((answer) => answer.length > 0);
+
+      if (answers.length === 0) {
+        throw new Error(`単語「${row.headword}」の正解候補が空です。`);
+      }
+
+      let vocabularyEntry =
+        (row.vocabularyId
+          ? await this.vocabularyEntryRepository.findById(row.vocabularyId)
+          : null) ?? null;
+
+      if (!vocabularyEntry && row.questionId) {
+        const relatedQuestion =
+          questionMap.get(row.questionId) ??
+          (await this.questionRepository.findById(row.questionId));
+        if (!relatedQuestion) {
+          throw new Error(
+            `関連する問題ID「${row.questionId}」が見つかりません。`,
+          );
+        }
+        if (relatedQuestion.unitId !== unit.id) {
+          throw new Error(
+            `問題ID「${row.questionId}」は指定のUNITに属していません。`,
+          );
+        }
+        if (relatedQuestion.vocabularyEntryId) {
+          vocabularyEntry = await this.vocabularyEntryRepository.findById(
+            relatedQuestion.vocabularyEntryId,
+          );
+        }
+      }
+
+      if (!vocabularyEntry) {
+        vocabularyEntry = await this.vocabularyEntryRepository.findByHeadword(
+          material.id,
+          row.headword,
+        );
+      }
+
+      if (vocabularyEntry && vocabularyEntry.materialId !== material.id) {
+        throw new Error(
+          `語彙ID「${vocabularyEntry.id}」は指定の教材に属していません。`,
+        );
+      }
+
+      let entryToSave: VocabularyEntry;
+      if (!vocabularyEntry) {
+        entryToSave = VocabularyEntry.create({
+          materialId: material.id,
+          headword: row.headword,
+          pronunciation: row.pronunciation,
+          partOfSpeech: row.partOfSpeech,
+          definitionJa: definitionText,
+          memo: row.definitionVariants.join(" / ") || undefined,
+          exampleSentenceEn: row.exampleSentenceEn,
+          exampleSentenceJa: row.exampleSentenceJa,
+        });
+      } else {
+        entryToSave = new VocabularyEntry({
+          id: vocabularyEntry.id,
+          materialId: vocabularyEntry.materialId,
+          headword: row.headword,
+          pronunciation: row.pronunciation ?? undefined,
+          partOfSpeech: row.partOfSpeech ?? undefined,
+          definitionJa: definitionText,
+          memo: row.definitionVariants.join(" / ") || undefined,
+          exampleSentenceEn: row.exampleSentenceEn ?? undefined,
+          exampleSentenceJa: row.exampleSentenceJa ?? undefined,
+          createdAt: vocabularyEntry.createdAt,
+          updatedAt: new Date(),
+        });
+      }
+
+      const savedEntry = await this.vocabularyEntryRepository.save(entryToSave);
+
+      await this.vocabularyRelationRepository.deleteByEntryId(savedEntry.id);
+
+      const relations: VocabularyRelation[] = [];
+      row.synonyms.forEach((word) => {
+        if (word.length === 0) return;
+        relations.push(
+          VocabularyRelation.create({
+            vocabularyEntryId: savedEntry.id,
+            relationType: "synonym",
+            relatedText: word,
+          }),
+        );
+      });
+      row.antonyms.forEach((word) => {
+        if (word.length === 0) return;
+        relations.push(
+          VocabularyRelation.create({
+            vocabularyEntryId: savedEntry.id,
+            relationType: "antonym",
+            relatedText: word,
+          }),
+        );
+      });
+      row.relatedWords.forEach((word) => {
+        if (word.length === 0) return;
+        relations.push(
+          VocabularyRelation.create({
+            vocabularyEntryId: savedEntry.id,
+            relationType: "related",
+            relatedText: word,
+          }),
+        );
+      });
+
+      if (relations.length > 0) {
+        await this.vocabularyRelationRepository.saveMany(relations);
+      }
+
+      let targetQuestion: Question | null = null;
+      if (row.questionId) {
+        targetQuestion =
+          questionMap.get(row.questionId) ??
+          (await this.questionRepository.findById(row.questionId));
+      }
+
+      if (targetQuestion && targetQuestion.unitId !== unit.id) {
+        throw new Error(
+          `問題ID「${targetQuestion.id}」は指定のUNITに属していません。`,
+        );
+      }
+
+      let finalOrder: number;
+      if (targetQuestion) {
+        usedOrders.delete(targetQuestion.order);
+        finalOrder = reserveOrder(row.order ?? targetQuestion.order);
+        targetQuestion = new Question({
+          id: targetQuestion.id,
+          unitId: targetQuestion.unitId,
+          japanese: definitionText,
+          prompt: row.prompt ?? undefined,
+          hint: targetQuestion.hint ?? undefined,
+          explanation: targetQuestion.explanation ?? undefined,
+          questionType: "jp_to_en",
+          vocabularyEntryId: savedEntry.id,
+          order: finalOrder,
+          createdAt: targetQuestion.createdAt,
+          updatedAt: new Date(),
+        });
+        updatedCount += 1;
+      } else {
+        finalOrder = reserveOrder(row.order);
+        targetQuestion = Question.create({
+          unitId: unit.id,
+          japanese: definitionText,
+          prompt: row.prompt ?? undefined,
+          hint: undefined,
+          explanation: undefined,
+          questionType: "jp_to_en",
+          vocabularyEntryId: savedEntry.id,
+          order: finalOrder,
+        });
+        createdCount += 1;
+      }
+
+      const savedQuestion = await this.questionRepository.save(targetQuestion);
+      questionMap.set(savedQuestion.id, savedQuestion);
+
+      await this.correctAnswerRepository.deleteByQuestionId(savedQuestion.id);
+      await Promise.all(
+        answers.map(async (answerText, index) => {
+          const answer = CorrectAnswer.create({
+            questionId: savedQuestion.id,
+            answerText,
+            order: index + 1,
+          });
+          await this.correctAnswerRepository.save(answer);
+        }),
+      );
+    }
+
+    return { createdCount, updatedCount };
+  }
+
   async updateQuestion(
     payload: UpdateQuestionRequest,
   ): Promise<QuestionDetailDto> {
@@ -695,14 +1035,83 @@ export class MaterialService {
       id: existing.id,
       unitId: existing.unitId,
       japanese: payload.japanese,
+      prompt: payload.prompt ?? undefined,
       hint: payload.hint ?? undefined,
       explanation: payload.explanation ?? undefined,
+      questionType: existing.questionType,
+      vocabularyEntryId: existing.vocabularyEntryId ?? undefined,
       order,
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     });
 
     await this.questionRepository.save(updatedQuestion);
+
+    if (payload.vocabulary) {
+      if (!existing.vocabularyEntryId) {
+        throw new Error("語彙エントリが紐づいていない問題です。");
+      }
+      if (existing.vocabularyEntryId !== payload.vocabulary.vocabularyEntryId) {
+        throw new Error("語彙エントリIDが一致しません。");
+      }
+
+      const entry = await this.vocabularyEntryRepository.findById(
+        existing.vocabularyEntryId,
+      );
+      if (!entry) {
+        throw new Error("語彙エントリが見つかりません。");
+      }
+
+      const updatedEntry = new VocabularyEntry({
+        id: entry.id,
+        materialId: entry.materialId,
+        headword: payload.vocabulary.headword,
+        pronunciation: payload.vocabulary.pronunciation ?? undefined,
+        partOfSpeech: payload.vocabulary.partOfSpeech ?? undefined,
+        definitionJa: payload.japanese,
+        memo: payload.vocabulary.memo ?? undefined,
+        exampleSentenceEn: payload.vocabulary.exampleSentenceEn ?? undefined,
+        exampleSentenceJa: payload.vocabulary.exampleSentenceJa ?? undefined,
+        createdAt: entry.createdAt,
+        updatedAt: new Date(),
+      });
+
+      const savedEntry =
+        await this.vocabularyEntryRepository.save(updatedEntry);
+
+      await this.vocabularyRelationRepository.deleteByEntryId(savedEntry.id);
+
+      const relationInputs: Array<{
+        type: VocabularyRelationDto["relationType"];
+        text: string;
+      }> = [];
+
+      const synonymList = payload.vocabulary.synonyms ?? [];
+      synonymList.forEach((text) => {
+        relationInputs.push({ type: "synonym", text });
+      });
+
+      const antonymList = payload.vocabulary.antonyms ?? [];
+      antonymList.forEach((text) => {
+        relationInputs.push({ type: "antonym", text });
+      });
+
+      const relatedList = payload.vocabulary.relatedWords ?? [];
+      relatedList.forEach((text) => {
+        relationInputs.push({ type: "related", text });
+      });
+
+      if (relationInputs.length > 0) {
+        const relations = relationInputs.map((relation) =>
+          VocabularyRelation.create({
+            vocabularyEntryId: savedEntry.id,
+            relationType: relation.type,
+            relatedText: relation.text,
+          }),
+        );
+        await this.vocabularyRelationRepository.saveMany(relations);
+      }
+    }
 
     await this.correctAnswerRepository.deleteByQuestionId(existing.id);
     await Promise.all(

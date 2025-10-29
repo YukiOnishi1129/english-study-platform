@@ -15,3 +15,7 @@ export type { UnitParams } from "./Unit";
 export { Unit } from "./Unit";
 export type { UserAnswerParams } from "./UserAnswer";
 export { UserAnswer } from "./UserAnswer";
+export type { VocabularyEntryParams } from "./VocabularyEntry";
+export { VocabularyEntry } from "./VocabularyEntry";
+export type { VocabularyRelationParams } from "./VocabularyRelation";
+export { VocabularyRelation } from "./VocabularyRelation";

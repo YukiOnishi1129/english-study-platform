@@ -9,6 +9,7 @@ import type {
   DeleteQuestionRequest,
   DeleteUnitRequest,
   ImportUnitQuestionsRequest,
+  ImportVocabularyEntriesRequest,
   UpdateChapterRequest,
   UpdateMaterialRequest,
   UpdateQuestionOrdersRequest,
@@ -25,6 +26,7 @@ import {
   DeleteQuestionRequestSchema,
   DeleteUnitRequestSchema,
   ImportUnitQuestionsRequestSchema,
+  ImportVocabularyEntriesRequestSchema,
   UpdateChapterRequestSchema,
   UpdateMaterialRequestSchema,
   UpdateQuestionOrdersRequestSchema,
@@ -89,6 +91,13 @@ export async function updateUnitOrders(
 export async function importUnitQuestions(request: ImportUnitQuestionsRequest) {
   const payload = ImportUnitQuestionsRequestSchema.parse(request);
   return materialService.importUnitQuestions(payload);
+}
+
+export async function importVocabularyEntries(
+  request: ImportVocabularyEntriesRequest,
+) {
+  const payload = ImportVocabularyEntriesRequestSchema.parse(request);
+  return materialService.importVocabularyEntries(payload);
 }
 
 export async function updateQuestion(request: UpdateQuestionRequest) {

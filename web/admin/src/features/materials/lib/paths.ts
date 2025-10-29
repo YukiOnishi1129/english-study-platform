@@ -8,6 +8,12 @@ export function toMaterialEditPath(materialId: string): FormRedirect {
   return `/materials/${materialId}/edit`;
 }
 
+export function toMaterialVocabularyImportPath(
+  materialId: string,
+): FormRedirect {
+  return `/materials/${materialId}/import-vocabulary`;
+}
+
 export function toChapterDetailPath(chapterId: string): FormRedirect {
   return `/chapters/${chapterId}`;
 }

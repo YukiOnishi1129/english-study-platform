@@ -19,6 +19,11 @@ export function QuestionEditFormPresenter(
     isRemoveDisabled,
   } = props;
 
+  const vocabulary = defaultValues.vocabulary ?? null;
+  const synonymDefault = vocabulary ? vocabulary.synonyms.join("\n") : "";
+  const antonymDefault = vocabulary ? vocabulary.antonyms.join("\n") : "";
+  const relatedDefault = vocabulary ? vocabulary.relatedWords.join("\n") : "";
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -29,6 +34,13 @@ export function QuestionEditFormPresenter(
     <form onSubmit={handleSubmit} className="space-y-6">
       <input type="hidden" name="questionId" value={defaultValues.questionId} />
       <input type="hidden" name="unitId" value={defaultValues.unitId} />
+      {vocabulary ? (
+        <input
+          type="hidden"
+          name="vocabularyEntryId"
+          value={vocabulary.vocabularyEntryId}
+        />
+      ) : null}
 
       <div className="space-y-1">
         <label
@@ -47,13 +59,33 @@ export function QuestionEditFormPresenter(
         />
       </div>
 
+      <div className="space-y-1">
+        <label
+          htmlFor="question-prompt"
+          className="text-sm font-semibold text-gray-800"
+        >
+          プロンプト
+        </label>
+        <textarea
+          id="question-prompt"
+          name="prompt"
+          rows={2}
+          defaultValue={defaultValues.prompt ?? ""}
+          placeholder="例: 単語の品詞を入力してください（任意）"
+          className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+        />
+        <p className="text-xs text-gray-500">
+          語彙問題で追加の指示文を表示したい場合に入力します。（任意）
+        </p>
+      </div>
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label
             className="text-sm font-semibold text-gray-800"
             htmlFor="question-correct-answer-0"
           >
-            英語正解 <span className="text-red-500">*</span>
+            正解候補 <span className="text-red-500">*</span>
           </label>
           <button
             type="button"
@@ -93,6 +125,168 @@ export function QuestionEditFormPresenter(
           ))}
         </div>
       </div>
+
+      {vocabulary ? (
+        <section className="space-y-4 rounded-lg border border-indigo-100 bg-indigo-50/40 p-4">
+          <header className="space-y-1">
+            <h2 className="text-sm font-semibold text-indigo-900">語彙情報</h2>
+            <p className="text-xs text-indigo-700">
+              英単語や類義語などの語彙情報を編集します。空欄のフィールドは未設定として扱われます。
+            </p>
+          </header>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-headword"
+                className="text-sm font-semibold text-gray-800"
+              >
+                英単語 <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="vocabulary-headword"
+                name="headword"
+                type="text"
+                required
+                defaultValue={vocabulary.headword}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-part-of-speech"
+                className="text-sm font-semibold text-gray-800"
+              >
+                品詞
+              </label>
+              <input
+                id="vocabulary-part-of-speech"
+                name="partOfSpeech"
+                type="text"
+                placeholder="例: noun, adjective"
+                defaultValue={vocabulary.partOfSpeech ?? ""}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-pronunciation"
+                className="text-sm font-semibold text-gray-800"
+              >
+                発音
+              </label>
+              <input
+                id="vocabulary-pronunciation"
+                name="pronunciation"
+                type="text"
+                placeholder="例: kən-ˈven-shə-nᵊl"
+                defaultValue={vocabulary.pronunciation ?? ""}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-memo"
+                className="text-sm font-semibold text-gray-800"
+              >
+                追加の日本語訳 / メモ
+              </label>
+              <textarea
+                id="vocabulary-memo"
+                name="vocabularyMemo"
+                rows={2}
+                placeholder="例: 慣習的な / 従来の"
+                defaultValue={vocabulary.memo ?? ""}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-synonyms"
+                className="text-sm font-semibold text-gray-800"
+              >
+                類義語
+              </label>
+              <textarea
+                id="vocabulary-synonyms"
+                name="synonyms"
+                rows={3}
+                placeholder="改行またはカンマで区切って入力してください"
+                defaultValue={synonymDefault}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-antonyms"
+                className="text-sm font-semibold text-gray-800"
+              >
+                対義語
+              </label>
+              <textarea
+                id="vocabulary-antonyms"
+                name="antonyms"
+                rows={3}
+                placeholder="改行またはカンマで区切って入力してください"
+                defaultValue={antonymDefault}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-related"
+                className="text-sm font-semibold text-gray-800"
+              >
+                関連語
+              </label>
+              <textarea
+                id="vocabulary-related"
+                name="relatedWords"
+                rows={3}
+                placeholder="改行またはカンマで区切って入力してください"
+                defaultValue={relatedDefault}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-example-en"
+                className="text-sm font-semibold text-gray-800"
+              >
+                例文（英語）
+              </label>
+              <textarea
+                id="vocabulary-example-en"
+                name="exampleSentenceEn"
+                rows={3}
+                defaultValue={vocabulary.exampleSentenceEn ?? ""}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="vocabulary-example-ja"
+                className="text-sm font-semibold text-gray-800"
+              >
+                例文（日本語）
+              </label>
+              <textarea
+                id="vocabulary-example-ja"
+                name="exampleSentenceJa"
+                rows={3}
+                defaultValue={vocabulary.exampleSentenceJa ?? ""}
+                className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-1">

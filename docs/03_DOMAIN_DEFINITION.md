@@ -51,8 +51,11 @@
   - id: string (UUID)
   - unitId: string (FK)
   - japanese: string (問題文)
+  - prompt: string | null (追加指示や語彙ヒント)
   - hint: string | null
   - explanation: string | null
+  - questionType: QuestionType (デフォルトは"phrase"。語彙セッションではランタイムで学習モードを切り替え)
+  - vocabularyEntryId: string | null (語彙教材の場合)
   - order: number
   - createdAt: Date
   - updatedAt: Date
@@ -62,6 +65,30 @@
   - questionId: string (FK)
   - answerText: string
   - order: number
+  - createdAt: Date
+  - updatedAt: Date
+
+### 【語彙ドメイン】
+
+- **VocabularyEntry**: 語彙エントリ
+  - id: string (UUID)
+  - materialId: string (FK)
+  - headword: string (英単語)
+  - pronunciation: string | null
+  - partOfSpeech: string | null
+  - definitionJa: string
+  - memo: string | null
+  - exampleSentenceEn: string | null
+  - exampleSentenceJa: string | null
+  - createdAt: Date
+  - updatedAt: Date
+
+- **VocabularyRelation**: 語彙関連語
+  - id: string (UUID)
+  - vocabularyEntryId: string (FK)
+  - relationType: VocabularyRelationType
+  - relatedText: string
+  - note: string | null
   - createdAt: Date
   - updatedAt: Date
 
@@ -130,6 +157,23 @@
     - `getParentPath()`: 親の章パスを取得
     - `toArray()`: 配列形式で各階層を取得
 
+### QuestionType（出題タイプ）
+
+- 値: `phrase` | `jp_to_en` | `en_to_jp` | `cloze` | `free_sentence`
+- ビジネスルール:
+    - UI層での判定ロジック・表示切替の基準（語彙セッションではランタイム選択）
+    - 語彙CSVではモード列を持たず、VocabularyEntryに紐づくQuestionは共通データを提供
+- メソッド例:
+    - `requiresVocabularyEntry()`: 語彙エントリの紐付けが必須かどうか
+    - `isFreeForm()`: 自由記述採点が必要かどうか
+
+### VocabularyRelationType（語彙関連タイプ）
+
+- 値: `synonym` | `antonym` | `related`
+- ビジネスルール: 表示順や分類ラベルの制御
+- メソッド例:
+    - `getLabel()`: UI表示用のラベルを返却
+
 ### AccuracyRate（正答率）
 
 - **値**: 0.0〜1.0 または 0〜100%
@@ -166,13 +210,15 @@
 ### Material集約
 
 - **集約ルート**: Material
-- **含まれるもの**: Material → Chapter（階層） → Unit → Question → CorrectAnswer
+- **含まれるもの**: Material → Chapter（階層） → Unit → Question → CorrectAnswer (+ VocabularyEntry → VocabularyRelation)
 - **整合性ルール**:
     - Chapterの親子関係が循環しない
     - Chapterのlevelとparentの関係が整合している
     - 同一親配下のorder値は重複しない
     - Questionには最低1つのCorrectAnswerが必要
     - CorrectAnswerのorderは1から連番
+    - questionTypeが語彙系の場合、vocabularyEntryIdが必須
+    - Material内のVocabularyEntry.headwordは重複させない
 
 ### StudyRecord集約
 
@@ -206,6 +252,9 @@
 - **完全性チェック**
     - 問題に正解が存在するか
     - 必須項目の検証
+- **語彙エントリ管理**
+    - VocabularyEntryの重複チェック
+    - 関連語（VocabularyRelation）の整合性維持（削除時に付随データも削除）
 
 ### Question
 
@@ -213,9 +262,13 @@
     - ユーザー回答と正解の照合（完全一致）
     - 複数正解のいずれかにマッチするか
     - 大文字小文字の正規化
+    - questionTypeごとのロジック切り替え（語彙挿入、自由作文、選択式など）※語彙教材では学習セッションがモードを指定
 - **手動修正**
     - 不正解から正解への変更
     - 統計への反映
+- **語彙表示**
+    - VocabularyEntryが紐づく場合、品詞・類義語・対義語を提示
+    - 学習モードに応じたプロンプト生成と説明文を提供
 
 ### QuestionStatistics
 
@@ -314,6 +367,19 @@
     3. parentChapterIdとlevelを設定
     4. ツリー構造を返却
 
+### VocabularyImportService（語彙インポートサービス）
+
+- **責務**:
+    - 語彙CSVの解析とVocabularyEntry生成
+    - VocabularyRelation/Question/CorrectAnswerの一括登録（Questionは語彙1件につき1レコードを生成し、学習時にモード切替）
+    - 既存語彙の更新とユニーク性の担保
+- **処理フロー**:
+    1. CSVをパースし語彙情報と正解候補を抽出
+    2. headword単位でVocabularyEntryを作成または更新
+    3. 類義語・対義語をVocabularyRelationとして登録
+    4. Questionを単語ごとに1件生成し、正解候補をCorrectAnswerとして登録
+    5. トランザクションでMaterial配下に保存
+
 ---
 
 ### 6. リポジトリインターフェース
@@ -357,6 +423,21 @@
 - `findById(id)`: 問題取得（正解リスト含む）
 - `save(question)`: 問題保存
 - `delete(id)`: 問題削除
+- `findByVocabularyEntryId(entryId)`: 語彙エントリに紐づく問題取得
+
+### VocabularyEntryRepository
+
+- `findById(id)`: 語彙エントリ取得
+- `findByHeadword(materialId, headword)`: 教材内の語彙検索
+- `findByMaterialId(materialId)`: 教材配下の語彙一覧取得
+- `save(entry)`: 語彙エントリ保存
+- `delete(id)`: 語彙エントリ削除
+
+### VocabularyRelationRepository
+
+- `findByEntryId(entryId)`: 関連語一覧取得
+- `saveMany(relations)`: 関連語一括保存
+- `deleteByEntryId(entryId)`: 関連語一括削除
 
 ### UserAnswerRepository
 

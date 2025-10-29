@@ -1,0 +1,1 @@
+export { MaterialVocabularyImportPageTemplate } from "./MaterialVocabularyImportPageTemplate";

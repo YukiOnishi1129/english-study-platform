@@ -36,12 +36,33 @@ export function QuestionEditContentPresenter(
         questionId: detail.question.id,
         unitId: detail.unit.id,
         japanese: detail.question.japanese,
+        prompt: detail.question.prompt,
         hint: detail.question.hint,
         explanation: detail.question.explanation,
         order: detail.question.order,
         correctAnswers: detail.question.correctAnswers.map(
           (answer) => answer.answerText,
         ),
+        vocabulary: detail.vocabularyEntry
+          ? {
+              vocabularyEntryId: detail.vocabularyEntry.id,
+              headword: detail.vocabularyEntry.headword,
+              pronunciation: detail.vocabularyEntry.pronunciation,
+              partOfSpeech: detail.vocabularyEntry.partOfSpeech,
+              memo: detail.vocabularyEntry.memo,
+              synonyms: detail.vocabularyEntry.relations
+                .filter((relation) => relation.relationType === "synonym")
+                .map((relation) => relation.relatedText),
+              antonyms: detail.vocabularyEntry.relations
+                .filter((relation) => relation.relationType === "antonym")
+                .map((relation) => relation.relatedText),
+              relatedWords: detail.vocabularyEntry.relations
+                .filter((relation) => relation.relationType === "related")
+                .map((relation) => relation.relatedText),
+              exampleSentenceEn: detail.vocabularyEntry.exampleSentenceEn,
+              exampleSentenceJa: detail.vocabularyEntry.exampleSentenceJa,
+            }
+          : null,
       }}
       context={{
         materialId: detail.material.id,

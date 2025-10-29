@@ -40,6 +40,8 @@ export function QuestionReorderTableRow(props: QuestionReorderTableRowProps) {
     opacity: isDragging ? 0.8 : undefined,
   };
 
+  const displayLabel = item.headword ?? item.japanese;
+
   return (
     <div
       ref={setNodeRef}
@@ -75,9 +77,12 @@ export function QuestionReorderTableRow(props: QuestionReorderTableRowProps) {
             #{item.order}
           </span>
           <span className="text-sm font-medium text-gray-900">
-            {item.japanese}
+            {displayLabel}
           </span>
         </div>
+        {item.headword && item.japanese && item.japanese !== item.headword ? (
+          <p className="text-xs text-gray-500">{item.japanese}</p>
+        ) : null}
         <p className="text-xs text-gray-600">
           最終更新: {new Date(item.updatedAt).toLocaleString("ja-JP")}
         </p>

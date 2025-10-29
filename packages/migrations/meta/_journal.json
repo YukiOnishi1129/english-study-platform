@@ -8,6 +8,20 @@
       "when": 1761490112390,
       "tag": "0000_green_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1761490112391,
+      "tag": "0002_add_vocabulary_support",
+      "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761490112392,
+      "tag": "0003_add_vocabulary_examples",
+      "breakpoints": false
     }
   ]
 }

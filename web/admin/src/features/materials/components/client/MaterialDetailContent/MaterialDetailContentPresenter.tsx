@@ -9,6 +9,7 @@ import { MaterialDeleteButton } from "@/features/materials/components/client/Mat
 import {
   toChapterDetailPath,
   toMaterialEditPath,
+  toMaterialVocabularyImportPath,
 } from "@/features/materials/lib/paths";
 import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
 import { Button } from "@/shared/components/ui/button";
@@ -153,9 +154,16 @@ export function MaterialDetailContentPresenter(
             {detail.description ?? "説明は登録されていません。"}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={toMaterialEditPath(materialId)}>教材情報を編集</Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button asChild variant="outline">
+            <Link href={toMaterialEditPath(materialId)}>教材情報を編集</Link>
+          </Button>
+          <Button asChild>
+            <Link href={toMaterialVocabularyImportPath(materialId)}>
+              語彙CSVを取り込む
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <section className="grid gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm sm:grid-cols-3">

@@ -94,6 +94,13 @@ export class AccountRepositoryImpl implements AccountRepository {
 }
 ```
 
+### Vocabulary Domain 拡張
+
+- **追加エンティティ**: `VocabularyEntry`（見出し語・品詞・和訳）、`VocabularyRelation`（類義語/対義語/関連語）。`Question` は `questionType` と `vocabularyEntryId` を持ち、語彙専用モード（JP→EN / EN→JP / Cloze / Free Sentence）を切り替える。
+- **サービス**: `VocabularyImportService` が語彙CSVを解析し、語彙メタ情報・関連語・問題・正解候補を一括登録。既存の `CsvImportService` と並列に動作し、Material配下にVocabularyEntryツリーを構築する。
+- **リポジトリ**: `VocabularyEntryRepository` と `VocabularyRelationRepository` を追加し、Material単位で語彙一覧を取得。QuestionRepository は語彙エントリでの検索をサポートし、学習画面で関連情報を表示する。
+- **UI連携**: 学習クライアントは語彙モードに応じて回答入力UIと判定ロジックを切り替え、解答後に類義語・対義語・例文などをフィードバック表示。管理画面のCSVプレビューも語彙メタ情報と問題設定を同時に確認できる。
+
 ## 共有パッケージ構造
 
 ### パッケージ構成

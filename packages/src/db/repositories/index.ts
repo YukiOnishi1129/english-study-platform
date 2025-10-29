@@ -30,3 +30,13 @@ export {
   type UserAnswerDashboardAggregate,
   UserAnswerQueryRepositoryImpl,
 } from "./user-answer-query.repository";
+export type {
+  NewVocabularyEntry,
+  VocabularyEntry,
+} from "./vocabulary-entry.repository";
+export { VocabularyEntryRepositoryImpl } from "./vocabulary-entry.repository";
+export type {
+  NewVocabularyRelation,
+  VocabularyRelation,
+} from "./vocabulary-relation.repository";
+export { VocabularyRelationRepositoryImpl } from "./vocabulary-relation.repository";

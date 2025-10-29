@@ -132,8 +132,11 @@
 | id | UUID | PRIMARY KEY | 問題ID |
 | unit_id | UUID | NOT NULL, FOREIGN KEY | ユニットID |
 | japanese | TEXT | NOT NULL | 日本語文 |
+| prompt | TEXT | NULL | 追加の指示文（語彙モード等） |
 | hint | TEXT | NULL | ヒント |
 | explanation | TEXT | NULL | 解説 |
+| question_type | VARCHAR(30) | NOT NULL, DEFAULT 'phrase' | 出題タイプ（語彙モード判定） |
+| vocabulary_entry_id | UUID | NULL, FOREIGN KEY | 語彙エントリID（語彙教材のみ） |
 | order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
@@ -142,10 +145,18 @@
 
 - `idx_questions_unit_id` ON (unit_id)
 - `idx_questions_order` ON (unit_id, order)
+- `idx_questions_vocabulary_entry` ON (vocabulary_entry_id)
+- `idx_questions_type` ON (question_type)
 
 **外部キー:**
 
 - `unit_id` REFERENCES units(id) ON DELETE CASCADE
+- `vocabulary_entry_id` REFERENCES vocabulary_entries(id) ON DELETE SET NULL
+
+**制約:**
+
+- CHECK (question_type IN ('phrase', 'jp_to_en', 'en_to_jp', 'cloze', 'free_sentence'))
+- 語彙系のquestion_typeではvocabulary_entry_id IS NOT NULL（アプリケーション層で担保）
 
 ---
 
@@ -175,6 +186,64 @@
 
 - CHECK (order > 0)
 - UNIQUE (question_id, order)
+
+---
+
+### vocabulary_entries テーブル
+
+語彙教材用の語彙エントリ
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 語彙ID |
+| material_id | UUID | NOT NULL, FOREIGN KEY | 教材ID |
+| headword | VARCHAR(255) | NOT NULL | 見出し語（英単語） |
+| pronunciation | VARCHAR(255) | NULL | 発音記号・読み |
+| part_of_speech | VARCHAR(50) | NULL | 品詞 |
+| definition_ja | TEXT | NOT NULL | 日本語定義 |
+| memo | TEXT | NULL | 補足情報 |
+| example_sentence_en | TEXT | NULL | 例文（英語） |
+| example_sentence_ja | TEXT | NULL | 例文（日本語訳） |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
+
+**インデックス:**
+
+- `idx_vocabulary_entries_material_id` ON (material_id)
+- `idx_vocabulary_entries_headword` ON (material_id, headword)
+
+**外部キー:**
+
+- `material_id` REFERENCES materials(id) ON DELETE CASCADE
+
+---
+
+### vocabulary_relations テーブル
+
+類義語・対義語などの関連語
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 関連語ID |
+| vocabulary_entry_id | UUID | NOT NULL, FOREIGN KEY | 語彙ID |
+| relation_type | VARCHAR(20) | NOT NULL | 関係タイプ（synonym/antonym/related） |
+| related_text | VARCHAR(255) | NOT NULL | 関連語 |
+| note | TEXT | NULL | 補足 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
+
+**インデックス:**
+
+- `idx_vocabulary_relations_entry` ON (vocabulary_entry_id)
+- `idx_vocabulary_relations_type` ON (relation_type)
+
+**外部キー:**
+
+- `vocabulary_entry_id` REFERENCES vocabulary_entries(id) ON DELETE CASCADE
+
+**制約:**
+
+- CHECK (relation_type IN ('synonym', 'antonym', 'related'))
 
 ---
 
@@ -287,13 +356,15 @@
 
 - **accounts** - ユーザーアカウント情報
 
-### 2. 教材関連（5テーブル）
+### 2. 教材関連（7テーブル）
 
 - **materials** - 教材
 - **chapters** - 章（階層構造）
 - **units** - ユニット
 - **questions** - 問題
 - **correct_answers** - 正解
+- **vocabulary_entries** - 語彙エントリ
+- **vocabulary_relations** - 類義語・対義語
 
 ### 3. 学習記録関連（3テーブル）
 
@@ -301,7 +372,7 @@
 - **question_statistics** - 問題統計
 - **daily_study_logs** - 日次学習ログ
 
-**合計: 9テーブル**
+**合計: 11テーブル**
 
 ---
 
@@ -316,6 +387,9 @@ chapters (1) ----< (N) chapters (自己参照: parent_chapter_id)
 chapters (1) ----< (N) units
 units (1) ----< (N) questions
 questions (1) ----< (N) correct_answers
+materials (1) ----< (N) vocabulary_entries
+vocabulary_entries (1) ----< (N) vocabulary_relations
+vocabulary_entries (1) ----< (N) questions (語彙教材のみ)
 questions (1) ----< (N) user_answers
 questions (1) ----< (N) question_statistics`
 
@@ -329,17 +403,20 @@ questions (1) ----< (N) question_statistics`
 2. materials
 3. chapters（自己参照の外部キーは後で追加）
 4. units
-5. questions
-6. correct_answers
-7. user_answers
-8. question_statistics
-9. daily_study_logs
+5. vocabulary_entries
+6. questions
+7. correct_answers
+8. vocabulary_relations
+9. user_answers
+10. question_statistics
+11. daily_study_logs
 
 ### Drizzle ORMでの実装方針
 
 - スキーマ定義を `src/db/schema/` 配下にドメインごとに分割
     - `src/db/schema/accounts.ts`
     - `src/db/schema/materials.ts`
+    - `src/db/schema/vocabulary.ts`
     - `src/db/schema/study-records.ts`
 - `drizzle-kit` でマイグレーションファイル生成
 - 本番環境（Neon）とローカル環境（Docker）で `DATABASE_URL` 環境変数を切り替え
