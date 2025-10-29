@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   toMaterialDetailPath,
   toUnitDetailPath,
@@ -25,24 +25,55 @@ type VocabularyImportUnitOption = {
   questionCount: number;
 };
 
+type VocabularyImportChapterOption = {
+  chapterId: string;
+  path: string[];
+};
+
 interface MaterialVocabularyImportContentProps {
   materialId: string;
   materialName: string;
+  chapters: VocabularyImportChapterOption[];
   units: VocabularyImportUnitOption[];
 }
 
 export function MaterialVocabularyImportContent(
   props: MaterialVocabularyImportContentProps,
 ) {
-  const { materialId, materialName, units } = props;
+  const { materialId, materialName, chapters, units } = props;
+  const [selectedChapterId, setSelectedChapterId] = useState<string>(() => {
+    if (units.length > 0) {
+      return units[0].chapterId;
+    }
+    return chapters[0]?.chapterId ?? "";
+  });
+  const filteredUnits = useMemo(
+    () => units.filter((unit) => unit.chapterId === selectedChapterId),
+    [units, selectedChapterId],
+  );
 
   const [selectedUnitId, setSelectedUnitId] = useState<string>(
     () => units[0]?.unitId ?? "",
   );
 
+  useEffect(() => {
+    if (filteredUnits.length === 0) {
+      if (selectedUnitId !== "") {
+        setSelectedUnitId("");
+      }
+      return;
+    }
+    const hasSelectedUnit = filteredUnits.some(
+      (unit) => unit.unitId === selectedUnitId,
+    );
+    if (!hasSelectedUnit) {
+      setSelectedUnitId(filteredUnits[0].unitId);
+    }
+  }, [filteredUnits, selectedUnitId]);
+
   const selectedUnit = useMemo(
-    () => units.find((unit) => unit.unitId === selectedUnitId),
-    [units, selectedUnitId],
+    () => filteredUnits.find((unit) => unit.unitId === selectedUnitId),
+    [filteredUnits, selectedUnitId],
   );
 
   if (units.length === 0) {
@@ -66,7 +97,7 @@ export function MaterialVocabularyImportContent(
     );
   }
 
-  const displayUnit = selectedUnit ?? units[0];
+  const displayUnit = selectedUnit ?? filteredUnits[0] ?? null;
 
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-8 px-6 py-10">
@@ -104,20 +135,63 @@ export function MaterialVocabularyImportContent(
       </header>
 
       <Card className="flex flex-col gap-4 border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        {!displayUnit ? (
+          <div className="rounded-md border border-dashed border-indigo-200 bg-indigo-50/70 px-4 py-6 text-sm text-indigo-800">
+            <p className="font-semibold">
+              この章にはUNITが登録されていません。
+            </p>
+            <p className="mt-2">
+              章を変更するか、教材の管理画面から新しいUNITを追加してください。
+            </p>
+          </div>
+        ) : null}
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              対象章
+            </p>
+            <Select
+              value={selectedChapterId}
+              onValueChange={(value) => setSelectedChapterId(value)}
+            >
+              <SelectTrigger className="min-w-[18rem]">
+                <SelectValue placeholder="章を選択してください" />
+              </SelectTrigger>
+              <SelectContent align="start" className="min-w-[18rem]">
+                {chapters.map((chapter) => (
+                  <SelectItem key={chapter.chapterId} value={chapter.chapterId}>
+                    <span className="flex flex-col">
+                      <span className="font-medium text-gray-900">
+                        {chapter.path.length > 0
+                          ? chapter.path[chapter.path.length - 1]
+                          : "ルート"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {chapter.path.length > 0
+                          ? chapter.path.join(" / ")
+                          : "ルート"}
+                      </span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               対象UNIT
             </p>
             <Select
-              value={displayUnit.unitId}
+              value={selectedUnitId}
               onValueChange={(value) => setSelectedUnitId(value)}
+              disabled={filteredUnits.length === 0}
             >
               <SelectTrigger className="min-w-[18rem]">
                 <SelectValue placeholder="UNITを選択してください" />
               </SelectTrigger>
               <SelectContent align="start" className="min-w-[18rem]">
-                {units.map((unit) => (
+                {filteredUnits.map((unit) => (
                   <SelectItem key={unit.unitId} value={unit.unitId}>
                     <span className="flex flex-col">
                       <span className="font-medium text-gray-900">
@@ -141,7 +215,11 @@ export function MaterialVocabularyImportContent(
             asChild
             className="self-start md:self-auto"
           >
-            <Link href={toUnitDetailPath(displayUnit.unitId)}>
+            <Link
+              aria-disabled={!displayUnit}
+              className={!displayUnit ? "pointer-events-none opacity-60" : ""}
+              href={displayUnit ? toUnitDetailPath(displayUnit.unitId) : "#"}
+            >
               UNIT詳細を開く
             </Link>
           </Button>
@@ -153,9 +231,11 @@ export function MaterialVocabularyImportContent(
               章の構成
             </p>
             <p className="mt-1 text-sm text-gray-700">
-              {displayUnit.chapterPath.length > 0
-                ? displayUnit.chapterPath.join(" / ")
-                : "ルート直下"}
+              {displayUnit
+                ? displayUnit.chapterPath.length > 0
+                  ? displayUnit.chapterPath.join(" / ")
+                  : "ルート直下"
+                : "-"}
             </p>
           </div>
           <div>
@@ -163,19 +243,21 @@ export function MaterialVocabularyImportContent(
               現在の問題数
             </p>
             <p className="mt-1 text-sm font-semibold text-gray-900">
-              {displayUnit.questionCount} 問
+              {displayUnit ? `${displayUnit.questionCount} 問` : "-"}
             </p>
           </div>
         </div>
       </Card>
 
-      <VocabularyCsvImporter
-        unitId={displayUnit.unitId}
-        unitName={displayUnit.unitName}
-        materialId={materialId}
-        chapterId={displayUnit.chapterId}
-        existingQuestionCount={displayUnit.questionCount}
-      />
+      {displayUnit ? (
+        <VocabularyCsvImporter
+          unitId={displayUnit.unitId}
+          unitName={displayUnit.unitName}
+          materialId={materialId}
+          chapterId={displayUnit.chapterId}
+          existingQuestionCount={displayUnit.questionCount}
+        />
+      ) : null}
     </main>
   );
 }

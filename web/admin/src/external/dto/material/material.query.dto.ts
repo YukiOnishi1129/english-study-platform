@@ -49,6 +49,7 @@ export interface UnitDetailQuestionDto {
   explanation: string | null;
   questionType: string;
   vocabularyEntryId: string | null;
+  headword: string | null;
   order: number;
   createdAt: string;
   updatedAt: string;

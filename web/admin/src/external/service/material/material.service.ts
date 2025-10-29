@@ -272,6 +272,12 @@ export class MaterialService {
           }))
           .sort((a, b) => a.order - b.order);
 
+        const vocabularyEntry = question.vocabularyEntryId
+          ? await this.vocabularyEntryRepository.findById(
+              question.vocabularyEntryId,
+            )
+          : null;
+
         return {
           id: question.id,
           unitId: question.unitId,
@@ -281,6 +287,7 @@ export class MaterialService {
           explanation: question.explanation ?? null,
           questionType: question.questionType,
           vocabularyEntryId: question.vocabularyEntryId ?? null,
+          headword: vocabularyEntry?.headword ?? null,
           order: question.order,
           createdAt: serialize(question.createdAt),
           updatedAt: serialize(question.updatedAt),
@@ -344,6 +351,14 @@ export class MaterialService {
       }))
       .sort((a, b) => a.order - b.order);
 
+    const questionHeadword = question.vocabularyEntryId
+      ? ((
+          await this.vocabularyEntryRepository.findById(
+            question.vocabularyEntryId,
+          )
+        )?.headword ?? null)
+      : null;
+
     const questionDto: UnitDetailQuestionDto = {
       id: question.id,
       unitId: question.unitId,
@@ -353,6 +368,7 @@ export class MaterialService {
       explanation: question.explanation ?? null,
       questionType: question.questionType,
       vocabularyEntryId: question.vocabularyEntryId ?? null,
+      headword: questionHeadword,
       order: question.order,
       createdAt: serialize(question.createdAt),
       updatedAt: serialize(question.updatedAt),

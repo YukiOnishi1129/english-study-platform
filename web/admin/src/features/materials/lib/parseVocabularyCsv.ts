@@ -39,11 +39,11 @@ const HEADER_ALIASES: Record<string, keyof VocabularyCsvRow> = {
 
 const REQUIRED_HEADERS = ["英単語", "日本語訳1", "正解候補1"] as const;
 
-const ANSWER_PREFIX = /^正解候補(?<index>\d+)$/;
-const DEFINITION_PREFIX = /^日本語訳(?<index>\d+)$/;
-const SYNONYM_PREFIX = /^類義語(?<index>\d+)$/;
-const ANTONYM_PREFIX = /^対義語(?<index>\d+)$/;
-const RELATED_PREFIX = /^関連語(?<index>\d+)$/;
+const ANSWER_PREFIX = /^正解候補(\d+)$/;
+const DEFINITION_PREFIX = /^日本語訳(\d+)$/;
+const SYNONYM_PREFIX = /^類義語(\d+)$/;
+const ANTONYM_PREFIX = /^対義語(\d+)$/;
+const RELATED_PREFIX = /^関連語(\d+)$/;
 
 function parseCsvRows(content: string): RawCsvRow[] {
   const rows: RawCsvRow[] = [];
@@ -145,43 +145,43 @@ export function parseVocabularyCsv(content: string): ParseVocabularyCsvResult {
     }
 
     const definitionMatch = normalized.match(DEFINITION_PREFIX);
-    if (definitionMatch?.groups?.index) {
+    if (definitionMatch) {
       definitionColumnIndices.push({
         index,
-        order: Number(definitionMatch.groups.index) || 0,
+        order: Number(definitionMatch[1]) || 0,
       });
       return;
     }
 
     const answerMatch = normalized.match(ANSWER_PREFIX);
-    if (answerMatch?.groups?.index) {
+    if (answerMatch) {
       answerColumnIndices.push(index);
       return;
     }
 
     const synonymMatch = normalized.match(SYNONYM_PREFIX);
-    if (synonymMatch?.groups?.index) {
+    if (synonymMatch) {
       synonymIndices.push({
         index,
-        order: Number(synonymMatch.groups.index) || 0,
+        order: Number(synonymMatch[1]) || 0,
       });
       return;
     }
 
     const antonymMatch = normalized.match(ANTONYM_PREFIX);
-    if (antonymMatch?.groups?.index) {
+    if (antonymMatch) {
       antonymIndices.push({
         index,
-        order: Number(antonymMatch.groups.index) || 0,
+        order: Number(antonymMatch[1]) || 0,
       });
       return;
     }
 
     const relatedMatch = normalized.match(RELATED_PREFIX);
-    if (relatedMatch?.groups?.index) {
+    if (relatedMatch) {
       relatedIndices.push({
         index,
-        order: Number(relatedMatch.groups.index) || 0,
+        order: Number(relatedMatch[1]) || 0,
       });
     }
   });

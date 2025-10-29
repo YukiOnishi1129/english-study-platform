@@ -16,6 +16,11 @@ type VocabularyImportUnitOption = {
   questionCount: number;
 };
 
+type VocabularyImportChapterOption = {
+  chapterId: string;
+  path: string[];
+};
+
 function collectUnits(
   chapters: MaterialChapterSummaryDto[],
   ancestors: string[] = [],
@@ -45,11 +50,26 @@ export async function MaterialVocabularyImportPageTemplate({
   }
 
   const units = collectUnits(material.chapters);
+  const chapterMap = new Map<string, VocabularyImportChapterOption>();
+  units.forEach((unit) => {
+    if (!chapterMap.has(unit.chapterId)) {
+      chapterMap.set(unit.chapterId, {
+        chapterId: unit.chapterId,
+        path: unit.chapterPath,
+      });
+    }
+  });
+  const chapters = Array.from(chapterMap.values()).sort((a, b) => {
+    const labelA = a.path.join("/");
+    const labelB = b.path.join("/");
+    return labelA.localeCompare(labelB, "ja");
+  });
 
   return (
     <MaterialVocabularyImportContent
       materialId={material.id}
       materialName={material.name}
+      chapters={chapters}
       units={units}
     />
   );

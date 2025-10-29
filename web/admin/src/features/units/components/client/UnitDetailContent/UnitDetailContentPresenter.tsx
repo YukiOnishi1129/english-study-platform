@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import type { UnitDetailDto } from "@/external/dto/material/material.query.dto";
 import {
   toChapterDetailPath,
@@ -10,6 +13,7 @@ import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteB
 import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
 import { VocabularyCsvImporter } from "@/features/units/components/client/VocabularyCsvImporter";
 import { Button } from "@/shared/components/ui/button";
+import { Card } from "@/shared/components/ui/card";
 import { DeleteConfirmDialog } from "@/shared/components/ui/delete-confirm-dialog";
 import { Spinner } from "@/shared/components/ui/spinner";
 
@@ -37,6 +41,28 @@ export function UnitDetailContentPresenter(
     onToggleAllQuestions,
     onBulkDelete,
   } = props;
+
+  const vocabularyQuestionCount = useMemo(
+    () =>
+      detail?.questions.filter((question) => question.vocabularyEntryId)
+        .length ?? 0,
+    [detail?.questions],
+  );
+  const isPureVocabularyUnit = useMemo(() => {
+    if (!detail) {
+      return false;
+    }
+    if (detail.questions.length === 0) {
+      return true;
+    }
+    return detail.questions.every((question) =>
+      Boolean(question.vocabularyEntryId),
+    );
+  }, [detail]);
+
+  const [importMode, setImportMode] = useState<"question" | "vocabulary">(
+    isPureVocabularyUnit ? "vocabulary" : "question",
+  );
 
   if (isLoading) {
     return (
@@ -69,6 +95,8 @@ export function UnitDetailContentPresenter(
     order: question.order,
     japanese: question.japanese,
     updatedAt: question.updatedAt,
+    headword:
+      question.headword ?? question.correctAnswers[0]?.answerText ?? null,
   }));
   const parentChapterId = currentChapter?.id ?? detail.unit.chapterId;
   const selectedCount = selectedQuestionIds.length;
@@ -168,6 +196,53 @@ export function UnitDetailContentPresenter(
         </div>
       </section>
 
+      <div className="space-y-3">
+        <Card className="flex flex-col gap-3 border border-gray-200 bg-white px-4 py-3 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-gray-900">CSV取り込み</h2>
+            <p className="text-xs text-gray-600">
+              問題数: {questionCount}問 / 語彙問題: {vocabularyQuestionCount}問
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={importMode === "question" ? "default" : "outline"}
+              onClick={() => setImportMode("question")}
+            >
+              問題CSVを取り込む
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={importMode === "vocabulary" ? "default" : "outline"}
+              onClick={() => setImportMode("vocabulary")}
+            >
+              語彙CSVを取り込む
+            </Button>
+          </div>
+        </Card>
+
+        {importMode === "question" ? (
+          <UnitQuestionCsvImporter
+            unitId={detail.unit.id}
+            unitName={detail.unit.name}
+            materialId={detail.material.id}
+            chapterId={parentChapterId}
+            existingQuestionCount={questionCount}
+          />
+        ) : (
+          <VocabularyCsvImporter
+            unitId={detail.unit.id}
+            unitName={detail.unit.name}
+            materialId={detail.material.id}
+            chapterId={parentChapterId}
+            existingQuestionCount={questionCount}
+          />
+        )}
+      </div>
+
       <section className="space-y-4">
         <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
@@ -204,20 +279,6 @@ export function UnitDetailContentPresenter(
               confirmPendingLabel="削除中..."
               onConfirm={onBulkDelete}
               isPending={isBulkDeleting}
-            />
-            <UnitQuestionCsvImporter
-              unitId={detail.unit.id}
-              unitName={detail.unit.name}
-              materialId={detail.material.id}
-              chapterId={parentChapterId}
-              existingQuestionCount={questionCount}
-            />
-            <VocabularyCsvImporter
-              unitId={detail.unit.id}
-              unitName={detail.unit.name}
-              materialId={detail.material.id}
-              chapterId={parentChapterId}
-              existingQuestionCount={questionCount}
             />
           </div>
         </header>
