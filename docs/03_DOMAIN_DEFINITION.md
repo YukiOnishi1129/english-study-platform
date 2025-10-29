@@ -54,7 +54,7 @@
   - prompt: string | null (追加指示や語彙ヒント)
   - hint: string | null
   - explanation: string | null
-  - questionType: QuestionType
+  - questionType: QuestionType (デフォルトは"phrase"。語彙セッションではランタイムで学習モードを切り替え)
   - vocabularyEntryId: string | null (語彙教材の場合)
   - order: number
   - createdAt: Date
@@ -159,8 +159,8 @@
 
 - 値: `phrase` | `jp_to_en` | `en_to_jp` | `cloze` | `free_sentence`
 - ビジネスルール:
-    - 語彙教材で使用可能なモードの制御
-    - 判定ロジックやUIの切り替え
+    - UI層での判定ロジック・表示切替の基準（語彙セッションではランタイム選択）
+    - 語彙CSVではモード列を持たず、VocabularyEntryに紐づくQuestionは共通データを提供
 - メソッド例:
     - `requiresVocabularyEntry()`: 語彙エントリの紐付けが必須かどうか
     - `isFreeForm()`: 自由記述採点が必要かどうか
@@ -260,7 +260,7 @@
     - ユーザー回答と正解の照合（完全一致）
     - 複数正解のいずれかにマッチするか
     - 大文字小文字の正規化
-    - questionTypeごとのロジック切り替え（語彙挿入、自由作文、選択式など）
+    - questionTypeごとのロジック切り替え（語彙挿入、自由作文、選択式など）※語彙教材では学習セッションがモードを指定
 - **手動修正**
     - 不正解から正解への変更
     - 統計への反映
@@ -369,13 +369,13 @@
 
 - **責務**:
     - 語彙CSVの解析とVocabularyEntry生成
-    - VocabularyRelation/Question/CorrectAnswerの一括登録
+    - VocabularyRelation/Question/CorrectAnswerの一括登録（Questionは語彙1件につき1レコードを生成し、学習時にモード切替）
     - 既存語彙の更新とユニーク性の担保
 - **処理フロー**:
-    1. CSVをパースし語彙情報と問題定義を分離
+    1. CSVをパースし語彙情報と正解候補を抽出
     2. headword単位でVocabularyEntryを作成または更新
     3. 類義語・対義語をVocabularyRelationとして登録
-    4. QuestionTypeごとにQuestionとCorrectAnswerを生成
+    4. Questionを単語ごとに1件生成し、正解候補をCorrectAnswerとして登録
     5. トランザクションでMaterial配下に保存
 
 ---

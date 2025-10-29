@@ -6,3 +6,5 @@ export * from "./question-statistics";
 export * from "./questions";
 export * from "./units";
 export * from "./user-answers";
+export * from "./vocabulary-entries";
+export * from "./vocabulary-relations";

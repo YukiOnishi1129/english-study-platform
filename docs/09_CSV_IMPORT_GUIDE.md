@@ -35,7 +35,6 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 | 日本語訳2〜          | 任意 | 追加の訳語。プレビューおよび許容解答として利用。 |
 | 品詞                 | 任意 | `noun`, `verb`, `adj.` など。 |
 | 発音                 | 任意 | 読み方やIPA表記。 |
-| 学習モード           | 任意 | `jp_to_en` / `en_to_jp` / `cloze` / `free_sentence`。未指定は `jp_to_en`。 |
 | プロンプト           | 任意 | 追加説明や指示文（例: 「この単語を使って英文を作成」）。 |
 | 正解候補1            | ✅   | Questionに登録する正解。学習モードに応じた言語で記述。 |
 | 正解候補2〜          | 任意 | 追加の正解。CorrectAnswerとして登録。 |
@@ -67,14 +66,14 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 
 ### 2.1 語彙教材用サンプル
 
-| 語彙ID | 問題ID | 並び順 | 英単語 | 日本語訳1 | 日本語訳2 | 品詞 | 学習モード | プロンプト                     | 正解候補1 | 正解候補2 | 類義語1 | 対義語1 | 関連語1 | 例文(英)                               | 例文(和)                         |
-|--------|--------|--------|--------|-----------|-----------|------|------------|--------------------------------|-----------|-----------|---------|---------|---------|----------------------------------------|----------------------------------|
-|        |        | 1      | accept | 受け入れる | 受諾する  | verb | jp_to_en   |                                | accept    | accept it | receive | refuse  | admit   | We must accept the offer immediately. | 我々はその提案をすぐに受け入れる必要がある。 |
-| vocab-1|        | 2      | cheerful | 陽気な   | 快活な    | adj. | en_to_jp   |                                | 陽気な    | 明るい    | joyful  | gloomy  | upbeat  | Her cheerful voice brightened the room. | 彼女の陽気な声が部屋を明るくした。        |
-| vocab-2| q-888  | 3      | contribute | 貢献する | 寄与する | verb | free_sentence | この単語を1文で使ってください | contribute |          | donate  | withhold| support | She contributes to the community weekly. | 彼女は毎週地域社会に貢献している。        |
+| 語彙ID | 問題ID | 並び順 | 英単語 | 日本語訳1 | 日本語訳2 | 品詞 | プロンプト                     | 正解候補1 | 正解候補2 | 類義語1 | 対義語1 | 関連語1 | 例文(英)                               | 例文(和)                         |
+|--------|--------|--------|--------|-----------|-----------|------|--------------------------------|-----------|-----------|---------|---------|---------|----------------------------------------|----------------------------------|
+|        |        | 1      | accept | 受け入れる | 受諾する  | verb |                                | accept    | accept it | receive | refuse  | admit   | We must accept the offer immediately. | 我々はその提案をすぐに受け入れる必要がある。 |
+| vocab-1|        | 2      | cheerful | 陽気な   | 快活な    | adj. |                                | cheerful | bright    | joyful  | gloomy  | upbeat  | Her cheerful voice brightened the room. | 彼女の陽気な声が部屋を明るくした。        |
+| vocab-2| q-888  | 3      | contribute | 貢献する | 寄与する | verb | この単語を1文で使ってください | contribute |          | donate  | withhold| support | She contributes to the community weekly. | 彼女は毎週地域社会に貢献している。        |
 
 - 語彙エントリと問題設定をまとめて1行に記述します。
-- `学習モード` が `free_sentence` の場合は、正解判定の緩和として手動判定が必要になるケースがあるため、例文やプロンプトを充実させてください。
+- 学習モードはCSVで指定せず、学習セッション開始時にUIから「JP→EN」「EN→JP」「例文」などを切り替える想定です。
 - 類義語／対義語／関連語はVocabularyRelationとして保存され、学習画面のフィードバックに表示されます。
 
 ---
@@ -101,7 +100,6 @@ CSV 解析時に以下のチェックを行い、問題があればプレビュ�
 - `並び順` に数値以外が入力されている
 - `関連ID` が指定されているが既存データに該当がない（将来の取り込み時に検証予定）
 - 語彙教材の場合、`英単語` または `正解候補1` が空欄
-- `学習モード` が未定義の値
 - 行内がすべて空欄 → スキップ（エラーではありません）
 
 ---

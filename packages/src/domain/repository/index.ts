@@ -6,3 +6,5 @@ export type { QuestionRepository } from "./QuestionRepository";
 export type { QuestionStatisticsRepository } from "./QuestionStatisticsRepository";
 export type { UnitRepository } from "./UnitRepository";
 export type { UserAnswerRepository } from "./UserAnswerRepository";
+export type { VocabularyEntryRepository } from "./VocabularyEntryRepository";
+export type { VocabularyRelationRepository } from "./VocabularyRelationRepository";

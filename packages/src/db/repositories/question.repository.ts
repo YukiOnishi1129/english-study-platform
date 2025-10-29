@@ -17,16 +17,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       return null;
     }
 
-    return new DomainQuestion({
-      id: data.id,
-      unitId: data.unitId,
-      japanese: data.japanese,
-      hint: data.hint ?? undefined,
-      explanation: data.explanation ?? undefined,
-      order: data.order,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    });
+    return this.toDomain(data);
   }
 
   async findByUnitId(unitId: string): Promise<DomainQuestion[]> {
@@ -36,19 +27,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       .where(eq(questions.unitId, unitId))
       .orderBy(questions.order);
 
-    return results.map(
-      (data) =>
-        new DomainQuestion({
-          id: data.id,
-          unitId: data.unitId,
-          japanese: data.japanese,
-          hint: data.hint ?? undefined,
-          explanation: data.explanation ?? undefined,
-          order: data.order,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        }),
-    );
+    return results.map(this.toDomain);
   }
 
   async findByUnitIds(unitIds: string[]): Promise<DomainQuestion[]> {
@@ -62,19 +41,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       .where(inArray(questions.unitId, unitIds))
       .orderBy(questions.unitId, questions.order);
 
-    return results.map(
-      (data) =>
-        new DomainQuestion({
-          id: data.id,
-          unitId: data.unitId,
-          japanese: data.japanese,
-          hint: data.hint ?? undefined,
-          explanation: data.explanation ?? undefined,
-          order: data.order,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        }),
-    );
+    return results.map(this.toDomain);
   }
 
   async findByIds(ids: string[]): Promise<DomainQuestion[]> {
@@ -84,19 +51,17 @@ export class QuestionRepositoryImpl implements QuestionRepository {
 
     const results = await db.select().from(questions).where(inArray(questions.id, ids));
 
-    return results.map(
-      (data) =>
-        new DomainQuestion({
-          id: data.id,
-          unitId: data.unitId,
-          japanese: data.japanese,
-          hint: data.hint ?? undefined,
-          explanation: data.explanation ?? undefined,
-          order: data.order,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        }),
-    );
+    return results.map(this.toDomain);
+  }
+
+  async findByVocabularyEntryId(entryId: string): Promise<DomainQuestion[]> {
+    const results = await db
+      .select()
+      .from(questions)
+      .where(eq(questions.vocabularyEntryId, entryId))
+      .orderBy(questions.order);
+
+    return results.map(this.toDomain);
   }
 
   async findFirstByCreatedAt(): Promise<DomainQuestion | null> {
@@ -106,16 +71,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       return null;
     }
 
-    return new DomainQuestion({
-      id: row.id,
-      unitId: row.unitId,
-      japanese: row.japanese,
-      hint: row.hint ?? undefined,
-      explanation: row.explanation ?? undefined,
-      order: row.order,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    });
+    return this.toDomain(row);
   }
 
   async save(question: DomainQuestion): Promise<DomainQuestion> {
@@ -125,8 +81,11 @@ export class QuestionRepositoryImpl implements QuestionRepository {
         id: question.id,
         unitId: question.unitId,
         japanese: question.japanese,
+        prompt: question.prompt ?? null,
         hint: question.hint ?? null,
         explanation: question.explanation ?? null,
+        questionType: question.questionType,
+        vocabularyEntryId: question.vocabularyEntryId ?? null,
         order: question.order,
         createdAt: question.createdAt,
         updatedAt: question.updatedAt,
@@ -135,8 +94,11 @@ export class QuestionRepositoryImpl implements QuestionRepository {
         target: questions.id,
         set: {
           japanese: question.japanese,
+          prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,
+          questionType: question.questionType,
+          vocabularyEntryId: question.vocabularyEntryId ?? null,
           order: question.order,
           updatedAt: new Date(),
         },
@@ -147,16 +109,7 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       throw new Error("Failed to save question");
     }
 
-    return new DomainQuestion({
-      id: result.id,
-      unitId: result.unitId,
-      japanese: result.japanese,
-      hint: result.hint ?? undefined,
-      explanation: result.explanation ?? undefined,
-      order: result.order,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-    });
+    return this.toDomain(result);
   }
 
   async delete(id: string): Promise<void> {
@@ -192,4 +145,19 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     });
     return map;
   }
+
+  private toDomain = (data: Question): DomainQuestion =>
+    new DomainQuestion({
+      id: data.id,
+      unitId: data.unitId,
+      japanese: data.japanese,
+      prompt: data.prompt ?? undefined,
+      hint: data.hint ?? undefined,
+      explanation: data.explanation ?? undefined,
+      questionType: data.questionType as DomainQuestion["questionType"],
+      vocabularyEntryId: data.vocabularyEntryId ?? undefined,
+      order: data.order,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+    });
 }
