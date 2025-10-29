@@ -9,5 +9,9 @@ export { Material } from "./Material";
 
 export type { QuestionParams } from "./Question";
 export { Question } from "./Question";
+export type { QuestionStatisticsParams } from "./QuestionStatistics";
+export { QuestionStatistics } from "./QuestionStatistics";
 export type { UnitParams } from "./Unit";
 export { Unit } from "./Unit";
+export type { UserAnswerParams } from "./UserAnswer";
+export { UserAnswer } from "./UserAnswer";

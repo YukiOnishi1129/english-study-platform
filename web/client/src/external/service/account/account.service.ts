@@ -36,6 +36,7 @@ export class AccountService {
       role: "user", // Default role for regular users
       provider: input.provider,
       providerAccountId: input.providerAccountId,
+      thumbnail: input.thumbnail,
     });
 
     return await this.accountRepository.save(newAccount);

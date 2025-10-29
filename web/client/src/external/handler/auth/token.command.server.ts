@@ -1,22 +1,24 @@
 import "server-only";
+
+import {
+  type RefreshGoogleTokensRequest,
+  RefreshGoogleTokensRequestSchema,
+  type RefreshGoogleTokensResponse,
+  RefreshGoogleTokensResponseSchema,
+} from "@/external/dto/auth/token.dto";
 import { TokenVerificationService } from "@/external/service/auth/token-verification.service";
 
 const tokenVerificationService = new TokenVerificationService();
 
-export interface RefreshedGoogleTokens {
-  accessToken?: string | null;
-  idToken?: string | null;
-  accessTokenExpires?: number | null;
-}
-
 export async function refreshGoogleTokens(
-  refreshToken: string,
-): Promise<RefreshedGoogleTokens> {
+  request: RefreshGoogleTokensRequest,
+): Promise<RefreshGoogleTokensResponse> {
+  const { refreshToken } = RefreshGoogleTokensRequestSchema.parse(request);
   const refreshed = await tokenVerificationService.refreshTokens(refreshToken);
 
-  return {
+  return RefreshGoogleTokensResponseSchema.parse({
     accessToken: refreshed.accessToken ?? null,
     idToken: refreshed.idToken ?? null,
     accessTokenExpires: refreshed.expiryDate ?? null,
-  };
+  });
 }

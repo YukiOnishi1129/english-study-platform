@@ -1,17 +1,22 @@
 import "server-only";
-import { mapAccountToFeature } from "@/external/mapper/account.mapper";
+import {
+  type AccountResponse,
+  type GetAccountByProviderRequest,
+  GetAccountByProviderRequestSchema,
+  toAccountResponse,
+} from "@/external/dto/account/account.query.dto";
 import { AccountService } from "@/external/service/account/account.service";
-import type { Account } from "@/features/account/types/account";
 
 const accountService = new AccountService();
 
 export async function getAccountByProvider(
-  provider: string,
-  providerAccountId: string,
-): Promise<Account | null> {
+  request: GetAccountByProviderRequest,
+): Promise<AccountResponse | null> {
+  const validated = GetAccountByProviderRequestSchema.parse(request);
+
   const domainAccount = await accountService.findByProvider(
-    provider,
-    providerAccountId,
+    validated.provider,
+    validated.providerAccountId,
   );
-  return domainAccount ? mapAccountToFeature(domainAccount) : null;
+  return domainAccount ? toAccountResponse(domainAccount) : null;
 }

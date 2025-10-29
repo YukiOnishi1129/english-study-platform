@@ -37,17 +37,13 @@ export const authOptions: NextAuthOptions = {
         const googleProfile = profile as GoogleProfile;
         const fullName = buildProfileName(googleProfile);
 
-        const accountData = await createOrGetAccount(
-          account.provider,
-          account.providerAccountId,
-          {
-            email: googleProfile.email,
-            name: fullName,
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
-            thumbnail: googleProfile.picture,
-          },
-        );
+        const accountData = await createOrGetAccount({
+          email: googleProfile.email,
+          name: fullName,
+          provider: account.provider,
+          providerAccountId: account.providerAccountId,
+          thumbnail: googleProfile.picture,
+        });
 
         user.account = accountData;
         return true;
@@ -90,7 +86,9 @@ export const authOptions: NextAuthOptions = {
       }
 
       try {
-        const refreshed = await refreshGoogleTokens(token.refreshToken);
+        const refreshed = await refreshGoogleTokens({
+          refreshToken: token.refreshToken,
+        });
 
         return {
           ...token,

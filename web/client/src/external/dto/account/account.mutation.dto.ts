@@ -1,8 +1,13 @@
-import type { Account } from "@acme/shared/domain";
 import { z } from "zod";
 
-// Create account request schema
-export const CreateAccountRequestSchema = z.object({
+import {
+  type AccountResponse,
+  AccountResponseSchema,
+} from "@/external/dto/account/account.query.dto";
+
+export { toAccountResponse } from "@/external/dto/account/account.query.dto";
+
+export const CreateOrGetAccountRequestSchema = z.object({
   email: z.email(),
   name: z.string().min(1),
   provider: z.string().min(1),
@@ -10,7 +15,10 @@ export const CreateAccountRequestSchema = z.object({
   thumbnail: z.string().optional(),
 });
 
-export type CreateAccountRequest = z.infer<typeof CreateAccountRequestSchema>;
+export type CreateOrGetAccountRequest = z.infer<
+  typeof CreateOrGetAccountRequestSchema
+>;
 
-// Response type
-export type CreateAccountResponse = Account;
+export type CreateOrGetAccountResponse = AccountResponse;
+
+export const CreateOrGetAccountResponseSchema = AccountResponseSchema;
