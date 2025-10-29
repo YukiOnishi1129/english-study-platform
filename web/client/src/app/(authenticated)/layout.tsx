@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getAuthenticatedAccount } from "@/features/auth/servers/auth-check.server";
-import { AppShell } from "@/shared/components/layout/AppShell";
+import { AppShell } from "@/shared/components/layout/client/AppShell";
 
 export default async function AuthenticatedLayout(props: LayoutProps<"/">) {
   const account = await getAuthenticatedAccount();
