@@ -144,16 +144,33 @@ export type ImportVocabularyEntriesRequest = z.infer<
 
 export type ImportVocabularyRow = z.infer<typeof ImportVocabularyRowSchema>;
 
+const VocabularyUpdateSchema = z.object({
+  vocabularyEntryId: z
+    .string()
+    .min(1, "vocabularyEntryIdが指定されていません。"),
+  headword: z.string().trim().min(1, "英単語を入力してください。"),
+  pronunciation: OPTIONAL_TEXT_SCHEMA,
+  partOfSpeech: OPTIONAL_TEXT_SCHEMA,
+  memo: OPTIONAL_TEXT_SCHEMA,
+  synonyms: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  antonyms: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  relatedWords: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  exampleSentenceEn: OPTIONAL_TEXT_SCHEMA,
+  exampleSentenceJa: OPTIONAL_TEXT_SCHEMA,
+});
+
 export const UpdateQuestionRequestSchema = z.object({
   questionId: z.string().min(1, "questionIdが指定されていません。"),
   unitId: z.string().min(1, "unitIdが指定されていません。"),
   japanese: z.string().trim().min(1, "日本語を入力してください。"),
+  prompt: OPTIONAL_TEXT_SCHEMA,
   hint: OPTIONAL_TEXT_SCHEMA,
   explanation: OPTIONAL_TEXT_SCHEMA,
   order: z.number().int().positive().optional(),
   correctAnswers: z
     .array(z.string().trim().min(1, "英語正解は1文字以上で入力してください。"))
     .min(1, "英語の正解を1つ以上入力してください。"),
+  vocabulary: VocabularyUpdateSchema.optional(),
 });
 
 export type UpdateQuestionRequest = z.infer<typeof UpdateQuestionRequestSchema>;

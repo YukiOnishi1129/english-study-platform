@@ -5,10 +5,23 @@ export interface QuestionEditFormDefaultValues {
   questionId: string;
   unitId: string;
   japanese: string;
+  prompt: string | null;
   hint: string | null;
   explanation: string | null;
   order: number;
   correctAnswers: string[];
+  vocabulary?: {
+    vocabularyEntryId: string;
+    headword: string;
+    pronunciation: string | null;
+    partOfSpeech: string | null;
+    memo: string | null;
+    synonyms: string[];
+    antonyms: string[];
+    relatedWords: string[];
+    exampleSentenceEn: string | null;
+    exampleSentenceJa: string | null;
+  } | null;
 }
 
 export interface QuestionEditFormProps {

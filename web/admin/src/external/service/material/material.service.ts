@@ -1035,14 +1035,83 @@ export class MaterialService {
       id: existing.id,
       unitId: existing.unitId,
       japanese: payload.japanese,
+      prompt: payload.prompt ?? undefined,
       hint: payload.hint ?? undefined,
       explanation: payload.explanation ?? undefined,
+      questionType: existing.questionType,
+      vocabularyEntryId: existing.vocabularyEntryId ?? undefined,
       order,
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     });
 
     await this.questionRepository.save(updatedQuestion);
+
+    if (payload.vocabulary) {
+      if (!existing.vocabularyEntryId) {
+        throw new Error("語彙エントリが紐づいていない問題です。");
+      }
+      if (existing.vocabularyEntryId !== payload.vocabulary.vocabularyEntryId) {
+        throw new Error("語彙エントリIDが一致しません。");
+      }
+
+      const entry = await this.vocabularyEntryRepository.findById(
+        existing.vocabularyEntryId,
+      );
+      if (!entry) {
+        throw new Error("語彙エントリが見つかりません。");
+      }
+
+      const updatedEntry = new VocabularyEntry({
+        id: entry.id,
+        materialId: entry.materialId,
+        headword: payload.vocabulary.headword,
+        pronunciation: payload.vocabulary.pronunciation ?? undefined,
+        partOfSpeech: payload.vocabulary.partOfSpeech ?? undefined,
+        definitionJa: payload.japanese,
+        memo: payload.vocabulary.memo ?? undefined,
+        exampleSentenceEn: payload.vocabulary.exampleSentenceEn ?? undefined,
+        exampleSentenceJa: payload.vocabulary.exampleSentenceJa ?? undefined,
+        createdAt: entry.createdAt,
+        updatedAt: new Date(),
+      });
+
+      const savedEntry =
+        await this.vocabularyEntryRepository.save(updatedEntry);
+
+      await this.vocabularyRelationRepository.deleteByEntryId(savedEntry.id);
+
+      const relationInputs: Array<{
+        type: VocabularyRelationDto["relationType"];
+        text: string;
+      }> = [];
+
+      const synonymList = payload.vocabulary.synonyms ?? [];
+      synonymList.forEach((text) => {
+        relationInputs.push({ type: "synonym", text });
+      });
+
+      const antonymList = payload.vocabulary.antonyms ?? [];
+      antonymList.forEach((text) => {
+        relationInputs.push({ type: "antonym", text });
+      });
+
+      const relatedList = payload.vocabulary.relatedWords ?? [];
+      relatedList.forEach((text) => {
+        relationInputs.push({ type: "related", text });
+      });
+
+      if (relationInputs.length > 0) {
+        const relations = relationInputs.map((relation) =>
+          VocabularyRelation.create({
+            vocabularyEntryId: savedEntry.id,
+            relationType: relation.type,
+            relatedText: relation.text,
+          }),
+        );
+        await this.vocabularyRelationRepository.saveMany(relations);
+      }
+    }
 
     await this.correctAnswerRepository.deleteByQuestionId(existing.id);
     await Promise.all(

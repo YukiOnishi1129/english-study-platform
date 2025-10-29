@@ -301,6 +301,16 @@ export function QuestionDetailContentPresenter(
                 {detail.question.japanese}
               </p>
             </div>
+            {detail.question.prompt ? (
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-gray-800">
+                  プロンプト
+                </h3>
+                <p className="whitespace-pre-wrap text-sm text-gray-700">
+                  {detail.question.prompt}
+                </p>
+              </div>
+            ) : null}
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-800">英語正解</h3>
               <ul className="list-inside list-disc space-y-1 text-sm text-gray-700">
