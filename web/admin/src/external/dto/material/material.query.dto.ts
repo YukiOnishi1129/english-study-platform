@@ -44,8 +44,11 @@ export interface UnitDetailQuestionDto {
   id: string;
   unitId: string;
   japanese: string;
+  prompt: string | null;
   hint: string | null;
   explanation: string | null;
+  questionType: string;
+  vocabularyEntryId: string | null;
   order: number;
   createdAt: string;
   updatedAt: string;

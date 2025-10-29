@@ -78,6 +78,8 @@
   - partOfSpeech: string | null
   - definitionJa: string
   - memo: string | null
+  - exampleSentenceEn: string | null
+  - exampleSentenceJa: string | null
   - createdAt: Date
   - updatedAt: Date
 

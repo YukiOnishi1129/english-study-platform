@@ -19,6 +19,15 @@ const OPTIONAL_TEXT_SCHEMA = z
   .optional()
   .transform((value) => (value && value.length > 0 ? value : undefined));
 
+const OPTIONAL_TEXT_ARRAY_SCHEMA = z
+  .array(OPTIONAL_TEXT_SCHEMA)
+  .optional()
+  .transform((value) =>
+    Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === "string")
+      : [],
+  );
+
 export const CreateMaterialRequestSchema = z.object({
   name: NAME_SCHEMA,
   description: DESCRIPTION_SCHEMA,
@@ -102,6 +111,43 @@ export type ImportUnitQuestionsRequest = z.infer<
   typeof ImportUnitQuestionsRequestSchema
 >;
 export type ImportUnitQuestionRow = z.infer<typeof ImportUnitQuestionRowSchema>;
+
+const ImportVocabularyRowSchema = z.object({
+  vocabularyId: OPTIONAL_TEXT_SCHEMA,
+  questionId: OPTIONAL_TEXT_SCHEMA,
+  order: z.number().int().positive().optional(),
+  headword: z.string().trim().min(1, "英単語を入力してください。"),
+  pronunciation: OPTIONAL_TEXT_SCHEMA,
+  partOfSpeech: OPTIONAL_TEXT_SCHEMA,
+  definitionJa: z
+    .string()
+    .trim()
+    .min(1, "日本語訳1を入力してください。"),
+  definitionVariants: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  prompt: OPTIONAL_TEXT_SCHEMA,
+  answerCandidates: z
+    .array(z.string().trim().min(1, "正解候補は1文字以上で入力してください。"))
+    .min(1, "正解候補を1つ以上入力してください。"),
+  synonyms: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  antonyms: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  relatedWords: OPTIONAL_TEXT_ARRAY_SCHEMA,
+  exampleSentenceEn: OPTIONAL_TEXT_SCHEMA,
+  exampleSentenceJa: OPTIONAL_TEXT_SCHEMA,
+});
+
+export const ImportVocabularyEntriesRequestSchema = z.object({
+  unitId: z.string().min(1, "unitIdが指定されていません。"),
+  materialId: z.string().min(1, "materialIdが指定されていません。"),
+  rows: z
+    .array(ImportVocabularyRowSchema)
+    .min(1, "取り込む語彙がありません。"),
+});
+
+export type ImportVocabularyEntriesRequest = z.infer<
+  typeof ImportVocabularyEntriesRequestSchema
+>;
+
+export type ImportVocabularyRow = z.infer<typeof ImportVocabularyRowSchema>;
 
 export const UpdateQuestionRequestSchema = z.object({
   questionId: z.string().min(1, "questionIdが指定されていません。"),

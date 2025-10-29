@@ -8,6 +8,8 @@ export interface VocabularyEntryParams {
   partOfSpeech?: string | null;
   definitionJa: string;
   memo?: string | null;
+  exampleSentenceEn?: string | null;
+  exampleSentenceJa?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -20,6 +22,8 @@ export class VocabularyEntry {
   public readonly partOfSpeech?: string | null;
   public readonly definitionJa: string;
   public readonly memo?: string | null;
+  public readonly exampleSentenceEn?: string | null;
+  public readonly exampleSentenceJa?: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -31,6 +35,8 @@ export class VocabularyEntry {
     this.partOfSpeech = params.partOfSpeech ?? null;
     this.definitionJa = params.definitionJa;
     this.memo = params.memo ?? null;
+    this.exampleSentenceEn = params.exampleSentenceEn ?? null;
+    this.exampleSentenceJa = params.exampleSentenceJa ?? null;
     this.createdAt = params.createdAt ?? new Date();
     this.updatedAt = params.updatedAt ?? new Date();
   }

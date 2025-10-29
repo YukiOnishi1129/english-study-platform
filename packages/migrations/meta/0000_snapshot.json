@@ -828,6 +828,18 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "example_sentence_en": {
+          "name": "example_sentence_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "example_sentence_ja": {
+          "name": "example_sentence_ja",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {

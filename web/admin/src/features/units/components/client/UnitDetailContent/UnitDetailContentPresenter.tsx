@@ -8,6 +8,7 @@ import {
 import { QuestionReorderTable } from "@/features/questions/components/client/QuestionReorderTable";
 import { UnitDeleteButton } from "@/features/units/components/client/UnitDeleteButton";
 import { UnitQuestionCsvImporter } from "@/features/units/components/client/UnitQuestionCsvImporter";
+import { VocabularyCsvImporter } from "@/features/units/components/client/VocabularyCsvImporter";
 import { Button } from "@/shared/components/ui/button";
 import { DeleteConfirmDialog } from "@/shared/components/ui/delete-confirm-dialog";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -205,6 +206,13 @@ export function UnitDetailContentPresenter(
               isPending={isBulkDeleting}
             />
             <UnitQuestionCsvImporter
+              unitId={detail.unit.id}
+              unitName={detail.unit.name}
+              materialId={detail.material.id}
+              chapterId={parentChapterId}
+              existingQuestionCount={questionCount}
+            />
+            <VocabularyCsvImporter
               unitId={detail.unit.id}
               unitName={detail.unit.name}
               materialId={detail.material.id}

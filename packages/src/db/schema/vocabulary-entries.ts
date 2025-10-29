@@ -13,6 +13,8 @@ export const vocabularyEntries = pgTable(
     partOfSpeech: varchar("part_of_speech", { length: 50 }),
     definitionJa: text("definition_ja").notNull(),
     memo: text("memo"),
+    exampleSentenceEn: text("example_sentence_en"),
+    exampleSentenceJa: text("example_sentence_ja"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

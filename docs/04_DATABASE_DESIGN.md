@@ -202,6 +202,8 @@
 | part_of_speech | VARCHAR(50) | NULL | 品詞 |
 | definition_ja | TEXT | NOT NULL | 日本語定義 |
 | memo | TEXT | NULL | 補足情報 |
+| example_sentence_en | TEXT | NULL | 例文（英語） |
+| example_sentence_ja | TEXT | NULL | 例文（日本語訳） |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 

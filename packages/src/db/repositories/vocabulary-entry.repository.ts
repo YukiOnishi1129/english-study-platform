@@ -61,6 +61,8 @@ export class VocabularyEntryRepositoryImpl implements VocabularyEntryRepository 
         partOfSpeech: entry.partOfSpeech ?? null,
         definitionJa: entry.definitionJa,
         memo: entry.memo ?? null,
+        exampleSentenceEn: entry.exampleSentenceEn ?? null,
+        exampleSentenceJa: entry.exampleSentenceJa ?? null,
         createdAt: entry.createdAt,
         updatedAt: entry.updatedAt,
       })
@@ -72,6 +74,8 @@ export class VocabularyEntryRepositoryImpl implements VocabularyEntryRepository 
           partOfSpeech: entry.partOfSpeech ?? null,
           definitionJa: entry.definitionJa,
           memo: entry.memo ?? null,
+          exampleSentenceEn: entry.exampleSentenceEn ?? null,
+          exampleSentenceJa: entry.exampleSentenceJa ?? null,
           updatedAt: new Date(),
         },
       })
@@ -97,6 +101,8 @@ export class VocabularyEntryRepositoryImpl implements VocabularyEntryRepository 
       partOfSpeech: row.partOfSpeech ?? undefined,
       definitionJa: row.definitionJa,
       memo: row.memo ?? undefined,
+      exampleSentenceEn: row.exampleSentenceEn ?? undefined,
+      exampleSentenceJa: row.exampleSentenceJa ?? undefined,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
