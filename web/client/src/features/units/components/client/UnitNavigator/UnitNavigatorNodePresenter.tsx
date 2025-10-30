@@ -88,7 +88,7 @@ export function UnitNavigatorNodePresenter({
                         {question.label}
                       </span>
                       <span className="ml-2 text-[11px] text-slate-500">
-                        {question.japanese}
+                        {question.displayText}
                       </span>
                     </span>
                     <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">

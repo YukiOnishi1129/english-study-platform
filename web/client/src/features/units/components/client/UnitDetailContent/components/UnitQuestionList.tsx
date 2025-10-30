@@ -36,8 +36,18 @@ export function UnitQuestionList({ questions }: UnitQuestionListProps) {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-semibold text-indigo-900">
-                      {question.title} {question.japanese}
+                      {question.title} {question.primaryText}
+                      {question.vocabulary?.partOfSpeech ? (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({question.vocabulary.partOfSpeech})
+                        </span>
+                      ) : null}
                     </p>
+                    {question.secondaryText ? (
+                      <p className="mt-1 text-xs text-slate-600">
+                        {question.secondaryText}
+                      </p>
+                    ) : null}
                     {question.hint ? (
                       <p className="mt-1 text-xs text-muted-foreground">
                         ヒント: {question.hint}

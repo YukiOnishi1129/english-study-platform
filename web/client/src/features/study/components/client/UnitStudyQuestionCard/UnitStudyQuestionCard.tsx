@@ -84,6 +84,32 @@ export function UnitStudyQuestionCard({
 }: UnitStudyQuestionCardProps) {
   const StatusIcon = getStatusIcon(status);
 
+  const renderVocabularyList = (label: string, items: string[] | undefined) => {
+    if (!items || items.length === 0) {
+      return null;
+    }
+    return (
+      <div className="space-y-1 text-xs text-slate-600">
+        <span className="font-semibold text-indigo-600">{label}</span>
+        <div className="flex flex-wrap gap-2">
+          {items.map((item) => (
+            <span
+              key={`${label}-${item}`}
+              className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const shouldShowDefinition =
+    question.definitionJa &&
+    question.definitionJa.trim().length > 0 &&
+    question.definitionJa.trim() !== question.promptText.trim();
+
   return (
     <Card className="border border-indigo-200/70 bg-white/95 shadow-md">
       <CardHeader className="flex flex-col gap-4">
@@ -103,9 +129,12 @@ export function UnitStudyQuestionCard({
           </Button>
         </div>
         <CardTitle className="text-2xl font-bold text-slate-900">
-          {question.title} {question.japanese}
+          {question.title} {question.promptText}
         </CardTitle>
-        <CardDescription className="flex items-center justify-between text-sm text-slate-600">
+        {question.promptNote ? (
+          <p className="text-sm text-slate-500">{question.promptNote}</p>
+        ) : null}
+        <CardDescription className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
           <span>
             「答える → 答えをチェック →
             次の問題へ」のリズムで繰り返し覚えましょう。
@@ -122,9 +151,15 @@ export function UnitStudyQuestionCard({
             variant={isHintVisible ? "default" : "outline"}
             size="sm"
             onClick={onToggleHint}
+            disabled={!question.hint}
           >
             ヒントを{isHintVisible ? "隠す" : "見る"}
           </Button>
+          {!question.hint ? (
+            <span className="text-xs text-muted-foreground">
+              ヒントはまだ登録されていません。
+            </span>
+          ) : null}
         </div>
 
         {isHintVisible && question.hint ? (
@@ -141,13 +176,13 @@ export function UnitStudyQuestionCard({
             className="block text-xs font-semibold uppercase tracking-widest text-slate-500"
             htmlFor={answerInputId}
           >
-            英語で答えてみよう
+            {question.answerLabel}
           </label>
           <Input
             id={answerInputId}
             value={inputValue}
             onChange={(event) => onInputChange(event.target.value)}
-            placeholder="例: Nice to meet you!"
+            placeholder={question.answerPlaceholder}
             autoFocus
             disabled={disableSubmit}
             className="h-12 rounded-xl border-indigo-100 bg-white px-4 text-base"
@@ -220,32 +255,102 @@ export function UnitStudyQuestionCard({
 
         {isAnswerVisible ? (
           <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
-              正解例
-            </p>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-indigo-900">
-              {question.acceptableAnswers.map((answer) => (
-                <li key={answer} className="flex items-center gap-2">
-                  <span>{answer}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                    onClick={() => onSpeakAnswer(answer)}
-                    disabled={speakingAnswer === answer}
-                  >
-                    <Volume2 className="size-4" />
-                    {speakingAnswer === answer ? "再生中..." : "音声"}
-                  </Button>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
+                正解例
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-sm text-indigo-900">
+                {question.acceptableAnswers.map((answer) => (
+                  <li key={answer} className="flex items-center gap-2">
+                    <span>{answer}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
+                      onClick={() => onSpeakAnswer(answer)}
+                      disabled={speakingAnswer === answer}
+                    >
+                      <Volume2 className="size-4" />
+                      {speakingAnswer === answer ? "再生中..." : "音声"}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {shouldShowDefinition ? (
+              <div className="rounded-xl border border-indigo-100 bg-white/80 px-3 py-2 text-sm text-slate-700">
+                <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                  日本語の意味
+                </span>
+                <p className="mt-1">{question.definitionJa}</p>
+              </div>
+            ) : null}
+
+            {question.vocabulary ? (
+              <div className="space-y-2 rounded-xl border border-indigo-100 bg-white/80 px-3 py-3 text-sm text-slate-800">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-base font-semibold text-indigo-700">
+                    {question.vocabulary.headword}
+                  </span>
+                  {question.vocabulary.partOfSpeech ? (
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700">
+                      {question.vocabulary.partOfSpeech}
+                    </span>
+                  ) : null}
+                  {question.vocabulary.pronunciation ? (
+                    <span className="text-xs text-muted-foreground">
+                      {question.vocabulary.pronunciation}
+                    </span>
+                  ) : null}
+                </div>
+                {question.vocabulary.definitionJa ? (
+                  <p className="text-sm text-slate-700">
+                    日本語訳: {question.vocabulary.definitionJa}
+                  </p>
+                ) : null}
+                {question.vocabulary.memo ? (
+                  <p className="text-xs text-muted-foreground">
+                    メモ: {question.vocabulary.memo}
+                  </p>
+                ) : null}
+                {renderVocabularyList("類義語", question.vocabulary.synonyms)}
+                {renderVocabularyList("対義語", question.vocabulary.antonyms)}
+                {renderVocabularyList(
+                  "関連語",
+                  question.vocabulary.relatedWords,
+                )}
+                {question.vocabulary.exampleSentenceEn ||
+                question.vocabulary.exampleSentenceJa ? (
+                  <div className="space-y-1 rounded-lg bg-slate-50/80 px-3 py-2 text-xs text-slate-700">
+                    {question.vocabulary.exampleSentenceEn ? (
+                      <p>
+                        <span className="font-semibold text-indigo-600">
+                          英:
+                        </span>{" "}
+                        {question.vocabulary.exampleSentenceEn}
+                      </p>
+                    ) : null}
+                    {question.vocabulary.exampleSentenceJa ? (
+                      <p>
+                        <span className="font-semibold text-indigo-600">
+                          和:
+                        </span>{" "}
+                        {question.vocabulary.exampleSentenceJa}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             {question.explanation ? (
               <p className="text-xs text-indigo-800/90">
                 解説: {question.explanation}
               </p>
             ) : null}
+
             {currentStatistics ? (
               <div className="grid gap-2 rounded-lg border border-indigo-100 bg-white/70 p-3 text-xs text-slate-700">
                 <div className="flex items-center justify-between">

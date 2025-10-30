@@ -3,7 +3,6 @@ import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import type {
   UnitStudyBreadcrumbItem,
   UnitStudyQuestionStatisticsViewModel,
-  UnitStudyQuestionViewModel,
 } from "./useUnitStudyContent";
 
 export function buildBreadcrumb(
@@ -58,29 +57,6 @@ export function mapStatistics(
     accuracy: stats.accuracy,
     lastAttemptedAt: stats.lastAttemptedAt,
   } satisfies UnitStudyQuestionStatisticsViewModel;
-}
-
-export function buildQuestionViewModels(
-  detail: UnitDetailDto | null,
-): UnitStudyQuestionViewModel[] {
-  if (!detail) {
-    return [];
-  }
-
-  return detail.questions
-    .slice()
-    .sort((a, b) => a.order - b.order)
-    .map((question) => ({
-      id: question.id,
-      title: `Q${question.order}`,
-      japanese: question.japanese,
-      hint: question.hint,
-      explanation: question.explanation,
-      acceptableAnswers: question.correctAnswers.map(
-        (answer) => answer.answerText,
-      ),
-      statistics: mapStatistics(question.statistics),
-    }));
 }
 
 export function buildMaterialDetail(detail: UnitDetailDto | null) {

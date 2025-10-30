@@ -5,6 +5,8 @@ import {
   QuestionRepositoryImpl,
   QuestionStatisticsRepositoryImpl,
   UnitRepositoryImpl,
+  VocabularyEntryRepositoryImpl,
+  VocabularyRelationRepositoryImpl,
 } from "@acme/shared/db";
 
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
@@ -21,6 +23,8 @@ export class UnitService {
   private questionRepository: QuestionRepositoryImpl;
   private correctAnswerRepository: CorrectAnswerRepositoryImpl;
   private questionStatisticsRepository: QuestionStatisticsRepositoryImpl;
+  private vocabularyEntryRepository: VocabularyEntryRepositoryImpl;
+  private vocabularyRelationRepository: VocabularyRelationRepositoryImpl;
 
   constructor() {
     this.unitRepository = new UnitRepositoryImpl();
@@ -29,6 +33,8 @@ export class UnitService {
     this.questionRepository = new QuestionRepositoryImpl();
     this.correctAnswerRepository = new CorrectAnswerRepositoryImpl();
     this.questionStatisticsRepository = new QuestionStatisticsRepositoryImpl();
+    this.vocabularyEntryRepository = new VocabularyEntryRepositoryImpl();
+    this.vocabularyRelationRepository = new VocabularyRelationRepositoryImpl();
   }
 
   private async buildChapterPath(
@@ -85,6 +91,41 @@ export class UnitService {
 
     const questions = await this.questionRepository.findByUnitId(unit.id);
     const questionIds = questions.map((question) => question.id);
+    const vocabularyEntryIds = Array.from(
+      new Set(
+        questions
+          .map((question) => question.vocabularyEntryId ?? null)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+    const vocabularyEntryMap = new Map<
+      string,
+      {
+        entry: Exclude<
+          Awaited<ReturnType<VocabularyEntryRepositoryImpl["findById"]>>,
+          null
+        >;
+        relations: Awaited<
+          ReturnType<VocabularyRelationRepositoryImpl["findByEntryId"]>
+        >;
+      }
+    >();
+
+    if (vocabularyEntryIds.length > 0) {
+      await Promise.all(
+        vocabularyEntryIds.map(async (entryId) => {
+          const entry = await this.vocabularyEntryRepository.findById(entryId);
+          if (!entry) {
+            return;
+          }
+          const relations =
+            await this.vocabularyRelationRepository.findByEntryId(entry.id);
+          vocabularyEntryMap.set(entry.id, { entry, relations });
+        }),
+      );
+    }
+
     const statisticsMap = accountId
       ? await this.questionStatisticsRepository
           .findByUserAndQuestionIds(accountId, questionIds)
@@ -105,12 +146,20 @@ export class UnitService {
           question.id,
         );
 
+        const vocabularyRecord = question.vocabularyEntryId
+          ? (vocabularyEntryMap.get(question.vocabularyEntryId) ?? null)
+          : null;
+
         return {
           id: question.id,
           unitId: question.unitId,
           japanese: question.japanese,
+          prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,
+          questionType: question.questionType,
+          vocabularyEntryId: question.vocabularyEntryId ?? null,
+          headword: vocabularyRecord ? vocabularyRecord.entry.headword : null,
           order: question.order,
           createdAt: serialize(question.createdAt),
           updatedAt: serialize(question.updatedAt),
@@ -121,6 +170,41 @@ export class UnitService {
             createdAt: serialize(answer.createdAt),
             updatedAt: serialize(answer.updatedAt),
           })),
+          vocabulary: (() => {
+            if (!vocabularyRecord) {
+              return null;
+            }
+            const { entry, relations } = vocabularyRecord;
+            const synonyms = relations
+              .filter((relation) => relation.relationType === "synonym")
+              .map((relation) => relation.relatedText)
+              .filter((text) => text.length > 0)
+              .sort((a, b) => a.localeCompare(b, "ja"));
+            const antonyms = relations
+              .filter((relation) => relation.relationType === "antonym")
+              .map((relation) => relation.relatedText)
+              .filter((text) => text.length > 0)
+              .sort((a, b) => a.localeCompare(b, "ja"));
+            const relatedWords = relations
+              .filter((relation) => relation.relationType === "related")
+              .map((relation) => relation.relatedText)
+              .filter((text) => text.length > 0)
+              .sort((a, b) => a.localeCompare(b, "ja"));
+
+            return {
+              id: entry.id,
+              headword: entry.headword,
+              pronunciation: entry.pronunciation ?? null,
+              partOfSpeech: entry.partOfSpeech ?? null,
+              definitionJa: entry.definitionJa,
+              memo: entry.memo ?? null,
+              synonyms,
+              antonyms,
+              relatedWords,
+              exampleSentenceEn: entry.exampleSentenceEn ?? null,
+              exampleSentenceJa: entry.exampleSentenceJa ?? null,
+            };
+          })(),
           statistics: (() => {
             const stat = accountId ? statisticsMap[question.id] : undefined;
             if (!stat) {

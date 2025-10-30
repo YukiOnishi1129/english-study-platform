@@ -48,10 +48,18 @@ export interface UnitStudyQuestionStatisticsViewModel {
 export interface UnitStudyQuestionViewModel {
   id: string;
   title: string;
-  japanese: string;
+  questionType: string;
+  promptText: string;
+  promptNote: string | null;
   hint: string | null;
   explanation: string | null;
   acceptableAnswers: string[];
+  vocabulary: UnitDetailDto["questions"][number]["vocabulary"];
+  headword: string | null;
+  answerLabel: string;
+  answerPlaceholder: string;
+  navigatorLabel: string;
+  definitionJa: string | null;
   statistics: UnitStudyQuestionStatisticsViewModel | null;
 }
 
@@ -139,17 +147,63 @@ export function useUnitStudyContent(
     return data.questions
       .slice()
       .sort((a, b) => a.order - b.order)
-      .map((question) => ({
-        id: question.id,
-        title: `Q${question.order}`,
-        japanese: question.japanese,
-        hint: question.hint,
-        explanation: question.explanation,
-        acceptableAnswers: question.correctAnswers.map(
+      .map((question) => {
+        const questionType = question.questionType;
+        const baseAcceptableAnswers = question.correctAnswers.map(
           (answer) => answer.answerText,
-        ),
-        statistics: mapStatistics(question.statistics),
-      }));
+        );
+
+        let promptText = question.japanese;
+        let navigatorLabel = question.japanese;
+        let answerLabel = "回答を入力してみよう";
+        let answerPlaceholder = "例: 回答を入力";
+
+        const extraMeta: string[] = [];
+        if (question.vocabulary?.partOfSpeech) {
+          extraMeta.push(question.vocabulary.partOfSpeech);
+        }
+        if (question.vocabulary?.pronunciation) {
+          extraMeta.push(question.vocabulary.pronunciation);
+        }
+
+        const promptNote =
+          question.prompt ??
+          (extraMeta.length > 0 ? extraMeta.join(" ・ ") : null);
+
+        if (questionType === "jp_to_en") {
+          promptText = question.japanese;
+          navigatorLabel = question.japanese;
+          answerLabel = "英単語で答えてみよう";
+          answerPlaceholder = "例: 英単語を入力";
+        } else if (questionType === "en_to_jp") {
+          promptText =
+            question.headword ?? baseAcceptableAnswers[0] ?? question.japanese;
+          navigatorLabel = promptText;
+          answerLabel = "日本語訳を入力してみよう";
+          answerPlaceholder = "例: 日本語訳を入力";
+        } else {
+          answerLabel = "回答を入力してみよう";
+          answerPlaceholder = "例: 回答を入力";
+        }
+
+        return {
+          id: question.id,
+          title: `Q${question.order}`,
+          questionType,
+          promptText,
+          promptNote,
+          hint: question.hint,
+          explanation: question.explanation,
+          acceptableAnswers: baseAcceptableAnswers,
+          vocabulary: question.vocabulary,
+          headword: question.headword,
+          answerLabel,
+          answerPlaceholder,
+          navigatorLabel,
+          definitionJa: question.vocabulary?.definitionJa ?? question.japanese,
+          statistics: mapStatistics(question.statistics),
+        };
+      });
   }, [data]);
 
   const [questionStatisticsMap, setQuestionStatisticsMap] = useState<
@@ -459,6 +513,13 @@ export function useUnitStudyContent(
     resetStateForNextQuestion();
   }, [resetStateForNextQuestion]);
 
+  const handleToggleHint = useCallback(() => {
+    if (!currentQuestion || !currentQuestion.hint) {
+      return;
+    }
+    setHintVisible((prev) => !prev);
+  }, [currentQuestion]);
+
   const handleSelectQuestion = useCallback(
     (questionId: string) => {
       const index = questions.findIndex(
@@ -516,7 +577,7 @@ export function useUnitStudyContent(
     errorMessage,
     accountId,
     onInputChange: handleInputChange,
-    onToggleHint: () => setHintVisible((prev) => !prev),
+    onToggleHint: handleToggleHint,
     onSubmit: handleSubmit,
     onNext: handleNext,
     onReset: handleReset,

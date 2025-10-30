@@ -19,16 +19,39 @@ export type UnitDetailCorrectAnswerDto = z.infer<
   typeof UnitDetailCorrectAnswerSchema
 >;
 
+const UnitDetailVocabularySchema = z.object({
+  id: z.string().min(1),
+  headword: z.string().min(1),
+  pronunciation: z.string().nullable(),
+  partOfSpeech: z.string().nullable(),
+  definitionJa: z.string().min(1),
+  memo: z.string().nullable(),
+  synonyms: z.array(z.string().min(1)),
+  antonyms: z.array(z.string().min(1)),
+  relatedWords: z.array(z.string().min(1)),
+  exampleSentenceEn: z.string().nullable(),
+  exampleSentenceJa: z.string().nullable(),
+});
+
+export type UnitDetailVocabularyDto = z.infer<
+  typeof UnitDetailVocabularySchema
+>;
+
 export const UnitDetailQuestionSchema = z.object({
   id: z.string().min(1),
   unitId: z.string().min(1),
   japanese: z.string().min(1),
+  prompt: z.string().nullable(),
   hint: z.string().nullable(),
   explanation: z.string().nullable(),
+  questionType: z.string(),
+  vocabularyEntryId: z.string().nullable(),
+  headword: z.string().nullable(),
   order: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
   correctAnswers: z.array(UnitDetailCorrectAnswerSchema),
+  vocabulary: UnitDetailVocabularySchema.nullable(),
   statistics: z
     .object({
       totalAttempts: z.number().int().nonnegative(),

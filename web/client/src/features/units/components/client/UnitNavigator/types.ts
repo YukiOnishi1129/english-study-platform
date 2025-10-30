@@ -18,7 +18,7 @@ export interface UnitNavigatorNodeProps {
 export interface NavigatorQuestion {
   id: string;
   label: string;
-  japanese: string;
+  displayText: string;
   statistics: UnitStudyQuestionViewModel["statistics"] | null;
   order: number;
 }

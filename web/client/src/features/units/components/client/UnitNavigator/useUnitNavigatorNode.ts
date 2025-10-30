@@ -15,13 +15,24 @@ function extractOrderFromTitle(title: string): number {
   return match ? Number.parseInt(match[0], 10) : 0;
 }
 
+function buildNavigatorText(question: NavigatorQuestionSource): string {
+  if (question.questionType === "en_to_jp") {
+    return (
+      question.headword ??
+      question.correctAnswers[0]?.answerText ??
+      question.japanese
+    );
+  }
+  return question.japanese;
+}
+
 function mapQuestionToNavigator(
   question: NavigatorQuestionSource,
 ): NavigatorQuestion {
   return {
     id: question.id,
     label: `Q${question.order}`,
-    japanese: question.japanese,
+    displayText: buildNavigatorText(question),
     statistics: question.statistics ?? null,
     order: question.order,
   } satisfies NavigatorQuestion;
@@ -54,7 +65,7 @@ export function useUnitNavigatorNodeView(props: UnitNavigatorNodeProps) {
       return currentUnitQuestions.map((question) => ({
         id: question.id,
         label: question.title,
-        japanese: question.japanese,
+        displayText: question.navigatorLabel,
         statistics: question.statistics,
         order: extractOrderFromTitle(question.title),
       }));
