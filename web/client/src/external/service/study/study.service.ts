@@ -3,6 +3,7 @@ import {
   QuestionRepositoryImpl,
   QuestionStatisticsRepositoryImpl,
   UserAnswerRepositoryImpl,
+  VocabularyEntryRepositoryImpl,
 } from "@acme/shared/db";
 import { UserAnswer } from "@acme/shared/domain";
 
@@ -12,6 +13,18 @@ import {
 } from "@/external/dto/study/next-study-target.dto";
 
 function normalizeAnswer(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizeJapanese(value: string): string {
+  return value
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[\u3000]/g, "") // 全角スペース除去
+    .toLowerCase();
+}
+
+function normalizeSentence(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
@@ -25,12 +38,14 @@ export class StudyService {
   private correctAnswerRepository: CorrectAnswerRepositoryImpl;
   private userAnswerRepository: UserAnswerRepositoryImpl;
   private questionStatisticsRepository: QuestionStatisticsRepositoryImpl;
+  private vocabularyEntryRepository: VocabularyEntryRepositoryImpl;
 
   constructor() {
     this.questionRepository = new QuestionRepositoryImpl();
     this.correctAnswerRepository = new CorrectAnswerRepositoryImpl();
     this.userAnswerRepository = new UserAnswerRepositoryImpl();
     this.questionStatisticsRepository = new QuestionStatisticsRepositoryImpl();
+    this.vocabularyEntryRepository = new VocabularyEntryRepositoryImpl();
   }
 
   private async findFallbackQuestion(): Promise<QuestionReference | null> {
@@ -91,8 +106,9 @@ export class StudyService {
     unitId: string;
     questionId: string;
     answerText: string;
+    mode: "jp_to_en" | "en_to_jp" | "sentence" | "default";
   }) {
-    const { accountId, unitId, questionId, answerText } = options;
+    const { accountId, unitId, questionId, answerText, mode } = options;
 
     const question = await this.questionRepository.findById(questionId);
     if (!question || question.unitId !== unitId) {
@@ -101,10 +117,64 @@ export class StudyService {
 
     const answers =
       await this.correctAnswerRepository.findByQuestionId(questionId);
+
+    let isCorrect = false;
     const normalizedAnswer = normalizeAnswer(answerText);
-    const isCorrect = answers.some(
-      (answer) => normalizeAnswer(answer.answerText) === normalizedAnswer,
-    );
+
+    if (mode === "en_to_jp") {
+      const entry = question.vocabularyEntryId
+        ? await this.vocabularyEntryRepository.findById(
+            question.vocabularyEntryId,
+          )
+        : null;
+
+      const candidates: string[] = [];
+      if (entry?.definitionJa) {
+        const parts = entry.definitionJa
+          .split(/[/、,・]/)
+          .map((value) => value.trim())
+          .filter(Boolean);
+        for (const value of parts) {
+          candidates.push(value);
+        }
+      }
+      if (entry?.memo) {
+        const parts = entry.memo
+          .split(/[/、,・]/)
+          .map((value) => value.trim())
+          .filter(Boolean);
+        for (const value of parts) {
+          candidates.push(value);
+        }
+      }
+      candidates.push(question.japanese);
+
+      const normalizedCandidates = candidates.map((value) =>
+        normalizeJapanese(value),
+      );
+      isCorrect = normalizedCandidates.some(
+        (value) => value === normalizeJapanese(answerText),
+      );
+    } else if (mode === "sentence") {
+      const entry = question.vocabularyEntryId
+        ? await this.vocabularyEntryRepository.findById(
+            question.vocabularyEntryId,
+          )
+        : null;
+      const expected = entry?.exampleSentenceEn ?? null;
+      if (expected) {
+        isCorrect =
+          normalizeSentence(expected) === normalizeSentence(answerText);
+      } else {
+        isCorrect = answers.some(
+          (answer) => normalizeAnswer(answer.answerText) === normalizedAnswer,
+        );
+      }
+    } else {
+      isCorrect = answers.some(
+        (answer) => normalizeAnswer(answer.answerText) === normalizedAnswer,
+      );
+    }
 
     const userAnswer = new UserAnswer({
       userId: accountId,

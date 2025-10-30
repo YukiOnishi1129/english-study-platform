@@ -22,6 +22,8 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     currentQuestion,
     currentStatistics,
     questions,
+    availableModes,
+    selectedMode,
     accountId,
     progressLabel,
     answeredCount,
@@ -33,6 +35,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     onInputChange,
     onSubmit,
     onNext,
+    onReset,
     onRetryCurrent,
     disableSubmit,
     disableNext,
@@ -48,6 +51,8 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     isSubmitting,
     onSelectQuestion,
     onNavigateUnit,
+    onChangeMode,
+    isLastQuestion,
   } = props;
 
   if (isLoading) {
@@ -109,6 +114,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
               onNext={onNext}
               disableNext={disableNext}
               onRetryCurrent={onRetryCurrent}
+              onRestartUnit={onReset}
               status={status}
               statusLabel={statusLabel}
               answeredCount={answeredCount}
@@ -122,6 +128,10 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
               onSpeakAnswer={onSpeakAnswer}
               remainingCount={remainingCount}
               isSubmitting={isSubmitting}
+              availableModes={availableModes}
+              selectedMode={selectedMode}
+              onChangeMode={onChangeMode}
+              isLastQuestion={isLastQuestion}
             />
 
             <UnitStudyStatisticsCard statistics={currentStatistics} />
