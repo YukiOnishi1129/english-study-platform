@@ -42,13 +42,12 @@ export function toAccountResponse(account: Account): AccountResponse {
   const normalizedFirstName =
     rawFirstName.length > 0
       ? rawFirstName
-      : account.email.split("@")[0] ?? "User";
+      : (account.email.split("@")[0] ?? "User");
   const normalizedLastName = rawLastName;
-  const normalizedFullName = `${normalizedFirstName} ${normalizedLastName}`
-    .trim()
-    .length
-    ? `${normalizedFirstName} ${normalizedLastName}`.trim()
-    : normalizedFirstName;
+  const normalizedFullName =
+    `${normalizedFirstName} ${normalizedLastName}`.trim().length
+      ? `${normalizedFirstName} ${normalizedLastName}`.trim()
+      : normalizedFirstName;
 
   return AccountResponseSchema.parse({
     id: account.id,
