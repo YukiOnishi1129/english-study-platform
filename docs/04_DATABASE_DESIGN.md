@@ -45,6 +45,54 @@
 
 ## 2. 教材関連
 
+### content_types テーブル
+
+教材タイプを管理。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|------|------|
+| id | UUID | PRIMARY KEY | タイプID |
+| code | VARCHAR(50) | NOT NULL, UNIQUE | タイプコード（例: "vocabulary"） |
+| name | VARCHAR(100) | NOT NULL | 表示名 |
+| description | TEXT | NULL | 補足説明 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
+
+### study_modes テーブル
+
+学習モードのマスタ。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|------|------|
+| id | UUID | PRIMARY KEY | モードID |
+| code | VARCHAR(50) | NOT NULL, UNIQUE | モードコード（例: "jp_to_en"） |
+| name | VARCHAR(100) | NOT NULL | 表示名 |
+| description | TEXT | NULL | 補足説明 |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
+
+### content_type_study_modes テーブル
+
+教材タイプと利用可能モードの対応。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|------|------|
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID |
+| study_mode_id | UUID | NOT NULL, FOREIGN KEY | 学習モードID |
+| priority | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
+| is_default | BOOLEAN | NOT NULL, DEFAULT FALSE | デフォルトモードか |
+| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
+
+**インデックス:**
+
+- `idx_ctsm_content_type` ON (content_type_id, priority)
+- `idx_ctsm_study_mode` ON (study_mode_id)
+
+**制約:**
+
+- PRIMARY KEY (content_type_id, study_mode_id)
+- UNIQUE (content_type_id, is_default) WHERE is_default = TRUE
+
 ### materials テーブル
 
 教材の基本情報
@@ -55,12 +103,18 @@
 | name | VARCHAR(255) | NOT NULL | 教材名 |
 | description | TEXT | NULL | 説明 |
 | order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
 **インデックス:**
 
 - `idx_materials_order` ON (order)
+- `idx_materials_type` ON (content_type_id)
+
+**外部キー:**
+
+- `content_type_id` REFERENCES content_types(id)
 
 ---
 
@@ -77,6 +131,7 @@
 | description | TEXT | NULL | 説明 |
 | order | INTEGER | NOT NULL, DEFAULT 0 | 同じ親配下での表示順 |
 | level | INTEGER | NOT NULL | 階層の深さ (1, 2, 3...) |
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID（materialと一致） |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
@@ -86,11 +141,13 @@
 - `idx_chapters_parent_id` ON (parent_chapter_id)
 - `idx_chapters_order` ON (material_id, parent_chapter_id, order)
 - `idx_chapters_level` ON (level)
+- `idx_chapters_type` ON (content_type_id)
 
 **外部キー:**
 
 - `material_id` REFERENCES materials(id) ON DELETE CASCADE
 - `parent_chapter_id` REFERENCES chapters(id) ON DELETE CASCADE
+- `content_type_id` REFERENCES content_types(id)
 
 **制約:**
 
@@ -109,6 +166,7 @@
 | name | VARCHAR(255) | NOT NULL | ユニット名 |
 | description | TEXT | NULL | 説明 |
 | order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID（chapterと一致） |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
 
@@ -116,10 +174,12 @@
 
 - `idx_units_chapter_id` ON (chapter_id)
 - `idx_units_order` ON (chapter_id, order)
+- `idx_units_type` ON (content_type_id)
 
 **外部キー:**
 
 - `chapter_id` REFERENCES chapters(id) ON DELETE CASCADE
+- `content_type_id` REFERENCES content_types(id)
 
 ---
 
@@ -131,12 +191,8 @@
 |---------|-------|-------|-------|
 | id | UUID | PRIMARY KEY | 問題ID |
 | unit_id | UUID | NOT NULL, FOREIGN KEY | ユニットID |
-| japanese | TEXT | NOT NULL | 日本語文 |
-| prompt | TEXT | NULL | 追加の指示文（語彙モード等） |
-| hint | TEXT | NULL | ヒント |
-| explanation | TEXT | NULL | 解説 |
-| question_type | VARCHAR(30) | NOT NULL, DEFAULT 'phrase' | 出題タイプ（語彙モード判定） |
-| vocabulary_entry_id | UUID | NULL, FOREIGN KEY | 語彙エントリID（語彙教材のみ） |
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID |
+| question_variant | VARCHAR(50) | NOT NULL | サブテーブル識別子（例: vocabulary, phrase） |
 | order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
@@ -145,18 +201,69 @@
 
 - `idx_questions_unit_id` ON (unit_id)
 - `idx_questions_order` ON (unit_id, order)
-- `idx_questions_vocabulary_entry` ON (vocabulary_entry_id)
-- `idx_questions_type` ON (question_type)
+- `idx_questions_type` ON (content_type_id, question_variant)
 
 **外部キー:**
 
 - `unit_id` REFERENCES units(id) ON DELETE CASCADE
-- `vocabulary_entry_id` REFERENCES vocabulary_entries(id) ON DELETE SET NULL
+- `content_type_id` REFERENCES content_types(id)
 
 **制約:**
 
-- CHECK (question_type IN ('phrase', 'jp_to_en', 'en_to_jp', 'cloze', 'free_sentence'))
-- 語彙系のquestion_typeではvocabulary_entry_id IS NOT NULL（アプリケーション層で担保）
+- CHECK (question_variant IN ('vocabulary', 'phrase', 'conversation', 'writing'))
+- unit.content_type_id = questions.content_type_id（アプリケーション層で担保）
+
+- `unit_id` REFERENCES units(id) ON DELETE CASCADE
+- `content_type_id` REFERENCES content_types(id)
+
+**制約:**
+
+- CHECK (question_variant IN ('vocabulary', 'phrase', 'conversation', 'writing'))
+- unit.content_type_id = questions.content_type_id（アプリケーション層で担保）
+
+---
+
+### vocabulary_questions テーブル
+
+語彙教材用の詳細テーブル（questions と 1:1）。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|------|------|
+| question_id | UUID | PRIMARY KEY, FOREIGN KEY | 問題ID |
+| entry_id | UUID | NULL, FOREIGN KEY | 語彙エントリID（共通辞書を参照する場合） |
+| headword | VARCHAR(255) | NOT NULL | 見出し語 |
+| pronunciation | VARCHAR(255) | NULL | 発音記号等 |
+| part_of_speech | VARCHAR(50) | NULL | 品詞 |
+| definition_ja | TEXT | NOT NULL | 日本語訳 |
+| memo | TEXT | NULL | メモ |
+| example_sentence_en | TEXT | NULL | 例文（英） |
+| example_sentence_ja | TEXT | NULL | 例文（和） |
+
+**外部キー:**
+
+- `question_id` REFERENCES questions(id) ON DELETE CASCADE
+- `entry_id` REFERENCES vocabulary_entries(id) ON DELETE SET NULL
+
+---
+
+### phrase_questions テーブル
+
+例文教材用の詳細テーブル（questions と 1:1）。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-----|------|------|
+| question_id | UUID | PRIMARY KEY, FOREIGN KEY | 問題ID |
+| prompt_ja | TEXT | NOT NULL | 日本語文 |
+| prompt_en | TEXT | NULL | 参考英訳 |
+| hint | TEXT | NULL | ヒント |
+| explanation | TEXT | NULL | 解説 |
+| audio_url | TEXT | NULL | 音声ファイルURL |
+
+**外部キー:**
+
+- `question_id` REFERENCES questions(id) ON DELETE CASCADE
+
+> 将来的に会話・ライティングなど別タイプを追加する場合は、同様に 1:1 の詳細テーブルを増やす。
 
 ---
 
@@ -258,6 +365,8 @@
 | id | UUID | PRIMARY KEY | 解答ID |
 | user_id | UUID | NOT NULL, FOREIGN KEY | ユーザーID |
 | question_id | UUID | NOT NULL, FOREIGN KEY | 問題ID |
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID（冗長保持） |
+| study_mode_id | UUID | NOT NULL, FOREIGN KEY | 使用した学習モード |
 | user_answer_text | TEXT | NOT NULL | ユーザーが入力した英語 |
 | is_correct | BOOLEAN | NOT NULL | 正解/不正解 |
 | is_manually_marked | BOOLEAN | NOT NULL, DEFAULT FALSE | 手動で正解にしたか |
@@ -268,6 +377,7 @@
 
 - `idx_user_answers_user_id` ON (user_id)
 - `idx_user_answers_question_id` ON (question_id)
+- `idx_user_answers_mode` ON (study_mode_id, answered_at DESC)
 - `idx_user_answers_answered_at` ON (answered_at DESC)
 - `idx_user_answers_user_question` ON (user_id, question_id, answered_at DESC)
 
@@ -275,6 +385,8 @@
 
 - `user_id` REFERENCES accounts(id) ON DELETE CASCADE
 - `question_id` REFERENCES questions(id) ON DELETE CASCADE
+- `content_type_id` REFERENCES content_types(id)
+- `study_mode_id` REFERENCES study_modes(id)
 
 ---
 
@@ -287,6 +399,8 @@
 | id | UUID | PRIMARY KEY | 統計ID |
 | user_id | UUID | NOT NULL, FOREIGN KEY | ユーザーID |
 | question_id | UUID | NOT NULL, FOREIGN KEY | 問題ID |
+| content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID |
+| study_mode_id | UUID | NULL, FOREIGN KEY | 学習モード（NULLの場合は集約） |
 | total_attempts | INTEGER | NOT NULL, DEFAULT 0 | 総解答回数 |
 | correct_count | INTEGER | NOT NULL, DEFAULT 0 | 正解回数 |
 | incorrect_count | INTEGER | NOT NULL, DEFAULT 0 | 不正解回数 |
@@ -298,16 +412,19 @@
 
 - `idx_question_statistics_user_id` ON (user_id)
 - `idx_question_statistics_question_id` ON (question_id)
+- `idx_question_statistics_mode` ON (study_mode_id)
 - `idx_question_statistics_last_attempted` ON (last_attempted_at DESC)
 
 **外部キー:**
 
 - `user_id` REFERENCES accounts(id) ON DELETE CASCADE
 - `question_id` REFERENCES questions(id) ON DELETE CASCADE
+- `content_type_id` REFERENCES content_types(id)
+- `study_mode_id` REFERENCES study_modes(id)
 
 **制約:**
 
-- UNIQUE (user_id, question_id)
+- UNIQUE (user_id, question_id, study_mode_id)
 - CHECK (total_attempts = correct_count + incorrect_count)
 - CHECK (total_attempts >= 0)
 - CHECK (correct_count >= 0)
@@ -356,29 +473,50 @@
 
 - **accounts** - ユーザーアカウント情報
 
-### 2. 教材関連（7テーブル）
+### 2. タイプ・モード関連（3テーブル）
+
+- **content_types** - 教材タイプ
+- **study_modes** - 学習モード
+- **content_type_study_modes** - タイプとモードの対応
+
+### 3. 教材構造関連（3テーブル）
 
 - **materials** - 教材
 - **chapters** - 章（階層構造）
 - **units** - ユニット
-- **questions** - 問題
+
+### 4. 問題関連（4テーブル）
+
+- **questions** - 問題共通メタ
+- **vocabulary_questions** - 語彙問題詳細
+- **phrase_questions** - 例文問題詳細
 - **correct_answers** - 正解
+
+### 5. 語彙辞書関連（2テーブル）
+
 - **vocabulary_entries** - 語彙エントリ
 - **vocabulary_relations** - 類義語・対義語
 
-### 3. 学習記録関連（3テーブル）
+### 6. 学習記録関連（3テーブル）
 
 - **user_answers** - ユーザー解答履歴
 - **question_statistics** - 問題統計
 - **daily_study_logs** - 日次学習ログ
 
-**合計: 11テーブル**
+**合計: 15テーブル**
 
 ---
 
 ## ER図の概要
 
-`accounts (1) ----< (N) user_answers
+`content_types (1) ----< (N) materials
+content_types (1) ----< (N) chapters
+content_types (1) ----< (N) units
+content_types (1) ----< (N) questions
+study_modes (1) ----< (N) content_type_study_modes
+content_types (1) ----< (N) content_type_study_modes
+
+accounts (1) ----< (N) user_answers
 accounts (1) ----< (N) question_statistics
 accounts (1) ----< (N) daily_study_logs
 
@@ -386,12 +524,16 @@ materials (1) ----< (N) chapters
 chapters (1) ----< (N) chapters (自己参照: parent_chapter_id)
 chapters (1) ----< (N) units
 units (1) ----< (N) questions
+questions (1) ----< (N) vocabulary_questions (0..1)
+questions (1) ----< (N) phrase_questions (0..1)
 questions (1) ----< (N) correct_answers
 materials (1) ----< (N) vocabulary_entries
 vocabulary_entries (1) ----< (N) vocabulary_relations
-vocabulary_entries (1) ----< (N) questions (語彙教材のみ)
+vocabulary_entries (1) ----< (N) vocabulary_questions (任意)
 questions (1) ----< (N) user_answers
-questions (1) ----< (N) question_statistics`
+questions (1) ----< (N) question_statistics
+study_modes (1) ----< (N) user_answers
+study_modes (1) ----< (N) question_statistics`
 
 ---
 
@@ -400,22 +542,29 @@ questions (1) ----< (N) question_statistics`
 ### 初期マイグレーション順序
 
 1. accounts
-2. materials
-3. chapters（自己参照の外部キーは後で追加）
-4. units
-5. vocabulary_entries
-6. questions
-7. correct_answers
-8. vocabulary_relations
-9. user_answers
-10. question_statistics
-11. daily_study_logs
+2. content_types
+3. study_modes
+4. content_type_study_modes
+5. materials
+6. chapters（自己参照の外部キーは後で追加）
+7. units
+8. vocabulary_entries
+9. questions
+10. vocabulary_questions / phrase_questions（タイプ別）
+11. correct_answers
+12. vocabulary_relations
+13. user_answers
+14. question_statistics
+15. daily_study_logs
 
 ### Drizzle ORMでの実装方針
 
 - スキーマ定義を `src/db/schema/` 配下にドメインごとに分割
     - `src/db/schema/accounts.ts`
+    - `src/db/schema/content-types.ts`
+    - `src/db/schema/study-modes.ts`
     - `src/db/schema/materials.ts`
+    - `src/db/schema/questions.ts`（サブテーブル含む）
     - `src/db/schema/vocabulary.ts`
     - `src/db/schema/study-records.ts`
 - `drizzle-kit` でマイグレーションファイル生成
