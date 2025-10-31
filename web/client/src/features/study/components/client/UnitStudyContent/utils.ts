@@ -1,9 +1,9 @@
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 
 import type {
   UnitStudyBreadcrumbItem,
   UnitStudyQuestionStatisticsViewModel,
-  UnitStudyQuestionViewModel,
 } from "./useUnitStudyContent";
 
 export function buildBreadcrumb(
@@ -46,9 +46,27 @@ export function buildBreadcrumb(
 
 export function mapStatistics(
   stats: UnitDetailDto["questions"][number]["statistics"],
+  modeStats?: UnitDetailDto["questions"][number]["modeStatistics"],
 ): UnitStudyQuestionStatisticsViewModel | null {
   if (!stats) {
     return null;
+  }
+
+  const byMode: Partial<
+    Record<StudyMode, UnitStudyQuestionStatisticsViewModel>
+  > = {};
+
+  if (modeStats) {
+    Object.entries(modeStats).forEach(([mode, value]) => {
+      byMode[mode as StudyMode] = {
+        totalAttempts: value.totalAttempts,
+        correctCount: value.correctCount,
+        incorrectCount: value.incorrectCount,
+        accuracy: value.accuracy,
+        lastAttemptedAt: value.lastAttemptedAt,
+        byMode: {},
+      } satisfies UnitStudyQuestionStatisticsViewModel;
+    });
   }
 
   return {
@@ -57,30 +75,8 @@ export function mapStatistics(
     incorrectCount: stats.incorrectCount,
     accuracy: stats.accuracy,
     lastAttemptedAt: stats.lastAttemptedAt,
+    byMode,
   } satisfies UnitStudyQuestionStatisticsViewModel;
-}
-
-export function buildQuestionViewModels(
-  detail: UnitDetailDto | null,
-): UnitStudyQuestionViewModel[] {
-  if (!detail) {
-    return [];
-  }
-
-  return detail.questions
-    .slice()
-    .sort((a, b) => a.order - b.order)
-    .map((question) => ({
-      id: question.id,
-      title: `Q${question.order}`,
-      japanese: question.japanese,
-      hint: question.hint,
-      explanation: question.explanation,
-      acceptableAnswers: question.correctAnswers.map(
-        (answer) => answer.answerText,
-      ),
-      statistics: mapStatistics(question.statistics),
-    }));
 }
 
 export function buildMaterialDetail(detail: UnitDetailDto | null) {

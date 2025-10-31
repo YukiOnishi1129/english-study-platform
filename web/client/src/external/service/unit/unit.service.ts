@@ -5,13 +5,42 @@ import {
   QuestionRepositoryImpl,
   QuestionStatisticsRepositoryImpl,
   UnitRepositoryImpl,
+  VocabularyEntryRepositoryImpl,
+  VocabularyRelationRepositoryImpl,
 } from "@acme/shared/db";
+import {
+  QUESTION_STATISTICS_MODES,
+  type QuestionStatisticsMode,
+  STUDY_MODES,
+  type StudyMode,
+} from "@acme/shared/domain";
 
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { UnitDetailSchema } from "@/external/dto/unit/unit.query.dto";
 
 function serialize(date: Date): string {
   return date.toISOString();
+}
+
+type DomainQuestionStatistics = Awaited<
+  ReturnType<QuestionStatisticsRepositoryImpl["findByUserAndQuestionIds"]>
+>[number];
+
+function serializeStatistics(
+  stat: DomainQuestionStatistics | undefined | null,
+) {
+  if (!stat) {
+    return null;
+  }
+  return {
+    totalAttempts: stat.totalAttempts,
+    correctCount: stat.correctCount,
+    incorrectCount: stat.incorrectCount,
+    accuracy: stat.accuracy,
+    lastAttemptedAt: stat.lastAttemptedAt
+      ? serialize(stat.lastAttemptedAt)
+      : null,
+  } as const;
 }
 
 export class UnitService {
@@ -21,6 +50,8 @@ export class UnitService {
   private questionRepository: QuestionRepositoryImpl;
   private correctAnswerRepository: CorrectAnswerRepositoryImpl;
   private questionStatisticsRepository: QuestionStatisticsRepositoryImpl;
+  private vocabularyEntryRepository: VocabularyEntryRepositoryImpl;
+  private vocabularyRelationRepository: VocabularyRelationRepositoryImpl;
 
   constructor() {
     this.unitRepository = new UnitRepositoryImpl();
@@ -29,6 +60,8 @@ export class UnitService {
     this.questionRepository = new QuestionRepositoryImpl();
     this.correctAnswerRepository = new CorrectAnswerRepositoryImpl();
     this.questionStatisticsRepository = new QuestionStatisticsRepositoryImpl();
+    this.vocabularyEntryRepository = new VocabularyEntryRepositoryImpl();
+    this.vocabularyRelationRepository = new VocabularyRelationRepositoryImpl();
   }
 
   private async buildChapterPath(
@@ -85,19 +118,71 @@ export class UnitService {
 
     const questions = await this.questionRepository.findByUnitId(unit.id);
     const questionIds = questions.map((question) => question.id);
-    const statisticsMap = accountId
-      ? await this.questionStatisticsRepository
-          .findByUserAndQuestionIds(accountId, questionIds)
-          .then((stats) =>
-            stats.reduce<Record<string, (typeof stats)[number]>>(
-              (acc, item) => {
-                acc[item.questionId] = item;
-                return acc;
-              },
-              {},
-            ),
-          )
-      : {};
+
+    const vocabularyEntryIds = Array.from(
+      new Set(
+        questions
+          .map((question) => question.vocabularyEntryId ?? null)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+    const vocabularyEntryMap = new Map<
+      string,
+      {
+        entry: Exclude<
+          Awaited<ReturnType<VocabularyEntryRepositoryImpl["findById"]>>,
+          null
+        >;
+        relations: Awaited<
+          ReturnType<VocabularyRelationRepositoryImpl["findByEntryId"]>
+        >;
+      }
+    >();
+
+    if (vocabularyEntryIds.length > 0) {
+      await Promise.all(
+        vocabularyEntryIds.map(async (entryId) => {
+          const entry = await this.vocabularyEntryRepository.findById(entryId);
+          if (!entry) {
+            return;
+          }
+          const relations =
+            await this.vocabularyRelationRepository.findByEntryId(entry.id);
+          vocabularyEntryMap.set(entry.id, { entry, relations });
+        }),
+      );
+    }
+
+    const statisticsMap = new Map<
+      string,
+      {
+        aggregate?: DomainQuestionStatistics;
+        perMode: Partial<Record<StudyMode, DomainQuestionStatistics>>;
+      }
+    >();
+
+    if (accountId) {
+      const modes: QuestionStatisticsMode[] = QUESTION_STATISTICS_MODES;
+      const stats =
+        await this.questionStatisticsRepository.findByUserAndQuestionIds(
+          accountId,
+          questionIds,
+          modes,
+        );
+
+      stats.forEach((stat) => {
+        const entry = statisticsMap.get(stat.questionId) ?? {
+          perMode: {},
+        };
+        if (stat.mode === "aggregate") {
+          entry.aggregate = stat;
+        } else if (STUDY_MODES.includes(stat.mode as StudyMode)) {
+          entry.perMode[stat.mode as StudyMode] = stat;
+        }
+        statisticsMap.set(stat.questionId, entry);
+      });
+    }
 
     const questionDtos = await Promise.all(
       questions.map(async (question) => {
@@ -105,12 +190,37 @@ export class UnitService {
           question.id,
         );
 
+        const vocabularyRecord = question.vocabularyEntryId
+          ? (vocabularyEntryMap.get(question.vocabularyEntryId) ?? null)
+          : null;
+
+        const statsEntry = statisticsMap.get(question.id);
+        const aggregateStats = serializeStatistics(statsEntry?.aggregate);
+        const perModeStats =
+          statsEntry && Object.keys(statsEntry.perMode).length > 0
+            ? Object.entries(statsEntry.perMode).reduce<
+                Record<
+                  StudyMode,
+                  NonNullable<ReturnType<typeof serializeStatistics>>
+                >
+              >((acc, [mode, stat]) => {
+                if (stat) {
+                  acc[mode as StudyMode] = serializeStatistics(stat)!;
+                }
+                return acc;
+              }, {})
+            : undefined;
+
         return {
           id: question.id,
           unitId: question.unitId,
           japanese: question.japanese,
+          prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,
+          questionType: question.questionType,
+          vocabularyEntryId: question.vocabularyEntryId ?? null,
+          headword: vocabularyRecord ? vocabularyRecord.entry.headword : null,
           order: question.order,
           createdAt: serialize(question.createdAt),
           updatedAt: serialize(question.updatedAt),
@@ -121,21 +231,34 @@ export class UnitService {
             createdAt: serialize(answer.createdAt),
             updatedAt: serialize(answer.updatedAt),
           })),
-          statistics: (() => {
-            const stat = accountId ? statisticsMap[question.id] : undefined;
-            if (!stat) {
+          vocabulary: (() => {
+            if (!vocabularyRecord) {
               return null;
             }
+            const { entry, relations } = vocabularyRecord;
+            const buildList = (type: string) =>
+              relations
+                .filter((relation) => relation.relationType === type)
+                .map((relation) => relation.relatedText)
+                .filter((text) => text.length > 0)
+                .sort((a, b) => a.localeCompare(b, "ja"));
+
             return {
-              totalAttempts: stat.totalAttempts,
-              correctCount: stat.correctCount,
-              incorrectCount: stat.incorrectCount,
-              accuracy: stat.accuracy,
-              lastAttemptedAt: stat.lastAttemptedAt
-                ? serialize(stat.lastAttemptedAt)
-                : null,
+              id: entry.id,
+              headword: entry.headword,
+              pronunciation: entry.pronunciation ?? null,
+              partOfSpeech: entry.partOfSpeech ?? null,
+              definitionJa: entry.definitionJa,
+              memo: entry.memo ?? null,
+              synonyms: buildList("synonym"),
+              antonyms: buildList("antonym"),
+              relatedWords: buildList("related"),
+              exampleSentenceEn: entry.exampleSentenceEn ?? null,
+              exampleSentenceJa: entry.exampleSentenceJa ?? null,
             };
           })(),
+          statistics: aggregateStats,
+          modeStatistics: perModeStats,
         };
       }),
     );

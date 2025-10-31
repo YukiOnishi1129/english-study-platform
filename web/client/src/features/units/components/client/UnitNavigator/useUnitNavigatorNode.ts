@@ -54,7 +54,7 @@ export function useUnitNavigatorNodeView(props: UnitNavigatorNodeProps) {
       return currentUnitQuestions.map((question) => ({
         id: question.id,
         label: question.title,
-        japanese: question.japanese,
+        japanese: question.navigatorLabel ?? question.japanese,
         statistics: question.statistics,
         order: extractOrderFromTitle(question.title),
       }));

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { StudyModeSchema } from "@/external/dto/study/submit-unit-answer.dto";
+
 export const GetUnitDetailRequestSchema = z.object({
   unitId: z.uuid(),
   accountId: z.uuid().optional().nullable(),
@@ -19,12 +21,34 @@ export type UnitDetailCorrectAnswerDto = z.infer<
   typeof UnitDetailCorrectAnswerSchema
 >;
 
+export const UnitDetailVocabularySchema = z.object({
+  id: z.string().min(1),
+  headword: z.string().min(1),
+  pronunciation: z.string().nullable(),
+  partOfSpeech: z.string().nullable(),
+  definitionJa: z.string().min(1),
+  memo: z.string().nullable(),
+  synonyms: z.array(z.string().min(1)),
+  antonyms: z.array(z.string().min(1)),
+  relatedWords: z.array(z.string().min(1)),
+  exampleSentenceEn: z.string().nullable(),
+  exampleSentenceJa: z.string().nullable(),
+});
+
+export type UnitDetailVocabularyDto = z.infer<
+  typeof UnitDetailVocabularySchema
+>;
+
 export const UnitDetailQuestionSchema = z.object({
   id: z.string().min(1),
   unitId: z.string().min(1),
   japanese: z.string().min(1),
+  prompt: z.string().nullable(),
   hint: z.string().nullable(),
   explanation: z.string().nullable(),
+  questionType: z.string().min(1),
+  vocabularyEntryId: z.string().nullable(),
+  headword: z.string().nullable(),
   order: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -38,6 +62,19 @@ export const UnitDetailQuestionSchema = z.object({
       lastAttemptedAt: z.string().nullable(),
     })
     .nullable(),
+  modeStatistics: z
+    .record(
+      StudyModeSchema,
+      z.object({
+        totalAttempts: z.number().int().nonnegative(),
+        correctCount: z.number().int().nonnegative(),
+        incorrectCount: z.number().int().nonnegative(),
+        accuracy: z.number().min(0).max(1),
+        lastAttemptedAt: z.string().nullable(),
+      }),
+    )
+    .optional(),
+  vocabulary: UnitDetailVocabularySchema.nullable(),
 });
 
 export type UnitDetailQuestionDto = z.infer<typeof UnitDetailQuestionSchema>;

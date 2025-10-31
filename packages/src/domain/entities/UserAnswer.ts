@@ -1,11 +1,14 @@
 import crypto from "node:crypto";
 
+import type { StudyMode } from "../value-objects";
+
 export interface UserAnswerParams {
   id?: string;
   userId: string;
   questionId: string;
   userAnswerText: string;
   isCorrect: boolean;
+  mode: StudyMode;
   isManuallyMarked?: boolean;
   answeredAt?: Date;
   createdAt?: Date;
@@ -18,6 +21,7 @@ export class UserAnswer {
   public readonly questionId: string;
   public readonly userAnswerText: string;
   public readonly isCorrect: boolean;
+  public readonly mode: StudyMode;
   public readonly isManuallyMarked: boolean;
   public readonly answeredAt: Date;
   public readonly createdAt: Date;
@@ -29,6 +33,7 @@ export class UserAnswer {
     this.questionId = params.questionId;
     this.userAnswerText = params.userAnswerText;
     this.isCorrect = params.isCorrect;
+    this.mode = params.mode;
     this.isManuallyMarked = params.isManuallyMarked ?? false;
     this.answeredAt = params.answeredAt ?? new Date();
     this.createdAt = params.createdAt ?? new Date();
