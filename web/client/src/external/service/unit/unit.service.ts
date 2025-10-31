@@ -118,7 +118,6 @@ export class UnitService {
 
     const questions = await this.questionRepository.findByUnitId(unit.id);
     const questionIds = questions.map((question) => question.id);
-
     const vocabularyEntryIds = Array.from(
       new Set(
         questions
@@ -163,7 +162,7 @@ export class UnitService {
     >();
 
     if (accountId) {
-      const modes: QuestionStatisticsMode[] = QUESTION_STATISTICS_MODES;
+      const modes: QuestionStatisticsMode[] = [...QUESTION_STATISTICS_MODES];
       const stats =
         await this.questionStatisticsRepository.findByUserAndQuestionIds(
           accountId,
@@ -199,13 +198,16 @@ export class UnitService {
         const perModeStats =
           statsEntry && Object.keys(statsEntry.perMode).length > 0
             ? Object.entries(statsEntry.perMode).reduce<
-                Record<
-                  StudyMode,
-                  NonNullable<ReturnType<typeof serializeStatistics>>
+                Partial<
+                  Record<
+                    StudyMode,
+                    NonNullable<ReturnType<typeof serializeStatistics>>
+                  >
                 >
               >((acc, [mode, stat]) => {
-                if (stat) {
-                  acc[mode as StudyMode] = serializeStatistics(stat)!;
+                const serialized = serializeStatistics(stat);
+                if (serialized) {
+                  acc[mode as StudyMode] = serialized;
                 }
                 return acc;
               }, {})
@@ -258,7 +260,10 @@ export class UnitService {
             };
           })(),
           statistics: aggregateStats,
-          modeStatistics: perModeStats,
+          modeStatistics:
+            perModeStats && Object.keys(perModeStats).length > 0
+              ? perModeStats
+              : undefined,
         };
       }),
     );

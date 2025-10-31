@@ -19,10 +19,14 @@ export interface UnitQuestionViewModel {
   id: string;
   title: string;
   order: number;
-  japanese: string;
+  primaryText: string;
+  secondaryText: string | null;
   hint: string | null;
   explanation: string | null;
   answerSamples: string[];
+  questionType: string;
+  headword: string | null;
+  vocabulary: UnitDetailDto["questions"][number]["vocabulary"];
   statistics: {
     totalAttempts: number;
     correctCount: number;
@@ -90,12 +94,19 @@ export function useUnitDetailContent(
       id: question.id,
       title: `Q${question.order}`,
       order: question.order,
-      japanese: question.japanese,
+      primaryText:
+        question.headword ??
+        question.correctAnswers[0]?.answerText ??
+        question.japanese,
+      secondaryText: question.vocabulary ? question.japanese : null,
       hint: question.hint,
       explanation: question.explanation,
       answerSamples: question.correctAnswers
         .map((answer) => answer.answerText)
         .slice(0, 3),
+      questionType: question.questionType,
+      headword: question.headword,
+      vocabulary: question.vocabulary,
       statistics: question.statistics
         ? {
             totalAttempts: question.statistics.totalAttempts,

@@ -19,7 +19,7 @@ export async function submitUnitAnswerCommand(
     throw new Error("UNAUTHORIZED");
   }
 
-  const { unitId, questionId, answerText } =
+  const { unitId, questionId, answerText, mode } =
     SubmitUnitAnswerRequestSchema.parse(input);
   const studyService = new StudyService();
   const result = await studyService.submitUnitAnswer({
@@ -27,6 +27,7 @@ export async function submitUnitAnswerCommand(
     unitId,
     questionId,
     answerText,
+    mode,
   });
 
   return SubmitUnitAnswerResponseSchema.parse(result);

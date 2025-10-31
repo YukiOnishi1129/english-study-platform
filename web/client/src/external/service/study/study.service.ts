@@ -209,7 +209,7 @@ export class StudyService {
       answerText,
       questionId,
       questionJapanese: question.japanese,
-      vocabularyEntryId: question.vocabularyEntryId,
+      vocabularyEntryId: question.vocabularyEntryId ?? undefined,
     });
 
     const userAnswer = new UserAnswer({

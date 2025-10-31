@@ -17,10 +17,14 @@ import {
 
 interface MobileNavigationSheetContentProps {
   pathname: string;
+  onStartStudy: () => void;
+  isStartingStudy: boolean;
 }
 
 export function MobileNavigationSheetContent({
   pathname,
+  onStartStudy,
+  isStartingStudy,
 }: MobileNavigationSheetContentProps) {
   return (
     <SheetContent
@@ -51,6 +55,12 @@ export function MobileNavigationSheetContent({
             items={mainNavigation}
             pathname={pathname}
             closeOnSelect
+            onAction={(action) => {
+              if (action === "startStudy") {
+                onStartStudy();
+              }
+            }}
+            disabledActions={isStartingStudy ? ["startStudy"] : undefined}
           />
         </div>
         <div>

@@ -1,5 +1,6 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import { cn } from "@/shared/lib/utils";
 
 import type { UnitNavigatorNodeProps } from "./types";
@@ -17,6 +18,13 @@ function formatAccuracy(value: number | null | undefined) {
   }
   return `${Math.round(value * 100)}%`;
 }
+
+const MODE_LABEL: Record<StudyMode, string> = {
+  jp_to_en: "日→英",
+  en_to_jp: "英→日",
+  sentence: "英作文",
+  default: "標準",
+};
 
 export function UnitNavigatorNodePresenter({
   unit,
@@ -88,11 +96,15 @@ export function UnitNavigatorNodePresenter({
                         {question.label}
                       </span>
                       <span className="ml-2 text-[11px] text-slate-500">
-                        {question.japanese}
+                        {question.displayText}
                       </span>
                     </span>
                     <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">
-                      {formatAccuracy(question.statistics?.accuracy ?? null)}
+                      {question.mode ? `${MODE_LABEL[question.mode]} ` : ""}
+                      {formatAccuracy(
+                        (question.modeStatistics ?? question.statistics)
+                          ?.accuracy ?? null,
+                      )}
                     </span>
                   </button>
                 </li>

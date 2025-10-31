@@ -41,13 +41,17 @@ export interface UnitStudyBreadcrumbItem {
   href: string | null;
 }
 
-export interface UnitStudyQuestionStatisticsViewModel {
+export interface UnitStudyModeStatisticsViewModel {
   totalAttempts: number;
   correctCount: number;
   incorrectCount: number;
   accuracy: number;
   lastAttemptedAt: string | null;
-  byMode: Partial<Record<StudyMode, UnitStudyQuestionStatisticsViewModel>>;
+}
+
+export interface UnitStudyQuestionStatisticsViewModel
+  extends UnitStudyModeStatisticsViewModel {
+  byMode: Partial<Record<StudyMode, UnitStudyModeStatisticsViewModel>>;
 }
 
 export interface UnitStudyQuestionViewModel {
@@ -57,6 +61,8 @@ export interface UnitStudyQuestionViewModel {
   japanese: string;
   promptText: string;
   promptNote: string | null;
+  sentencePromptJa: string | null;
+  sentenceTargetWord: string | null;
   hint: string | null;
   explanation: string | null;
   acceptableAnswers: string[];
@@ -67,8 +73,10 @@ export interface UnitStudyQuestionViewModel {
   navigatorLabel: string;
   definitionJa: string | null;
   statistics: UnitStudyQuestionStatisticsViewModel | null;
+  activeModeStatistics: UnitStudyModeStatisticsViewModel | null;
   availableModes: StudyMode[];
   defaultMode: StudyMode;
+  activeMode: StudyMode;
 }
 
 interface UnitStudyQuestionBase {
@@ -81,19 +89,11 @@ interface UnitStudyQuestionBase {
 
 type StudyStatus = "idle" | "correct" | "incorrect";
 
-const _STUDY_MODE_LABEL: Record<StudyMode, string> = {
-  jp_to_en: "英→日",
-  en_to_jp: "日→英",
-  sentence: "英作文",
-  default: "標準",
-};
-
 function getAvailableModes(
   question: UnitDetailDto["questions"][number],
 ): StudyMode[] {
   if (question.vocabulary?.definitionJa) {
-    const modes: StudyMode[] = ["jp_to_en"];
-    modes.push("en_to_jp");
+    const modes: StudyMode[] = ["en_to_jp", "jp_to_en"];
     if (question.vocabulary.exampleSentenceEn) {
       modes.push("sentence");
     }
@@ -116,27 +116,34 @@ function resolveQuestionView(
     (answer) => answer.answerText,
   );
 
+  const relationHintParts: string[] = [];
+  if (vocabulary?.synonyms?.length) {
+    relationHintParts.push(`類義語: ${vocabulary.synonyms.join(" / ")}`);
+  }
+  if (vocabulary?.antonyms?.length) {
+    relationHintParts.push(`対義語: ${vocabulary.antonyms.join(" / ")}`);
+  }
+  if (vocabulary?.relatedWords?.length) {
+    relationHintParts.push(`関連語: ${vocabulary.relatedWords.join(" / ")}`);
+  }
+
   let promptText = data.japanese;
   let navigatorLabel = data.japanese;
   let answerLabel = "回答を入力してみよう";
   let answerPlaceholder = "例: 回答を入力";
-  let promptNote =
-    data.prompt && data.prompt.trim().length > 0 ? data.prompt : null;
+  const promptNote =
+    data.prompt && data.prompt.trim().length > 0 ? data.prompt.trim() : null;
+  let sentencePromptJa: string | null = null;
+  let sentenceTargetWord: string | null = null;
 
-  if (vocabulary) {
-    const meta: string[] = [];
-    if (vocabulary.partOfSpeech) {
-      meta.push(vocabulary.partOfSpeech);
-    }
-    if (vocabulary.pronunciation) {
-      meta.push(vocabulary.pronunciation);
-    }
-    if (meta.length > 0) {
-      promptNote = promptNote
-        ? `${promptNote}\n${meta.join(" ・ ")}`
-        : meta.join(" ・ ");
-    }
-  }
+  const manualHint =
+    data.hint && data.hint.trim().length > 0 ? data.hint.trim() : null;
+  const relationsText = relationHintParts.join("\n");
+  const derivedHint = relationsText
+    ? manualHint
+      ? `${manualHint}\n${relationsText}`
+      : relationsText
+    : manualHint;
 
   let acceptableAnswers = baseAcceptableAnswers;
 
@@ -171,19 +178,27 @@ function resolveQuestionView(
     }
     acceptableAnswers = candidates;
   } else if (effectiveMode === "sentence") {
-    promptText = data.headword ?? baseAcceptableAnswers[0] ?? "";
-    navigatorLabel = promptText;
+    const sentenceJapanese =
+      vocabulary?.exampleSentenceJa &&
+      vocabulary.exampleSentenceJa.trim().length > 0
+        ? vocabulary.exampleSentenceJa.trim()
+        : data.japanese;
+    const targetHeadword =
+      vocabulary?.headword ?? data.headword ?? baseAcceptableAnswers[0] ?? "";
+    promptText = sentenceJapanese;
+    navigatorLabel = targetHeadword || promptText;
+    sentencePromptJa = sentenceJapanese;
+    sentenceTargetWord =
+      targetHeadword.trim().length > 0 ? targetHeadword : null;
     answerLabel = "例文を英語で入力";
     answerPlaceholder = "例: This is a pen.";
     acceptableAnswers = vocabulary?.exampleSentenceEn
       ? [vocabulary.exampleSentenceEn]
       : baseAcceptableAnswers;
-    if (vocabulary?.exampleSentenceJa) {
-      promptNote = promptNote
-        ? `${promptNote}\n和訳: ${vocabulary.exampleSentenceJa}`
-        : `和訳: ${vocabulary.exampleSentenceJa}`;
-    }
   }
+
+  const statistics = mapStatistics(data.statistics, data.modeStatistics);
+  const activeModeStatistics = statistics?.byMode?.[effectiveMode] ?? null;
 
   return {
     id: base.id,
@@ -192,7 +207,9 @@ function resolveQuestionView(
     japanese: data.japanese,
     promptText,
     promptNote,
-    hint: data.hint,
+    sentencePromptJa,
+    sentenceTargetWord,
+    hint: derivedHint,
     explanation: data.explanation,
     acceptableAnswers,
     vocabulary,
@@ -201,9 +218,11 @@ function resolveQuestionView(
     answerPlaceholder,
     navigatorLabel,
     definitionJa: vocabulary?.definitionJa ?? data.japanese,
-    statistics: mapStatistics(data.statistics, data.modeStatistics),
+    statistics,
+    activeModeStatistics,
     availableModes: base.availableModes,
     defaultMode: base.defaultMode,
+    activeMode: effectiveMode,
   };
 }
 
@@ -240,6 +259,7 @@ export interface UseUnitStudyContentResult {
   availableModes: StudyMode[];
   selectedMode: StudyMode;
   currentStatistics: UnitStudyQuestionStatisticsViewModel | null;
+  currentModeStatistics: UnitStudyModeStatisticsViewModel | null;
   inputValue: string;
   status: StudyStatus;
   isHintVisible: boolean;
@@ -254,6 +274,7 @@ export interface UseUnitStudyContentResult {
   encouragement: string;
   statusLabel: string;
   remainingCount: number;
+  isLastQuestion: boolean;
   onInputChange: (value: string) => void;
   onToggleHint: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -426,6 +447,10 @@ export function useUnitStudyContent(
   const currentStatistics = currentQuestion
     ? (questionStatisticsMap[currentQuestion.id] ?? null)
     : null;
+  const currentModeStatistics =
+    currentMode && currentStatistics
+      ? (currentStatistics.byMode?.[currentMode] ?? null)
+      : (currentQuestion?.activeModeStatistics ?? null);
 
   const isAnswered = status !== "idle";
   const encouragement =
@@ -441,6 +466,8 @@ export function useUnitStudyContent(
         ? "また挑戦してみよう"
         : "解答を待っています";
   const remainingCount = questionCount - currentIndex - 1;
+  const _isLastQuestion =
+    questionCount > 0 && currentIndex >= questionCount - 1;
 
   const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
@@ -518,14 +545,47 @@ export function useUnitStudyContent(
     questionCount > 0 ? `${currentIndex + 1} / ${questionCount}` : "0 / 0";
   const accuracyRate =
     answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : null;
+  const isLastQuestion = questionCount > 0 && currentIndex >= questionCount - 1;
 
-  const moveToNextQuestion = useCallback(() => {
-    if (questionCount === 0) {
-      return;
+  const moveToNextQuestion = useCallback(
+    (options: { wrapAround?: boolean } = {}) => {
+      if (questionCount === 0) {
+        return;
+      }
+      setCurrentIndex((prev) => {
+        const nextIndex = prev + 1;
+        if (nextIndex >= questionCount) {
+          return options.wrapAround ? 0 : prev;
+        }
+        return nextIndex;
+      });
+      resetStateForNextQuestion();
+    },
+    [questionCount, resetStateForNextQuestion],
+  );
+
+  const findNextUnitId = useCallback(() => {
+    if (!materialDetail || !data) {
+      return null;
     }
-    setCurrentIndex((prev) => (prev + 1) % questionCount);
-    resetStateForNextQuestion();
-  }, [questionCount, resetStateForNextQuestion]);
+    const orderedChapters = materialDetail.chapters
+      .slice()
+      .sort((a, b) => a.order - b.order);
+    const orderedUnits = orderedChapters.flatMap((chapter) =>
+      chapter.units.slice().sort((a, b) => a.order - b.order),
+    );
+    const currentUnitId = data.unit.id;
+    const currentUnitIndex = orderedUnits.findIndex(
+      (unit) => unit.id === currentUnitId,
+    );
+    if (
+      currentUnitIndex === -1 ||
+      currentUnitIndex >= orderedUnits.length - 1
+    ) {
+      return null;
+    }
+    return orderedUnits[currentUnitIndex + 1]?.id ?? null;
+  }, [data, materialDetail]);
 
   const handleNext = useCallback(() => {
     if (questionCount === 0) {
@@ -533,11 +593,16 @@ export function useUnitStudyContent(
     }
     const isLastQuestion = currentIndex >= questionCount - 1;
     if (isLastQuestion) {
-      moveToNextQuestion();
+      const nextUnitId = findNextUnitId();
+      if (nextUnitId) {
+        router.push(`/units/${nextUnitId}/study` as Route);
+        return;
+      }
+      moveToNextQuestion({ wrapAround: true });
       return;
     }
     moveToNextQuestion();
-  }, [currentIndex, moveToNextQuestion, questionCount]);
+  }, [currentIndex, findNextUnitId, moveToNextQuestion, questionCount, router]);
 
   const submitAnswer = useMutation({
     mutationFn: async (
@@ -588,9 +653,7 @@ export function useUnitStudyContent(
             ...(questionStatisticsMap[currentQuestion.id]?.byMode ?? {}),
             ...(result.modeStatistics
               ? Object.entries(result.modeStatistics).reduce<
-                  Partial<
-                    Record<StudyMode, UnitStudyQuestionStatisticsViewModel>
-                  >
+                  Partial<Record<StudyMode, UnitStudyModeStatisticsViewModel>>
                 >((acc, [mode, stats]) => {
                   acc[mode as StudyMode] = {
                     totalAttempts: stats.totalAttempts,
@@ -598,7 +661,6 @@ export function useUnitStudyContent(
                     incorrectCount: stats.incorrectCount,
                     accuracy: stats.accuracy,
                     lastAttemptedAt: stats.lastAttemptedAt,
-                    byMode: {},
                   };
                   return acc;
                 }, {})
@@ -675,7 +737,7 @@ export function useUnitStudyContent(
 
   const handleModeChange = useCallback(
     (questionId: string, nextMode: StudyMode) => {
-      setModeByQuestion((prev) => ({ ...prev, [questionId]: nextMode }));
+      setModeByQuestion({ [questionId]: nextMode });
       setPreferredMode(nextMode);
       if (currentBaseQuestion && currentBaseQuestion.id === questionId) {
         resetStateForNextQuestion();
@@ -743,6 +805,7 @@ export function useUnitStudyContent(
     availableModes: currentBaseQuestion?.availableModes ?? ["default"],
     selectedMode: currentMode ?? currentBaseQuestion?.defaultMode ?? "default",
     currentStatistics,
+    currentModeStatistics,
     inputValue,
     status,
     isHintVisible,
@@ -775,5 +838,6 @@ export function useUnitStudyContent(
     encouragement,
     statusLabel,
     remainingCount,
+    isLastQuestion,
   };
 }

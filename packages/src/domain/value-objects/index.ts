@@ -5,12 +5,12 @@ export {
   type QuestionType,
 } from "./QuestionType";
 export {
+  QUESTION_STATISTICS_MODES,
+  type QuestionStatisticsMode,
+  STUDY_MODES,
+  type StudyMode,
+} from "./StudyMode";
+export {
   VOCABULARY_RELATION_TYPES,
   type VocabularyRelationType,
 } from "./VocabularyRelationType";
-export {
-  STUDY_MODES,
-  QUESTION_STATISTICS_MODES,
-  type StudyMode,
-  type QuestionStatisticsMode,
-} from "./StudyMode";

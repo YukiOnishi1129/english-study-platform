@@ -1,7 +1,6 @@
 "use client";
 
 import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
-
 import { UnitStudyContentPresenter } from "./UnitStudyContentPresenter";
 import { useUnitStudyContent } from "./useUnitStudyContent";
 

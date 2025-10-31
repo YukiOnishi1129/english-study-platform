@@ -124,6 +124,7 @@ export function useReviewStudySession({
           unitId: currentQuestion.unitId,
           questionId: currentQuestion.questionId,
           answerText: inputValue,
+          mode: "default",
         });
 
         setStatus(result.isCorrect ? "correct" : "incorrect");

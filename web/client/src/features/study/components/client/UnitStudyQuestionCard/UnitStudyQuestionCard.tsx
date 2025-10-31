@@ -22,6 +22,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { cn } from "@/shared/lib/utils";
 
 import type {
+  UnitStudyModeStatisticsViewModel,
   UnitStudyQuestionStatisticsViewModel,
   UnitStudyQuestionViewModel,
 } from "../UnitStudyContent/useUnitStudyContent";
@@ -47,6 +48,7 @@ interface UnitStudyQuestionCardProps {
   errorMessage: string | null;
   isAnswerVisible: boolean;
   currentStatistics: UnitStudyQuestionStatisticsViewModel | null;
+  currentModeStatistics: UnitStudyModeStatisticsViewModel | null;
   speakingAnswer: string | null;
   onSpeakAnswer: (answer: string) => void;
   remainingCount: number;
@@ -54,11 +56,12 @@ interface UnitStudyQuestionCardProps {
   availableModes: StudyMode[];
   selectedMode: StudyMode;
   onChangeMode: (mode: StudyMode) => void;
+  isLastQuestion: boolean;
 }
 
 const MODE_LABEL: Record<StudyMode, string> = {
-  jp_to_en: "英→日",
-  en_to_jp: "日→英",
+  jp_to_en: "日→英",
+  en_to_jp: "英→日",
   sentence: "英作文",
   default: "標準",
 };
@@ -67,6 +70,24 @@ function getStatusIcon(status: "idle" | "correct" | "incorrect") {
   if (status === "correct") return CheckCircle2;
   if (status === "incorrect") return XCircle;
   return CircleHelp;
+}
+
+const JAPANESE_CHAR_PATTERN = /[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]/u;
+
+function _canSpeakEnglish(text: string): boolean {
+  if (!text.trim()) {
+    return false;
+  }
+  return !JAPANESE_CHAR_PATTERN.test(text);
+}
+
+function _createValueKeyGenerator(prefix: string) {
+  const occurrences = new Map<string, number>();
+  return (value: string) => {
+    const occurrence = occurrences.get(value) ?? 0;
+    occurrences.set(value, occurrence + 1);
+    return `${prefix}-${value}-${occurrence}`;
+  };
 }
 
 export function UnitStudyQuestionCard({
@@ -90,6 +111,7 @@ export function UnitStudyQuestionCard({
   errorMessage,
   isAnswerVisible,
   currentStatistics,
+  currentModeStatistics,
   speakingAnswer,
   onSpeakAnswer,
   remainingCount,
@@ -97,10 +119,18 @@ export function UnitStudyQuestionCard({
   availableModes,
   selectedMode,
   onChangeMode,
+  isLastQuestion,
 }: UnitStudyQuestionCardProps) {
   const StatusIcon = getStatusIcon(status);
   const hasAnswered = status !== "idle";
-  const _isLastQuestion = remainingCount === 0;
+  const shouldShowRestart = hasAnswered && isLastQuestion;
+  const displayedStatistics = currentModeStatistics ?? currentStatistics;
+  const createAnswerKey = _createValueKeyGenerator(`answer-${question.id}`);
+  const createSynonymKey = _createValueKeyGenerator(`synonym-${question.id}`);
+  const createAntonymKey = _createValueKeyGenerator(`antonym-${question.id}`);
+  const createRelatedKey = _createValueKeyGenerator(`related-${question.id}`);
+  const headword = question.vocabulary?.headword ?? question.headword ?? null;
+  const canSpeakHeadword = headword ? _canSpeakEnglish(headword) : false;
 
   return (
     <Card className="border border-indigo-200/70 bg-white/95 shadow-md">
@@ -137,10 +167,49 @@ export function UnitStudyQuestionCard({
           </div>
         ) : null}
         <CardTitle className="text-2xl font-bold text-slate-900">
-          {question.title} {question.promptText}
+          {question.title}{" "}
+          {selectedMode === "sentence"
+            ? (question.sentencePromptJa ?? question.promptText)
+            : question.promptText}
         </CardTitle>
-        {question.promptNote ? (
-          <p className="text-sm whitespace-pre-line text-slate-500">
+        {selectedMode !== "sentence" && question.vocabulary ? (
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            {question.vocabulary.partOfSpeech ? (
+              <span className="rounded-full border border-indigo-200 bg-indigo-100 px-3 py-1 text-base font-semibold uppercase tracking-wide text-indigo-700 shadow-sm">
+                {question.vocabulary.partOfSpeech}
+              </span>
+            ) : null}
+            {question.vocabulary.pronunciation ? (
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-600 shadow-sm">
+                {question.vocabulary.pronunciation}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {selectedMode === "sentence" && question.sentencePromptJa ? (
+          <div className="space-y-2 text-sm text-indigo-900">
+            <p className="text-indigo-700">
+              上記の日本語の文章を英語で書いてください
+            </p>
+            {question.sentenceTargetWord ? (
+              <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-indigo-700">
+                <span className="rounded-full bg-indigo-100 px-3 py-1 text-base shadow-sm">
+                  この単語を必ず使う:{" "}
+                  <span className="text-lg font-bold text-indigo-800">
+                    {question.sentenceTargetWord}
+                  </span>
+                </span>
+                {question.vocabulary?.partOfSpeech ? (
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-600 shadow-sm">
+                    {question.vocabulary.partOfSpeech}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {question.promptNote && selectedMode !== "sentence" ? (
+          <p className="whitespace-pre-line text-sm text-slate-600">
             {question.promptNote}
           </p>
         ) : null}
@@ -233,7 +302,7 @@ export function UnitStudyQuestionCard({
               <p className="text-xs text-indigo-600">
                 「次の問題へ進む」を押すと、次のクイズに挑戦できます。
               </p>
-              {hasAnswered ? (
+              {shouldShowRestart ? (
                 <div className="space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-xs text-emerald-800">
                   <p className="font-semibold text-sm">
                     このUNITの学習が一巡しました。もう一度最初から挑戦してみましょうか？
@@ -286,22 +355,28 @@ export function UnitStudyQuestionCard({
                 正解例
               </p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-indigo-900">
-                {question.acceptableAnswers.map((answer) => (
-                  <li key={answer} className="flex items-center gap-2">
-                    <span>{answer}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                      onClick={() => onSpeakAnswer(answer)}
-                      disabled={speakingAnswer === answer}
-                    >
-                      <Volume2 className="size-4" />
-                      {speakingAnswer === answer ? "再生中..." : "音声"}
-                    </Button>
-                  </li>
-                ))}
+                {question.acceptableAnswers.map((answer) => {
+                  const key = createAnswerKey(answer);
+                  const canSpeak = _canSpeakEnglish(answer);
+                  return (
+                    <li key={key} className="flex items-center gap-2">
+                      <span>{answer}</span>
+                      {canSpeak ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
+                          onClick={() => onSpeakAnswer(answer)}
+                          disabled={speakingAnswer === answer}
+                        >
+                          <Volume2 className="size-4" />
+                          {speakingAnswer === answer ? "再生中..." : "音声"}
+                        </Button>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
@@ -314,9 +389,26 @@ export function UnitStudyQuestionCard({
             {question.vocabulary ? (
               <div className="space-y-2 rounded-xl border border-indigo-100 bg-white/80 px-3 py-3 text-sm text-slate-800">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-base font-semibold text-indigo-700">
-                    {question.vocabulary.headword}
-                  </span>
+                  {headword ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-semibold text-indigo-700">
+                        {headword}
+                      </span>
+                      {selectedMode === "en_to_jp" && canSpeakHeadword ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
+                          onClick={() => headword && onSpeakAnswer(headword)}
+                          disabled={speakingAnswer === headword}
+                        >
+                          <Volume2 className="size-4" />
+                          {speakingAnswer === headword ? "再生中..." : "音声"}
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {question.vocabulary.partOfSpeech ? (
                     <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700">
                       {question.vocabulary.partOfSpeech}
@@ -342,14 +434,30 @@ export function UnitStudyQuestionCard({
                       類義語
                     </span>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {question.vocabulary.synonyms.map((item) => (
-                        <span
-                          key={`syn-${item}`}
-                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
-                        >
-                          {item}
-                        </span>
-                      ))}
+                      {question.vocabulary.synonyms.map((item) => {
+                        const key = createSynonymKey(item);
+                        const canSpeak = _canSpeakEnglish(item);
+                        return canSpeak ? (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => onSpeakAnswer(item)}
+                            disabled={speakingAnswer === item}
+                            className="flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700 transition hover:bg-indigo-200 disabled:opacity-60"
+                            aria-label={`${item} を再生`}
+                          >
+                            <span>{item}</span>
+                            <Volume2 className="size-3" />
+                          </button>
+                        ) : (
+                          <span
+                            key={key}
+                            className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+                          >
+                            {item}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}
@@ -359,14 +467,30 @@ export function UnitStudyQuestionCard({
                       対義語
                     </span>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {question.vocabulary.antonyms.map((item) => (
-                        <span
-                          key={`ant-${item}`}
-                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
-                        >
-                          {item}
-                        </span>
-                      ))}
+                      {question.vocabulary.antonyms.map((item) => {
+                        const key = createAntonymKey(item);
+                        const canSpeak = _canSpeakEnglish(item);
+                        return canSpeak ? (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => onSpeakAnswer(item)}
+                            disabled={speakingAnswer === item}
+                            className="flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700 transition hover:bg-indigo-200 disabled:opacity-60"
+                            aria-label={`${item} を再生`}
+                          >
+                            <span>{item}</span>
+                            <Volume2 className="size-3" />
+                          </button>
+                        ) : (
+                          <span
+                            key={key}
+                            className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+                          >
+                            {item}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}
@@ -376,14 +500,30 @@ export function UnitStudyQuestionCard({
                       関連語
                     </span>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {question.vocabulary.relatedWords.map((item) => (
-                        <span
-                          key={`rel-${item}`}
-                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
-                        >
-                          {item}
-                        </span>
-                      ))}
+                      {question.vocabulary.relatedWords.map((item) => {
+                        const key = createRelatedKey(item);
+                        const canSpeak = _canSpeakEnglish(item);
+                        return canSpeak ? (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => onSpeakAnswer(item)}
+                            disabled={speakingAnswer === item}
+                            className="flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700 transition hover:bg-indigo-200 disabled:opacity-60"
+                            aria-label={`${item} を再生`}
+                          >
+                            <span>{item}</span>
+                            <Volume2 className="size-3" />
+                          </button>
+                        ) : (
+                          <span
+                            key={key}
+                            className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+                          >
+                            {item}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}
@@ -412,54 +552,77 @@ export function UnitStudyQuestionCard({
             ) : null}
 
             {currentStatistics ? (
-              <div className="grid gap-2 rounded-lg border border-indigo-100 bg-white/70 p-3 text-xs text-slate-700">
-                <div className="flex items-center justify-between">
-                  <span>解答回数</span>
-                  <span className="font-semibold text-slate-900">
-                    {currentStatistics.totalAttempts} 回
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>正解数</span>
-                  <span className="font-semibold text-slate-900">
-                    {currentStatistics.correctCount} 回
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>正答率</span>
-                  <span className="font-semibold text-slate-900">
-                    {Math.round(currentStatistics.accuracy * 100)}%
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>最終解答日</span>
-                  <span>
-                    {currentStatistics.lastAttemptedAt
-                      ? new Date(
-                          currentStatistics.lastAttemptedAt,
-                        ).toLocaleString()
-                      : "まだこれから！"}
-                  </span>
+              <div className="space-y-3">
+                <div className="grid gap-2 rounded-lg border border-indigo-100 bg-white/70 p-3 text-xs text-slate-700">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
+                    {currentModeStatistics
+                      ? `${MODE_LABEL[selectedMode]}モードの記録`
+                      : "この問題の通算記録"}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span>解答回数</span>
+                    <span className="font-semibold text-slate-900">
+                      {displayedStatistics?.totalAttempts ?? 0} 回
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>正解数</span>
+                    <span className="font-semibold text-slate-900">
+                      {displayedStatistics?.correctCount ?? 0} 回
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>正答率</span>
+                    <span className="font-semibold text-slate-900">
+                      {displayedStatistics
+                        ? Math.round(displayedStatistics.accuracy * 100)
+                        : "--"}
+                      {displayedStatistics ? "%" : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>最終解答日</span>
+                    <span>
+                      {displayedStatistics?.lastAttemptedAt
+                        ? new Date(
+                            displayedStatistics.lastAttemptedAt,
+                          ).toLocaleString()
+                        : "まだこれから！"}
+                    </span>
+                  </div>
                 </div>
                 {Object.entries(currentStatistics.byMode).length > 0 ? (
-                  <div className="mt-2 space-y-2 border-t border-indigo-100 pt-2">
+                  <div className="rounded-lg border border-indigo-100 bg-white/60 p-3">
                     <p className="text-[11px] font-semibold text-indigo-600">
                       モード別の成績
                     </p>
-                    {Object.entries(currentStatistics.byMode).map(
-                      ([mode, stat]) => (
-                        <div
-                          key={mode}
-                          className="flex items-center justify-between text-[11px]"
-                        >
-                          <span>{MODE_LABEL[mode as StudyMode]}</span>
-                          <span>
-                            {Math.round(stat.accuracy * 100)}% (
-                            {stat.correctCount}/{stat.totalAttempts})
-                          </span>
-                        </div>
-                      ),
-                    )}
+                    <div className="mt-2 space-y-1 text-[11px] text-slate-700">
+                      {Object.entries(currentStatistics.byMode).map(
+                        ([mode, stat]) => {
+                          if (!stat) {
+                            return null;
+                          }
+                          const isActive = mode === selectedMode;
+                          return (
+                            <div
+                              key={mode}
+                              className={cn(
+                                "flex items-center justify-between rounded-md px-3 py-1",
+                                isActive
+                                  ? "bg-indigo-100/80 font-semibold text-indigo-800"
+                                  : "bg-slate-50/80",
+                              )}
+                            >
+                              <span>{MODE_LABEL[mode as StudyMode]}</span>
+                              <span>
+                                {Math.round(stat.accuracy * 100)}% (
+                                {stat.correctCount}/{stat.totalAttempts})
+                              </span>
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -473,4 +636,8 @@ export function UnitStudyQuestionCard({
       </CardContent>
     </Card>
   );
+}
+
+function _normalizeForComparison(value: string): string {
+  return value.trim().toLowerCase();
 }

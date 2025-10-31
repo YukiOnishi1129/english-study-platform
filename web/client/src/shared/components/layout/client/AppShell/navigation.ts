@@ -9,11 +9,14 @@ import {
 } from "lucide-react";
 import type { Route } from "next";
 
+export type NavigationAction = "startStudy";
+
 export interface NavigationItem {
   label: string;
   href?: Route;
   icon: LucideIcon;
   comingSoon?: boolean;
+  action?: NavigationAction;
 }
 
 export const mainNavigation: NavigationItem[] = [
@@ -30,7 +33,7 @@ export const mainNavigation: NavigationItem[] = [
   {
     label: "学習する",
     icon: PlayCircle,
-    comingSoon: true,
+    action: "startStudy",
   },
   {
     label: "学習分析",

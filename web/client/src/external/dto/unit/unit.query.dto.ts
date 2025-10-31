@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { StudyModeSchema } from "@/external/dto/study/submit-unit-answer.dto";
-
 export const GetUnitDetailRequestSchema = z.object({
   unitId: z.uuid(),
   accountId: z.uuid().optional().nullable(),
@@ -39,6 +37,31 @@ export type UnitDetailVocabularyDto = z.infer<
   typeof UnitDetailVocabularySchema
 >;
 
+const QuestionStatisticsPayloadSchema = z.object({
+  totalAttempts: z.number().int().nonnegative(),
+  correctCount: z.number().int().nonnegative(),
+  incorrectCount: z.number().int().nonnegative(),
+  accuracy: z.number().min(0).max(1),
+  lastAttemptedAt: z.string().nullable(),
+});
+
+export type UnitDetailQuestionStatisticsDto = z.infer<
+  typeof QuestionStatisticsPayloadSchema
+>;
+
+const QuestionModeStatisticsSchema = z
+  .object({
+    jp_to_en: QuestionStatisticsPayloadSchema.optional(),
+    en_to_jp: QuestionStatisticsPayloadSchema.optional(),
+    sentence: QuestionStatisticsPayloadSchema.optional(),
+    default: QuestionStatisticsPayloadSchema.optional(),
+  })
+  .partial();
+
+export type UnitDetailQuestionModeStatisticsDto = z.infer<
+  typeof QuestionModeStatisticsSchema
+>;
+
 export const UnitDetailQuestionSchema = z.object({
   id: z.string().min(1),
   unitId: z.string().min(1),
@@ -53,27 +76,8 @@ export const UnitDetailQuestionSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   correctAnswers: z.array(UnitDetailCorrectAnswerSchema),
-  statistics: z
-    .object({
-      totalAttempts: z.number().int().nonnegative(),
-      correctCount: z.number().int().nonnegative(),
-      incorrectCount: z.number().int().nonnegative(),
-      accuracy: z.number().min(0).max(1),
-      lastAttemptedAt: z.string().nullable(),
-    })
-    .nullable(),
-  modeStatistics: z
-    .record(
-      StudyModeSchema,
-      z.object({
-        totalAttempts: z.number().int().nonnegative(),
-        correctCount: z.number().int().nonnegative(),
-        incorrectCount: z.number().int().nonnegative(),
-        accuracy: z.number().min(0).max(1),
-        lastAttemptedAt: z.string().nullable(),
-      }),
-    )
-    .optional(),
+  statistics: QuestionStatisticsPayloadSchema.nullable(),
+  modeStatistics: QuestionModeStatisticsSchema.optional(),
   vocabulary: UnitDetailVocabularySchema.nullable(),
 });
 

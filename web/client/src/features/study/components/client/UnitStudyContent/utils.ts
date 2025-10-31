@@ -3,6 +3,7 @@ import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 
 import type {
   UnitStudyBreadcrumbItem,
+  UnitStudyModeStatisticsViewModel,
   UnitStudyQuestionStatisticsViewModel,
 } from "./useUnitStudyContent";
 
@@ -52,20 +53,22 @@ export function mapStatistics(
     return null;
   }
 
-  const byMode: Partial<
-    Record<StudyMode, UnitStudyQuestionStatisticsViewModel>
-  > = {};
+  const byMode: Partial<Record<StudyMode, UnitStudyModeStatisticsViewModel>> =
+    {};
 
   if (modeStats) {
     Object.entries(modeStats).forEach(([mode, value]) => {
-      byMode[mode as StudyMode] = {
+      if (!value) {
+        return;
+      }
+      const serialized: UnitStudyModeStatisticsViewModel = {
         totalAttempts: value.totalAttempts,
         correctCount: value.correctCount,
         incorrectCount: value.incorrectCount,
         accuracy: value.accuracy,
         lastAttemptedAt: value.lastAttemptedAt,
-        byMode: {},
-      } satisfies UnitStudyQuestionStatisticsViewModel;
+      };
+      byMode[mode as StudyMode] = serialized;
     });
   }
 

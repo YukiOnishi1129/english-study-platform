@@ -15,6 +15,7 @@ export interface UseStudyNavigatorSidebarOptions
       | "currentQuestionId"
       | "currentUnitQuestions"
       | "accountId"
+      | "displayMode"
     >,
     Pick<StudyNavigatorProps, "onSelectQuestion" | "onNavigateUnit"> {
   maxHeight?: string;
@@ -34,6 +35,7 @@ export function useStudyNavigatorSidebar(
     currentQuestionId,
     currentUnitQuestions,
     accountId,
+    displayMode,
     onSelectQuestion,
     onNavigateUnit,
     maxHeight = "calc(100vh - 12rem)",
@@ -73,6 +75,7 @@ export function useStudyNavigatorSidebar(
       currentQuestionId,
       currentUnitQuestions,
       accountId,
+      displayMode,
       expandedUnitId,
       onToggleUnit: handleToggleUnit,
       onSelectQuestion: handleSelectQuestion,
@@ -84,6 +87,7 @@ export function useStudyNavigatorSidebar(
       currentQuestionId,
       currentUnitQuestions,
       accountId,
+      displayMode,
       expandedUnitId,
       handleToggleUnit,
       handleSelectQuestion,
