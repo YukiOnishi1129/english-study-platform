@@ -55,7 +55,11 @@ export function AppShellPresenter({
               isStartingStudy={isStartingStudy}
               mobileMenuTrigger={mobileTrigger}
             />
-            <MobileNavigationSheetContent pathname={pathname} />
+            <MobileNavigationSheetContent
+              pathname={pathname}
+              onStartStudy={onStartStudy}
+              isStartingStudy={isStartingStudy}
+            />
           </Sheet>
           <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
         </div>
