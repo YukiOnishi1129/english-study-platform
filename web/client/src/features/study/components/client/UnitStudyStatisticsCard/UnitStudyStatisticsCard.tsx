@@ -10,21 +10,32 @@ import {
   CardTitle,
 } from "@/shared/components/ui/card";
 
-import type { UnitStudyQuestionStatisticsViewModel } from "../UnitStudyContent/useUnitStudyContent";
+import type {
+  UnitStudyModeStatisticsViewModel,
+  UnitStudyQuestionStatisticsViewModel,
+} from "../UnitStudyContent/useUnitStudyContent";
 
 interface UnitStudyStatisticsCardProps {
   statistics: UnitStudyQuestionStatisticsViewModel | null;
+  selectedMode: StudyMode;
+  modeStatistics: UnitStudyModeStatisticsViewModel | null;
 }
 
 export function UnitStudyStatisticsCard({
   statistics,
+  selectedMode,
+  modeStatistics,
 }: UnitStudyStatisticsCardProps) {
   const MODE_LABEL: Record<StudyMode, string> = {
-    jp_to_en: "英→日",
-    en_to_jp: "日→英",
+    jp_to_en: "日→英",
+    en_to_jp: "英→日",
     sentence: "英作文",
     default: "標準",
   };
+  const displayedStatistics = modeStatistics ?? statistics;
+  const summaryLabel = modeStatistics
+    ? `${MODE_LABEL[selectedMode]}モードの記録`
+    : "この問題の通算記録";
 
   return (
     <Card className="border border-indigo-100/80 bg-white/90 shadow-md">
@@ -38,29 +49,36 @@ export function UnitStudyStatisticsCard({
       </CardHeader>
       <CardContent className="space-y-4 text-sm text-slate-700">
         <div className="grid gap-2 rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
+            {summaryLabel}
+          </p>
           <div className="flex items-center justify-between">
-            <span>通算解答回数</span>
+            <span>{modeStatistics ? "モード解答回数" : "通算解答回数"}</span>
             <span className="text-base font-semibold text-slate-900">
-              {statistics ? statistics.totalAttempts : 0} 回
+              {displayedStatistics ? displayedStatistics.totalAttempts : 0} 回
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span>通算正解数</span>
+            <span>{modeStatistics ? "モード正解数" : "通算正解数"}</span>
             <span className="text-base font-semibold text-slate-900">
-              {statistics ? statistics.correctCount : 0} 回
+              {displayedStatistics ? displayedStatistics.correctCount : 0} 回
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span>通算正答率</span>
+            <span>{modeStatistics ? "モード正答率" : "通算正答率"}</span>
             <span className="text-base font-semibold text-slate-900">
-              {statistics ? `${Math.round(statistics.accuracy * 100)}%` : "--"}
+              {displayedStatistics
+                ? `${Math.round(displayedStatistics.accuracy * 100)}%`
+                : "--"}
             </span>
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>最後に解いた日</span>
             <span>
-              {statistics?.lastAttemptedAt
-                ? new Date(statistics.lastAttemptedAt).toLocaleDateString()
+              {displayedStatistics?.lastAttemptedAt
+                ? new Date(
+                    displayedStatistics.lastAttemptedAt,
+                  ).toLocaleDateString()
                 : "まだこれから！"}
             </span>
           </div>

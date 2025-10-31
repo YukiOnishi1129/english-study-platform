@@ -21,6 +21,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     questionCount,
     currentQuestion,
     currentStatistics,
+    currentModeStatistics,
     questions,
     availableModes,
     selectedMode,
@@ -49,6 +50,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     speakingAnswer,
     onSpeakAnswer,
     remainingCount,
+    isLastQuestion,
     isSubmitting,
     onSelectQuestion,
     onNavigateUnit,
@@ -123,6 +125,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
               errorMessage={errorMessage}
               isAnswerVisible={isAnswerVisible}
               currentStatistics={currentStatistics}
+              currentModeStatistics={currentModeStatistics}
               speakingAnswer={speakingAnswer}
               onSpeakAnswer={onSpeakAnswer}
               remainingCount={remainingCount}
@@ -130,9 +133,14 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
               availableModes={availableModes}
               selectedMode={selectedMode}
               onChangeMode={onChangeMode}
+              isLastQuestion={isLastQuestion}
             />
 
-            <UnitStudyStatisticsCard statistics={currentStatistics} />
+            <UnitStudyStatisticsCard
+              statistics={currentStatistics}
+              selectedMode={selectedMode}
+              modeStatistics={currentModeStatistics}
+            />
           </div>
         </div>
       </div>

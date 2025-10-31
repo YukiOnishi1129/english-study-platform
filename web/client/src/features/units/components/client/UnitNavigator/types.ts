@@ -20,6 +20,8 @@ export interface NavigatorQuestion {
   label: string;
   displayText: string;
   statistics: UnitStudyQuestionViewModel["statistics"] | null;
+  modeStatistics: UnitStudyQuestionViewModel["activeModeStatistics"];
+  mode: UnitStudyQuestionViewModel["activeMode"] | null;
   order: number;
 }
 

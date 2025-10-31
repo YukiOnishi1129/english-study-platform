@@ -34,6 +34,8 @@ function mapQuestionToNavigator(
     label: `Q${question.order}`,
     displayText: buildNavigatorText(question),
     statistics: mapStatistics(question.statistics, question.modeStatistics),
+    modeStatistics: null,
+    mode: null,
     order: question.order,
   } satisfies NavigatorQuestion;
 }
@@ -67,6 +69,8 @@ export function useUnitNavigatorNodeView(props: UnitNavigatorNodeProps) {
         label: question.title,
         displayText: question.navigatorLabel ?? question.japanese,
         statistics: question.statistics,
+        modeStatistics: question.activeModeStatistics,
+        mode: question.activeMode,
         order: extractOrderFromTitle(question.title),
       }));
     }

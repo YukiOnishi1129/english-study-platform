@@ -61,6 +61,8 @@ export interface UnitStudyQuestionViewModel {
   japanese: string;
   promptText: string;
   promptNote: string | null;
+  sentencePromptJa: string | null;
+  sentenceTargetWord: string | null;
   hint: string | null;
   explanation: string | null;
   acceptableAnswers: string[];
@@ -71,8 +73,10 @@ export interface UnitStudyQuestionViewModel {
   navigatorLabel: string;
   definitionJa: string | null;
   statistics: UnitStudyQuestionStatisticsViewModel | null;
+  activeModeStatistics: UnitStudyModeStatisticsViewModel | null;
   availableModes: StudyMode[];
   defaultMode: StudyMode;
+  activeMode: StudyMode;
 }
 
 interface UnitStudyQuestionBase {
@@ -89,8 +93,7 @@ function getAvailableModes(
   question: UnitDetailDto["questions"][number],
 ): StudyMode[] {
   if (question.vocabulary?.definitionJa) {
-    const modes: StudyMode[] = ["jp_to_en"];
-    modes.push("en_to_jp");
+    const modes: StudyMode[] = ["en_to_jp", "jp_to_en"];
     if (question.vocabulary.exampleSentenceEn) {
       modes.push("sentence");
     }
@@ -113,27 +116,34 @@ function resolveQuestionView(
     (answer) => answer.answerText,
   );
 
+  const relationHintParts: string[] = [];
+  if (vocabulary?.synonyms?.length) {
+    relationHintParts.push(`類義語: ${vocabulary.synonyms.join(" / ")}`);
+  }
+  if (vocabulary?.antonyms?.length) {
+    relationHintParts.push(`対義語: ${vocabulary.antonyms.join(" / ")}`);
+  }
+  if (vocabulary?.relatedWords?.length) {
+    relationHintParts.push(`関連語: ${vocabulary.relatedWords.join(" / ")}`);
+  }
+
   let promptText = data.japanese;
   let navigatorLabel = data.japanese;
   let answerLabel = "回答を入力してみよう";
   let answerPlaceholder = "例: 回答を入力";
-  let promptNote =
-    data.prompt && data.prompt.trim().length > 0 ? data.prompt : null;
+  const promptNote =
+    data.prompt && data.prompt.trim().length > 0 ? data.prompt.trim() : null;
+  let sentencePromptJa: string | null = null;
+  let sentenceTargetWord: string | null = null;
 
-  if (vocabulary) {
-    const meta: string[] = [];
-    if (vocabulary.partOfSpeech) {
-      meta.push(vocabulary.partOfSpeech);
-    }
-    if (vocabulary.pronunciation) {
-      meta.push(vocabulary.pronunciation);
-    }
-    if (meta.length > 0) {
-      promptNote = promptNote
-        ? `${promptNote}\n${meta.join(" ・ ")}`
-        : meta.join(" ・ ");
-    }
-  }
+  const manualHint =
+    data.hint && data.hint.trim().length > 0 ? data.hint.trim() : null;
+  const relationsText = relationHintParts.join("\n");
+  const derivedHint = relationsText
+    ? manualHint
+      ? `${manualHint}\n${relationsText}`
+      : relationsText
+    : manualHint;
 
   let acceptableAnswers = baseAcceptableAnswers;
 
@@ -168,19 +178,27 @@ function resolveQuestionView(
     }
     acceptableAnswers = candidates;
   } else if (effectiveMode === "sentence") {
-    promptText = data.headword ?? baseAcceptableAnswers[0] ?? "";
-    navigatorLabel = promptText;
+    const sentenceJapanese =
+      vocabulary?.exampleSentenceJa &&
+      vocabulary.exampleSentenceJa.trim().length > 0
+        ? vocabulary.exampleSentenceJa.trim()
+        : data.japanese;
+    const targetHeadword =
+      vocabulary?.headword ?? data.headword ?? baseAcceptableAnswers[0] ?? "";
+    promptText = sentenceJapanese;
+    navigatorLabel = targetHeadword || promptText;
+    sentencePromptJa = sentenceJapanese;
+    sentenceTargetWord =
+      targetHeadword.trim().length > 0 ? targetHeadword : null;
     answerLabel = "例文を英語で入力";
     answerPlaceholder = "例: This is a pen.";
     acceptableAnswers = vocabulary?.exampleSentenceEn
       ? [vocabulary.exampleSentenceEn]
       : baseAcceptableAnswers;
-    if (vocabulary?.exampleSentenceJa) {
-      promptNote = promptNote
-        ? `${promptNote}\n和訳: ${vocabulary.exampleSentenceJa}`
-        : `和訳: ${vocabulary.exampleSentenceJa}`;
-    }
   }
+
+  const statistics = mapStatistics(data.statistics, data.modeStatistics);
+  const activeModeStatistics = statistics?.byMode?.[effectiveMode] ?? null;
 
   return {
     id: base.id,
@@ -189,7 +207,9 @@ function resolveQuestionView(
     japanese: data.japanese,
     promptText,
     promptNote,
-    hint: data.hint,
+    sentencePromptJa,
+    sentenceTargetWord,
+    hint: derivedHint,
     explanation: data.explanation,
     acceptableAnswers,
     vocabulary,
@@ -198,9 +218,11 @@ function resolveQuestionView(
     answerPlaceholder,
     navigatorLabel,
     definitionJa: vocabulary?.definitionJa ?? data.japanese,
-    statistics: mapStatistics(data.statistics, data.modeStatistics),
+    statistics,
+    activeModeStatistics,
     availableModes: base.availableModes,
     defaultMode: base.defaultMode,
+    activeMode: effectiveMode,
   };
 }
 
@@ -237,6 +259,7 @@ export interface UseUnitStudyContentResult {
   availableModes: StudyMode[];
   selectedMode: StudyMode;
   currentStatistics: UnitStudyQuestionStatisticsViewModel | null;
+  currentModeStatistics: UnitStudyModeStatisticsViewModel | null;
   inputValue: string;
   status: StudyStatus;
   isHintVisible: boolean;
@@ -424,6 +447,10 @@ export function useUnitStudyContent(
   const currentStatistics = currentQuestion
     ? (questionStatisticsMap[currentQuestion.id] ?? null)
     : null;
+  const currentModeStatistics =
+    currentMode && currentStatistics
+      ? (currentStatistics.byMode?.[currentMode] ?? null)
+      : (currentQuestion?.activeModeStatistics ?? null);
 
   const isAnswered = status !== "idle";
   const encouragement =
@@ -673,7 +700,7 @@ export function useUnitStudyContent(
 
   const handleModeChange = useCallback(
     (questionId: string, nextMode: StudyMode) => {
-      setModeByQuestion((prev) => ({ ...prev, [questionId]: nextMode }));
+      setModeByQuestion({ [questionId]: nextMode });
       setPreferredMode(nextMode);
       if (currentBaseQuestion && currentBaseQuestion.id === questionId) {
         resetStateForNextQuestion();
@@ -741,6 +768,7 @@ export function useUnitStudyContent(
     availableModes: currentBaseQuestion?.availableModes ?? ["default"],
     selectedMode: currentMode ?? currentBaseQuestion?.defaultMode ?? "default",
     currentStatistics,
+    currentModeStatistics,
     inputValue,
     status,
     isHintVisible,

@@ -37,7 +37,10 @@ const QuestionModeStatisticsSchema = z
     const record: Record<
       StudyMode,
       z.infer<typeof QuestionStatisticsPayloadSchema>
-    > = {} as Record<StudyMode, z.infer<typeof QuestionStatisticsPayloadSchema>>;
+    > = {} as Record<
+      StudyMode,
+      z.infer<typeof QuestionStatisticsPayloadSchema>
+    >;
 
     for (const [mode, stats] of entries) {
       record[mode] = stats;
