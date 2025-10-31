@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type {
+  ContentTypeDto,
   UnitDetailChapterDto,
   UnitDetailCorrectAnswerDto,
   UnitDetailDto,
@@ -7,6 +8,12 @@ import type {
   UnitDetailQuestionDto,
   UnitDetailUnitDto,
 } from "@/external/dto/material/material.query.dto";
+
+const contentTypeSchema: z.ZodType<ContentTypeDto> = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+});
 
 export const unitDetailMaterialSchema: z.ZodType<UnitDetailMaterialDto> =
   z.object({
@@ -16,6 +23,7 @@ export const unitDetailMaterialSchema: z.ZodType<UnitDetailMaterialDto> =
     order: z.number(),
     createdAt: z.string(),
     updatedAt: z.string(),
+    contentType: contentTypeSchema,
   });
 
 export const unitDetailChapterSchema: z.ZodType<UnitDetailChapterDto> =
@@ -29,6 +37,7 @@ export const unitDetailChapterSchema: z.ZodType<UnitDetailChapterDto> =
     order: z.number(),
     createdAt: z.string(),
     updatedAt: z.string(),
+    contentType: contentTypeSchema,
   });
 
 export const unitDetailCorrectAnswerSchema: z.ZodType<UnitDetailCorrectAnswerDto> =
@@ -44,11 +53,12 @@ export const unitDetailQuestionSchema: z.ZodType<UnitDetailQuestionDto> =
   z.object({
     id: z.string(),
     unitId: z.string(),
+    contentType: contentTypeSchema,
     japanese: z.string(),
     prompt: z.string().nullable(),
     hint: z.string().nullable(),
     explanation: z.string().nullable(),
-    questionType: z.string(),
+    variant: z.string(),
     vocabularyEntryId: z.string().nullable(),
     headword: z.string().nullable(),
     order: z.number(),
@@ -65,6 +75,7 @@ export const unitDetailUnitSchema: z.ZodType<UnitDetailUnitDto> = z.object({
   order: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  contentType: contentTypeSchema,
 });
 
 const unitDetailSchema: z.ZodType<UnitDetailDto> = z.object({

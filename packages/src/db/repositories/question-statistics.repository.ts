@@ -156,7 +156,7 @@ export class QuestionStatisticsRepositoryImpl implements QuestionStatisticsRepos
       contentTypeId,
       "aggregate",
       isCorrect,
-      null,
+      undefined,
     );
     const modeStat = await this.upsertCounts(
       userId,

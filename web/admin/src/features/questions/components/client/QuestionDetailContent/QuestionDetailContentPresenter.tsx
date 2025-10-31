@@ -42,7 +42,7 @@ export function QuestionDetailContentPresenter(
 
   const vocabularyEntry = detail.vocabularyEntry;
   const vocabulary =
-    detail.question.vocabularyEntryId && vocabularyEntry
+    detail.question.variant === "vocabulary" && vocabularyEntry
       ? vocabularyEntry
       : null;
   const synonyms =
@@ -60,6 +60,15 @@ export function QuestionDetailContentPresenter(
   const lastUpdated = new Date(detail.question.updatedAt).toLocaleString(
     "ja-JP",
   );
+
+  const variantLabelMap: Record<string, string> = {
+    vocabulary: "語彙問題",
+    phrase: "例文問題",
+    conversation: "会話問題",
+    writing: "ライティング",
+  };
+  const variantLabel =
+    variantLabelMap[detail.question.variant] ?? detail.question.variant;
 
   function renderChipList(label: string, items: string[], keyPrefix: string) {
     const uniqueItems = Array.from(new Set(items));
@@ -138,6 +147,14 @@ export function QuestionDetailContentPresenter(
           <p className="text-sm text-gray-600">
             UNIT「{detail.unit.name}」配下の問題です。
           </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+              {detail.question.contentType.name}
+            </span>
+            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              {variantLabel}
+            </span>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link

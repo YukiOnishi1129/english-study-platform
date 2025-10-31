@@ -153,6 +153,9 @@ export function MaterialDetailContentPresenter(
           <p className="text-sm text-gray-600">
             {detail.description ?? "説明は登録されていません。"}
           </p>
+          <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+            {detail.contentType.name}
+          </span>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Button asChild variant="outline">

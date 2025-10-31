@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 import type {
   ChapterDetailDto,
+  ContentTypeDto,
   MaterialHierarchyItemDto,
   QuestionDetailDto,
   UnitDetailDto,
@@ -10,6 +11,7 @@ import type {
 import { MaterialService } from "@/external/service/material/material.service";
 import { ensureChapterDetail } from "@/features/chapters/queries/validation";
 import {
+  ensureContentTypeList,
   ensureMaterialHierarchy,
   ensureMaterialHierarchyList,
 } from "@/features/materials/queries/validation";
@@ -90,4 +92,9 @@ export async function getQuestionDetail(request: {
   } catch (error) {
     remapNotFoundError(error, "QUESTION_NOT_FOUND");
   }
+}
+
+export async function listContentTypes(): Promise<ContentTypeDto[]> {
+  const contentTypes = await materialService.listContentTypes();
+  return ensureContentTypeList(contentTypes);
 }

@@ -6,6 +6,7 @@ export interface QuestionReorderTableItem {
   japanese: string;
   updatedAt: string;
   headword: string | null;
+  variant: string;
 }
 
 export interface QuestionReorderTableProps {

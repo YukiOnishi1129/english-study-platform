@@ -10,6 +10,7 @@ export async function createMaterialAction(
 ): Promise<FormState> {
   const name = formData.get("name");
   const description = formData.get("description");
+  const contentTypeId = formData.get("contentTypeId");
 
   try {
     const material = await createMaterial({
@@ -18,6 +19,10 @@ export async function createMaterialAction(
         typeof description === "string" && description.length > 0
           ? description
           : undefined,
+      contentTypeId:
+        typeof contentTypeId === "string" && contentTypeId.length > 0
+          ? contentTypeId
+          : "",
     });
 
     const detailPath = toMaterialDetailPath(material.id);

@@ -1,19 +1,25 @@
 import {
   ChapterRepositoryImpl,
+  ContentTypeRepositoryImpl,
   CorrectAnswerRepositoryImpl,
   MaterialRepositoryImpl,
+  PhraseQuestionRepositoryImpl,
   QuestionRepositoryImpl,
   UnitRepositoryImpl,
   VocabularyEntryRepositoryImpl,
+  VocabularyQuestionRepositoryImpl,
   VocabularyRelationRepositoryImpl,
 } from "@acme/shared/db";
 import {
   Chapter,
+  type ContentType,
   CorrectAnswer,
   Material,
+  PhraseQuestion,
   Question,
   Unit,
   VocabularyEntry,
+  VocabularyQuestion,
   VocabularyRelation,
 } from "@acme/shared/domain";
 import type {
@@ -43,7 +49,6 @@ import type {
   UnitDetailChapterDto,
   UnitDetailCorrectAnswerDto,
   UnitDetailDto,
-  UnitDetailMaterialDto,
   UnitDetailQuestionDto,
   UnitDetailUnitDto,
   VocabularyEntryDetailDto,
@@ -54,7 +59,15 @@ function serialize(date: Date): string {
   return date.toISOString();
 }
 
-function mapMaterialBase(material: Material) {
+function toContentTypeDto(contentType: ContentType) {
+  return {
+    id: contentType.id,
+    code: contentType.code,
+    name: contentType.name,
+  };
+}
+
+function mapMaterialBase(material: Material, contentType: ContentType) {
   return {
     id: material.id,
     name: material.name,
@@ -62,11 +75,13 @@ function mapMaterialBase(material: Material) {
     order: material.order,
     createdAt: serialize(material.createdAt),
     updatedAt: serialize(material.updatedAt),
+    contentType: toContentTypeDto(contentType),
   };
 }
 
 function mapChapterBase(
   chapter: Chapter,
+  contentType: ContentType,
 ): Omit<MaterialChapterSummaryDto, "units" | "children"> {
   return {
     id: chapter.id,
@@ -78,10 +93,15 @@ function mapChapterBase(
     order: chapter.order,
     createdAt: serialize(chapter.createdAt),
     updatedAt: serialize(chapter.updatedAt),
+    contentType: toContentTypeDto(contentType),
   };
 }
 
-function mapUnit(unit: Unit, questionCount = 0): MaterialUnitSummaryDto {
+function mapUnit(
+  unit: Unit,
+  questionCount: number,
+  contentType: ContentType,
+): MaterialUnitSummaryDto {
   return {
     id: unit.id,
     name: unit.name,
@@ -90,6 +110,7 @@ function mapUnit(unit: Unit, questionCount = 0): MaterialUnitSummaryDto {
     createdAt: serialize(unit.createdAt),
     updatedAt: serialize(unit.updatedAt),
     questionCount,
+    contentType: toContentTypeDto(contentType),
   };
 }
 
@@ -108,6 +129,8 @@ export class MaterialService {
 
   private readonly unitRepository = new UnitRepositoryImpl();
 
+  private readonly contentTypeRepository = new ContentTypeRepositoryImpl();
+
   private readonly questionRepository = new QuestionRepositoryImpl();
 
   private readonly correctAnswerRepository = new CorrectAnswerRepositoryImpl();
@@ -118,8 +141,44 @@ export class MaterialService {
   private readonly vocabularyRelationRepository =
     new VocabularyRelationRepositoryImpl();
 
+  private readonly phraseQuestionRepository =
+    new PhraseQuestionRepositoryImpl();
+
+  private readonly vocabularyQuestionRepository =
+    new VocabularyQuestionRepositoryImpl();
+
+  private async getContentTypeOrThrow(
+    contentTypeId: string,
+  ): Promise<ContentType> {
+    const contentType =
+      await this.contentTypeRepository.findById(contentTypeId);
+    if (!contentType) {
+      throw new Error(`コンテンツタイプが見つかりません: ${contentTypeId}`);
+    }
+    return contentType;
+  }
+
+  private async getContentTypeMap(): Promise<Map<string, ContentType>> {
+    const contentTypes = await this.contentTypeRepository.findAll();
+    return new Map(contentTypes.map((type) => [type.id, type]));
+  }
+
+  async listContentTypes() {
+    const contentTypes = await this.contentTypeRepository.findAll();
+    return contentTypes.map((type) => toContentTypeDto(type));
+  }
+
   async listMaterialsHierarchy(): Promise<MaterialHierarchyItemDto[]> {
     const materialEntities = await this.materialRepository.findAll();
+    const contentTypeMap = await this.getContentTypeMap();
+
+    const resolveContentType = (id: string): ContentType => {
+      const contentType = contentTypeMap.get(id);
+      if (!contentType) {
+        throw new Error(`コンテンツタイプが見つかりません: ${id}`);
+      }
+      return contentType;
+    };
 
     const materials = await Promise.all(
       materialEntities.map(async (materialEntity) => {
@@ -139,8 +198,17 @@ export class MaterialService {
               units.map((unit) => unit.id),
             );
             const dto: MaterialChapterSummaryDto = {
-              ...mapChapterBase(chapterEntity),
-              units: units.map((unit) => mapUnit(unit, counts[unit.id] ?? 0)),
+              ...mapChapterBase(
+                chapterEntity,
+                resolveContentType(chapterEntity.contentTypeId),
+              ),
+              units: units.map((unit) =>
+                mapUnit(
+                  unit,
+                  counts[unit.id] ?? 0,
+                  resolveContentType(unit.contentTypeId),
+                ),
+              ),
               children: [],
             };
             chapterMap.set(dto.id, dto);
@@ -161,7 +229,10 @@ export class MaterialService {
         sortChaptersRecursively(roots);
 
         return {
-          ...mapMaterialBase(materialEntity),
+          ...mapMaterialBase(
+            materialEntity,
+            resolveContentType(materialEntity.contentTypeId),
+          ),
           chapters: roots,
         } satisfies MaterialHierarchyItemDto;
       }),
@@ -190,18 +261,36 @@ export class MaterialService {
       throw new Error("Material not found");
     }
 
-    const [units, childChapters] = await Promise.all([
+    const [units, childChapters, contentTypeMap] = await Promise.all([
       this.unitRepository.findByChapterId(chapterEntity.id),
       this.chapterRepository.findByParentId(chapterEntity.id),
+      this.getContentTypeMap(),
     ]);
 
     const unitCounts = await this.questionRepository.countByUnitIds(
       units.map((unit) => unit.id),
     );
 
+    const resolveContentType = (id: string): ContentType => {
+      const contentType = contentTypeMap.get(id);
+      if (!contentType) {
+        throw new Error(`コンテンツタイプが見つかりません: ${id}`);
+      }
+      return contentType;
+    };
+
     const chapterDto: MaterialChapterSummaryDto = {
-      ...mapChapterBase(chapterEntity),
-      units: units.map((unit) => mapUnit(unit, unitCounts[unit.id] ?? 0)),
+      ...mapChapterBase(
+        chapterEntity,
+        resolveContentType(chapterEntity.contentTypeId),
+      ),
+      units: units.map((unit) =>
+        mapUnit(
+          unit,
+          unitCounts[unit.id] ?? 0,
+          resolveContentType(unit.contentTypeId),
+        ),
+      ),
       children: await Promise.all(
         childChapters.map(async (child) => {
           const childUnits = await this.unitRepository.findByChapterId(
@@ -211,9 +300,13 @@ export class MaterialService {
             childUnits.map((unit) => unit.id),
           );
           return {
-            ...mapChapterBase(child),
+            ...mapChapterBase(child, resolveContentType(child.contentTypeId)),
             units: childUnits.map((unit) =>
-              mapUnit(unit, childCounts[unit.id] ?? 0),
+              mapUnit(
+                unit,
+                childCounts[unit.id] ?? 0,
+                resolveContentType(unit.contentTypeId),
+              ),
             ),
             children: [],
           } satisfies MaterialChapterSummaryDto;
@@ -231,7 +324,10 @@ export class MaterialService {
       }));
 
     return {
-      material: mapMaterialBase(materialEntity),
+      material: mapMaterialBase(
+        materialEntity,
+        resolveContentType(materialEntity.contentTypeId),
+      ),
       chapter: chapterDto,
       ancestors,
     } satisfies ChapterDetailDto;
@@ -254,10 +350,19 @@ export class MaterialService {
       throw new Error("Material not found");
     }
 
-    const [chapterPath, questions] = await Promise.all([
+    const [chapterPath, questions, contentTypeMap] = await Promise.all([
       this.buildChapterPath(chapter),
       this.questionRepository.findByUnitId(unit.id),
+      this.getContentTypeMap(),
     ]);
+
+    const resolveContentType = (id: string): ContentType => {
+      const contentType = contentTypeMap.get(id);
+      if (!contentType) {
+        throw new Error(`コンテンツタイプが見つかりません: ${id}`);
+      }
+      return contentType;
+    };
 
     const questionsWithAnswers: UnitDetailQuestionDto[] = await Promise.all(
       questions.map(async (question): Promise<UnitDetailQuestionDto> => {
@@ -274,22 +379,47 @@ export class MaterialService {
           }))
           .sort((a, b) => a.order - b.order);
 
+        const questionContentType = resolveContentType(question.contentTypeId);
+
+        const variant = question.variant;
+
+        const phraseDetails =
+          variant === "phrase"
+            ? await this.phraseQuestionRepository.findByQuestionId(question.id)
+            : null;
+
+        const vocabularyDetails =
+          variant === "vocabulary"
+            ? await this.vocabularyQuestionRepository.findByQuestionId(
+                question.id,
+              )
+            : null;
+
         const vocabularyEntry = question.vocabularyEntryId
           ? await this.vocabularyEntryRepository.findById(
               question.vocabularyEntryId,
             )
           : null;
 
+        const japaneseText =
+          vocabularyDetails?.definitionJa ??
+          phraseDetails?.promptJa ??
+          question.japanese ??
+          "";
+
         return {
           id: question.id,
           unitId: question.unitId,
-          japanese: question.japanese,
-          prompt: question.prompt ?? null,
-          hint: question.hint ?? null,
-          explanation: question.explanation ?? null,
-          questionType: question.questionType,
+          contentType: toContentTypeDto(questionContentType),
+          japanese: japaneseText,
+          prompt: phraseDetails?.promptEn ?? question.prompt ?? null,
+          hint: phraseDetails?.hint ?? question.hint ?? null,
+          explanation:
+            phraseDetails?.explanation ?? question.explanation ?? null,
+          variant,
           vocabularyEntryId: question.vocabularyEntryId ?? null,
-          headword: vocabularyEntry?.headword ?? null,
+          headword:
+            vocabularyDetails?.headword ?? vocabularyEntry?.headword ?? null,
           order: question.order,
           createdAt: serialize(question.createdAt),
           updatedAt: serialize(question.updatedAt),
@@ -298,7 +428,6 @@ export class MaterialService {
       }),
     );
 
-    const materialDto: UnitDetailMaterialDto = mapMaterialBase(material);
     const unitDto: UnitDetailUnitDto = {
       id: unit.id,
       chapterId: unit.chapterId,
@@ -307,10 +436,14 @@ export class MaterialService {
       order: unit.order,
       createdAt: serialize(unit.createdAt),
       updatedAt: serialize(unit.updatedAt),
+      contentType: toContentTypeDto(resolveContentType(unit.contentTypeId)),
     };
 
     return {
-      material: materialDto,
+      material: mapMaterialBase(
+        material,
+        resolveContentType(material.contentTypeId),
+      ),
       chapterPath,
       unit: unitDto,
       questions: questionsWithAnswers.sort((a, b) => a.order - b.order),
@@ -338,10 +471,19 @@ export class MaterialService {
       throw new Error("Material not found");
     }
 
-    const chapterPath = await this.buildChapterPath(chapter);
-    const answers = await this.correctAnswerRepository.findByQuestionId(
-      question.id,
-    );
+    const [chapterPath, answers, contentTypeMap] = await Promise.all([
+      this.buildChapterPath(chapter),
+      this.correctAnswerRepository.findByQuestionId(question.id),
+      this.getContentTypeMap(),
+    ]);
+
+    const resolveContentType = (id: string): ContentType => {
+      const contentType = contentTypeMap.get(id);
+      if (!contentType) {
+        throw new Error(`コンテンツタイプが見つかりません: ${id}`);
+      }
+      return contentType;
+    };
 
     const answerDtos: UnitDetailCorrectAnswerDto[] = answers
       .map((answer) => ({
@@ -355,6 +497,22 @@ export class MaterialService {
 
     let vocabularyEntryDto: VocabularyEntryDetailDto | null = null;
     let questionHeadword: string | null = null;
+
+    const variant = question.variant;
+
+    const phraseDetails =
+      variant === "phrase"
+        ? await this.phraseQuestionRepository.findByQuestionId(question.id)
+        : null;
+
+    const vocabularyDetails =
+      variant === "vocabulary"
+        ? await this.vocabularyQuestionRepository.findByQuestionId(question.id)
+        : null;
+
+    if (vocabularyDetails?.headword) {
+      questionHeadword = vocabularyDetails.headword;
+    }
 
     if (question.vocabularyEntryId) {
       const entry = await this.vocabularyEntryRepository.findById(
@@ -405,14 +563,21 @@ export class MaterialService {
       }
     }
 
+    const japaneseText =
+      vocabularyDetails?.definitionJa ??
+      phraseDetails?.promptJa ??
+      question.japanese ??
+      "";
+
     const questionDto: UnitDetailQuestionDto = {
       id: question.id,
       unitId: question.unitId,
-      japanese: question.japanese,
-      prompt: question.prompt ?? null,
-      hint: question.hint ?? null,
-      explanation: question.explanation ?? null,
-      questionType: question.questionType,
+      contentType: toContentTypeDto(resolveContentType(question.contentTypeId)),
+      japanese: japaneseText,
+      prompt: phraseDetails?.promptEn ?? question.prompt ?? null,
+      hint: phraseDetails?.hint ?? question.hint ?? null,
+      explanation: phraseDetails?.explanation ?? question.explanation ?? null,
+      variant,
       vocabularyEntryId: question.vocabularyEntryId ?? null,
       headword: questionHeadword,
       order: question.order,
@@ -429,10 +594,14 @@ export class MaterialService {
       order: unit.order,
       createdAt: serialize(unit.createdAt),
       updatedAt: serialize(unit.updatedAt),
+      contentType: toContentTypeDto(resolveContentType(unit.contentTypeId)),
     };
 
     return {
-      material: mapMaterialBase(material),
+      material: mapMaterialBase(
+        material,
+        resolveContentType(material.contentTypeId),
+      ),
       chapterPath,
       unit: unitDto,
       question: questionDto,
@@ -444,6 +613,7 @@ export class MaterialService {
     payload: CreateMaterialRequest,
   ): Promise<MaterialHierarchyItemDto> {
     const existingMaterials = await this.materialRepository.findAll();
+    const contentType = await this.getContentTypeOrThrow(payload.contentTypeId);
     const nextOrder =
       existingMaterials.length === 0
         ? 1
@@ -453,12 +623,13 @@ export class MaterialService {
       name: payload.name,
       description: payload.description ?? undefined,
       order: nextOrder,
+      contentTypeId: contentType.id,
     });
 
     const saved = await this.materialRepository.save(material);
 
     return {
-      ...mapMaterialBase(saved),
+      ...mapMaterialBase(saved, contentType),
       chapters: [],
     };
   }
@@ -474,6 +645,7 @@ export class MaterialService {
       name: payload.name,
       description: payload.description ?? undefined,
       order: existing.order,
+      contentTypeId: existing.contentTypeId,
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     });
@@ -512,6 +684,9 @@ export class MaterialService {
         : Math.max(...siblingChapters.map((chapter) => chapter.order)) + 1;
 
     const level = parentChapter ? parentChapter.level + 1 : 0;
+    const materialContentType = await this.getContentTypeOrThrow(
+      material.contentTypeId,
+    );
 
     const chapter = Chapter.create({
       materialId: material.id,
@@ -520,12 +695,13 @@ export class MaterialService {
       description: payload.description ?? undefined,
       order: nextOrder,
       level,
+      contentTypeId: material.contentTypeId,
     });
 
     const saved = await this.chapterRepository.save(chapter);
 
     return {
-      ...mapChapterBase(saved),
+      ...mapChapterBase(saved, materialContentType),
       units: [],
       children: [],
     };
@@ -545,6 +721,7 @@ export class MaterialService {
       description: payload.description ?? undefined,
       order: existing.order,
       level: existing.level,
+      contentTypeId: existing.contentTypeId,
       createdAt: existing.createdAt,
       updatedAt: new Date(),
     });
@@ -563,16 +740,20 @@ export class MaterialService {
     const units = await this.unitRepository.findByChapterId(chapter.id);
     const nextOrder =
       units.length === 0 ? 1 : Math.max(...units.map((unit) => unit.order)) + 1;
+    const chapterContentType = await this.getContentTypeOrThrow(
+      chapter.contentTypeId,
+    );
 
     const unit = Unit.create({
       chapterId: chapter.id,
+      contentTypeId: chapter.contentTypeId,
       name: payload.name,
       description: payload.description ?? undefined,
       order: nextOrder,
     });
 
     const saved = await this.unitRepository.save(unit);
-    return mapUnit(saved);
+    return mapUnit(saved, 0, chapterContentType);
   }
 
   async updateUnit(
@@ -586,6 +767,7 @@ export class MaterialService {
     const updatedUnit = new Unit({
       id: existing.id,
       chapterId: existing.chapterId,
+      contentTypeId: existing.contentTypeId,
       name: payload.name,
       description: payload.description ?? undefined,
       order: existing.order,
@@ -594,7 +776,12 @@ export class MaterialService {
     });
 
     const saved = await this.unitRepository.save(updatedUnit);
-    return mapUnit(saved);
+    const unitContentType = await this.getContentTypeOrThrow(
+      saved.contentTypeId,
+    );
+    const countMap = await this.questionRepository.countByUnitIds([saved.id]);
+    const questionCount = countMap[saved.id] ?? 0;
+    return mapUnit(saved, questionCount, unitContentType);
   }
 
   async updateUnitOrders(payload: UpdateUnitOrdersRequest): Promise<void> {
@@ -715,7 +902,17 @@ export class MaterialService {
           updatedAt: new Date(),
         });
 
-        await this.questionRepository.save(updatedQuestion);
+        const savedQuestion =
+          await this.questionRepository.save(updatedQuestion);
+        await this.phraseQuestionRepository.save(
+          new PhraseQuestion({
+            questionId: savedQuestion.id,
+            promptJa: row.japanese,
+            promptEn: savedQuestion.prompt ?? null,
+            hint: row.hint ?? savedQuestion.hint ?? null,
+            explanation: row.explanation ?? savedQuestion.explanation ?? null,
+          }),
+        );
         await this.correctAnswerRepository.deleteByQuestionId(existing.id);
         for (const [index, answerText] of answers.entries()) {
           const answer = CorrectAnswer.create({
@@ -726,7 +923,7 @@ export class MaterialService {
           await this.correctAnswerRepository.save(answer);
         }
 
-        existingQuestionMap.set(existing.id, updatedQuestion);
+        existingQuestionMap.set(existing.id, savedQuestion);
         updatedCount += 1;
         continue;
       }
@@ -743,6 +940,15 @@ export class MaterialService {
       });
 
       const savedQuestion = await this.questionRepository.save(newQuestion);
+      await this.phraseQuestionRepository.save(
+        new PhraseQuestion({
+          questionId: savedQuestion.id,
+          promptJa: row.japanese,
+          promptEn: savedQuestion.prompt ?? null,
+          hint: row.hint ?? savedQuestion.hint ?? null,
+          explanation: row.explanation ?? savedQuestion.explanation ?? null,
+        }),
+      );
       for (const [index, answerText] of answers.entries()) {
         const answer = CorrectAnswer.create({
           questionId: savedQuestion.id,
@@ -1003,6 +1209,19 @@ export class MaterialService {
 
       const savedQuestion = await this.questionRepository.save(targetQuestion);
       questionMap.set(savedQuestion.id, savedQuestion);
+      await this.vocabularyQuestionRepository.save(
+        new VocabularyQuestion({
+          questionId: savedQuestion.id,
+          vocabularyEntryId: savedEntry.id,
+          headword: savedEntry.headword,
+          pronunciation: savedEntry.pronunciation ?? undefined,
+          partOfSpeech: savedEntry.partOfSpeech ?? undefined,
+          definitionJa: savedEntry.definitionJa,
+          memo: savedEntry.memo ?? undefined,
+          exampleSentenceEn: savedEntry.exampleSentenceEn ?? undefined,
+          exampleSentenceJa: savedEntry.exampleSentenceJa ?? undefined,
+        }),
+      );
 
       await this.correctAnswerRepository.deleteByQuestionId(savedQuestion.id);
       await Promise.all(
@@ -1052,7 +1271,21 @@ export class MaterialService {
       updatedAt: new Date(),
     });
 
-    await this.questionRepository.save(updatedQuestion);
+    const savedQuestion = await this.questionRepository.save(updatedQuestion);
+
+    if (existing.variant === "phrase") {
+      await this.phraseQuestionRepository.save(
+        new PhraseQuestion({
+          questionId: savedQuestion.id,
+          promptJa: payload.japanese,
+          promptEn: savedQuestion.prompt ?? null,
+          hint: savedQuestion.hint ?? null,
+          explanation: savedQuestion.explanation ?? null,
+        }),
+      );
+    }
+
+    let updatedVocabularyEntry: VocabularyEntry | null = null;
 
     if (payload.vocabulary) {
       if (!existing.vocabularyEntryId) {
@@ -1085,6 +1318,7 @@ export class MaterialService {
 
       const savedEntry =
         await this.vocabularyEntryRepository.save(updatedEntry);
+      updatedVocabularyEntry = savedEntry;
 
       await this.vocabularyRelationRepository.deleteByEntryId(savedEntry.id);
 
@@ -1118,6 +1352,31 @@ export class MaterialService {
         );
         await this.vocabularyRelationRepository.saveMany(relations);
       }
+    }
+
+    if (existing.variant === "vocabulary") {
+      let entry = updatedVocabularyEntry;
+      if (!entry && existing.vocabularyEntryId) {
+        entry = await this.vocabularyEntryRepository.findById(
+          existing.vocabularyEntryId,
+        );
+      }
+      if (!entry) {
+        throw new Error("語彙エントリが見つかりません。");
+      }
+      await this.vocabularyQuestionRepository.save(
+        new VocabularyQuestion({
+          questionId: savedQuestion.id,
+          vocabularyEntryId: entry.id,
+          headword: entry.headword,
+          pronunciation: entry.pronunciation ?? undefined,
+          partOfSpeech: entry.partOfSpeech ?? undefined,
+          definitionJa: entry.definitionJa,
+          memo: entry.memo ?? undefined,
+          exampleSentenceEn: entry.exampleSentenceEn ?? undefined,
+          exampleSentenceJa: entry.exampleSentenceJa ?? undefined,
+        }),
+      );
     }
 
     await this.correctAnswerRepository.deleteByQuestionId(existing.id);
@@ -1318,6 +1577,7 @@ export class MaterialService {
           description: chapter.description ?? undefined,
           order: nextOrder,
           level: chapter.level,
+          contentTypeId: chapter.contentTypeId,
           createdAt: chapter.createdAt,
           updatedAt: new Date(),
         });
@@ -1342,6 +1602,7 @@ export class MaterialService {
           name: material.name,
           description: material.description ?? undefined,
           order: nextOrder,
+          contentTypeId: material.contentTypeId,
           createdAt: material.createdAt,
           updatedAt: new Date(),
         });
@@ -1360,6 +1621,9 @@ export class MaterialService {
     let current = chapter;
 
     while (current) {
+      const contentType = await this.getContentTypeOrThrow(
+        current.contentTypeId,
+      );
       path.push({
         id: current.id,
         materialId: current.materialId,
@@ -1370,6 +1634,7 @@ export class MaterialService {
         order: current.order,
         createdAt: serialize(current.createdAt),
         updatedAt: serialize(current.updatedAt),
+        contentType: toContentTypeDto(contentType),
       });
 
       if (!current.parentChapterId) {

@@ -4,6 +4,7 @@ import type {
   MaterialChapterSummaryDto,
   UnitDetailMaterialDto,
 } from "@/external/dto/material/material.query.dto";
+import { contentTypeSchema } from "@/features/materials/queries/validation";
 
 const materialUnitSummarySchema = z.object({
   id: z.string(),
@@ -13,6 +14,7 @@ const materialUnitSummarySchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   questionCount: z.number(),
+  contentType: contentTypeSchema,
 });
 
 const chapterSummarySchema: z.ZodType<MaterialChapterSummaryDto> = z.lazy(() =>
@@ -28,6 +30,7 @@ const chapterSummarySchema: z.ZodType<MaterialChapterSummaryDto> = z.lazy(() =>
     updatedAt: z.string(),
     units: z.array(materialUnitSummarySchema),
     children: z.array(chapterSummarySchema),
+    contentType: contentTypeSchema,
   }),
 );
 
@@ -38,6 +41,7 @@ const materialSchema: z.ZodType<UnitDetailMaterialDto> = z.object({
   order: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  contentType: contentTypeSchema,
 });
 
 const chapterBreadcrumbItemSchema = z.object({

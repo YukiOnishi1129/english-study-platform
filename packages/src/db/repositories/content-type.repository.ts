@@ -71,7 +71,7 @@ export class ContentTypeRepositoryImpl implements ContentTypeRepository {
   private toDomain = (row: ContentTypeRow): DomainContentType =>
     new DomainContentType({
       id: row.id,
-      code: row.code,
+      code: row.code as ContentTypeCode,
       name: row.name,
       description: row.description ?? undefined,
       createdAt: row.createdAt,

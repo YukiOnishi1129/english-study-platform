@@ -5,6 +5,7 @@ import {
   getMaterialHierarchyById,
   getQuestionDetail,
   getUnitDetail,
+  listContentTypes,
   listMaterialsHierarchy,
 } from "./material.query.server";
 
@@ -44,4 +45,8 @@ export async function getUnitDetailAction(input: { unitId: string }) {
   } catch (_error) {
     return null;
   }
+}
+
+export async function listContentTypesAction() {
+  return listContentTypes();
 }

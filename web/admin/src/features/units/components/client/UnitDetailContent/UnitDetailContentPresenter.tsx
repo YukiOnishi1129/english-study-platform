@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { UnitDetailDto } from "@/external/dto/material/material.query.dto";
 import {
   toChapterDetailPath,
@@ -44,25 +44,25 @@ export function UnitDetailContentPresenter(
 
   const vocabularyQuestionCount = useMemo(
     () =>
-      detail?.questions.filter((question) => question.vocabularyEntryId)
+      detail?.questions.filter((question) => question.variant === "vocabulary")
         .length ?? 0,
     [detail?.questions],
   );
-  const isPureVocabularyUnit = useMemo(() => {
-    if (!detail) {
-      return false;
-    }
-    if (detail.questions.length === 0) {
-      return true;
-    }
-    return detail.questions.every((question) =>
-      Boolean(question.vocabularyEntryId),
-    );
-  }, [detail]);
+
+  const isVocabularyUnit = detail?.unit.contentType.code === "vocabulary";
 
   const [importMode, setImportMode] = useState<"question" | "vocabulary">(
-    isPureVocabularyUnit ? "vocabulary" : "question",
+    isVocabularyUnit ? "vocabulary" : "question",
   );
+
+  useEffect(() => {
+    if (isVocabularyUnit && importMode !== "vocabulary") {
+      setImportMode("vocabulary");
+    }
+    if (!isVocabularyUnit && importMode !== "question") {
+      setImportMode("question");
+    }
+  }, [isVocabularyUnit, importMode]);
 
   if (isLoading) {
     return (
@@ -97,6 +97,7 @@ export function UnitDetailContentPresenter(
     updatedAt: question.updatedAt,
     headword:
       question.headword ?? question.correctAnswers[0]?.answerText ?? null,
+    variant: question.variant,
   }));
   const parentChapterId = currentChapter?.id ?? detail.unit.chapterId;
   const selectedCount = selectedQuestionIds.length;
@@ -152,6 +153,11 @@ export function UnitDetailContentPresenter(
             {detail.chapterPath.map((chapter) => chapter.name).join(" / ")}{" "}
             配下のUNITです。
           </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+              {detail.unit.contentType.name}
+            </span>
+          </div>
         </div>
         <Link
           href={toUnitEditPath(detail.unit.id)}
@@ -210,6 +216,7 @@ export function UnitDetailContentPresenter(
               size="sm"
               variant={importMode === "question" ? "default" : "outline"}
               onClick={() => setImportMode("question")}
+              disabled={isVocabularyUnit}
             >
               問題CSVを取り込む
             </Button>
@@ -218,6 +225,7 @@ export function UnitDetailContentPresenter(
               size="sm"
               variant={importMode === "vocabulary" ? "default" : "outline"}
               onClick={() => setImportMode("vocabulary")}
+              disabled={!isVocabularyUnit}
             >
               語彙CSVを取り込む
             </Button>
