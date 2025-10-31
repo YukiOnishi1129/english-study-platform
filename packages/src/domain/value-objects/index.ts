@@ -1,28 +1,28 @@
 export {
+  CONTENT_TYPE_CODES,
+  type ContentTypeCode,
+  isContentTypeCode,
+} from "./ContentTypeCode";
+export {
   isFreeFormQuestionType,
   isVocabularyQuestionType,
   QUESTION_TYPES,
   type QuestionType,
 } from "./QuestionType";
 export {
-  CONTENT_TYPE_CODES,
-  type ContentTypeCode,
-  isContentTypeCode,
-} from "./ContentTypeCode";
+  isQuestionVariant,
+  QUESTION_VARIANTS,
+  type QuestionVariant,
+} from "./QuestionVariant";
 export {
+  isStudyModeCode,
   QUESTION_STATISTICS_MODES,
   type QuestionStatisticsMode,
   STUDY_MODE_CODES,
   STUDY_MODES,
-  type StudyModeCode,
   type StudyMode,
-  isStudyModeCode,
+  type StudyModeCode,
 } from "./StudyMode";
-export {
-  QUESTION_VARIANTS,
-  type QuestionVariant,
-  isQuestionVariant,
-} from "./QuestionVariant";
 export {
   VOCABULARY_RELATION_TYPES,
   type VocabularyRelationType,

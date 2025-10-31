@@ -12,4 +12,3 @@ export const phraseQuestions = pgTable("phrase_questions", {
   explanation: text("explanation"),
   audioUrl: text("audio_url"),
 });
-

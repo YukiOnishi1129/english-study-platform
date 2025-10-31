@@ -1,7 +1,7 @@
 import {
-  ContentType as DomainContentType,
-  type ContentTypeRepository,
   type ContentTypeCode,
+  type ContentTypeRepository,
+  ContentType as DomainContentType,
 } from "@acme/shared/domain";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { eq } from "drizzle-orm";
@@ -24,11 +24,7 @@ export class ContentTypeRepositoryImpl implements ContentTypeRepository {
   }
 
   async findByCode(code: ContentTypeCode): Promise<DomainContentType | null> {
-    const [row] = await db
-      .select()
-      .from(contentTypes)
-      .where(eq(contentTypes.code, code))
-      .limit(1);
+    const [row] = await db.select().from(contentTypes).where(eq(contentTypes.code, code)).limit(1);
 
     if (!row) {
       return null;
@@ -82,4 +78,3 @@ export class ContentTypeRepositoryImpl implements ContentTypeRepository {
       updatedAt: row.updatedAt,
     });
 }
-

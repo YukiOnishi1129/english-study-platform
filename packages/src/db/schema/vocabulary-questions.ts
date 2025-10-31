@@ -18,4 +18,3 @@ export const vocabularyQuestions = pgTable("vocabulary_questions", {
   exampleSentenceEn: text("example_sentence_en"),
   exampleSentenceJa: text("example_sentence_ja"),
 });
-

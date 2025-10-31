@@ -1,6 +1,6 @@
 import { integer, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
-import { contentTypes } from "./content-types";
 import { chapters } from "./chapters";
+import { contentTypes } from "./content-types";
 
 export const units = pgTable("units", {
   id: uuid("id").defaultRandom().primaryKey(),

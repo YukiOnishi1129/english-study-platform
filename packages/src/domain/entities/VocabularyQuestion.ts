@@ -38,4 +38,3 @@ export class VocabularyQuestion {
     this.relations = params.relations ?? [];
   }
 }
-

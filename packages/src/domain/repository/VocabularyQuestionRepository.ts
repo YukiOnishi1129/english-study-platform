@@ -6,4 +6,3 @@ export interface VocabularyQuestionRepository {
   save(question: VocabularyQuestion): Promise<VocabularyQuestion>;
   delete(questionId: string): Promise<void>;
 }
-

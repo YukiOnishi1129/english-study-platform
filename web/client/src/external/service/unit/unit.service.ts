@@ -163,12 +163,13 @@ export class UnitService {
 
     if (accountId) {
       const modes: QuestionStatisticsMode[] = [...QUESTION_STATISTICS_MODES];
-      const stats = await this.questionStatisticsRepository.findByUserAndQuestionIds(
-        accountId,
-        questionIds,
-        undefined,
-        modes,
-      );
+      const stats =
+        await this.questionStatisticsRepository.findByUserAndQuestionIds(
+          accountId,
+          questionIds,
+          undefined,
+          modes,
+        );
 
       stats.forEach((stat) => {
         const entry = statisticsMap.get(stat.questionId) ?? {

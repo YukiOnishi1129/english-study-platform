@@ -6,4 +6,3 @@ export interface PhraseQuestionRepository {
   save(question: PhraseQuestion): Promise<PhraseQuestion>;
   delete(questionId: string): Promise<void>;
 }
-

@@ -11,4 +11,3 @@ export const studyModes = pgTable("study_modes", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
-

@@ -7,4 +7,3 @@ export interface ContentTypeRepository {
   findAll(): Promise<ContentType[]>;
   save(contentType: ContentType): Promise<ContentType>;
 }
-

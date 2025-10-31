@@ -1,9 +1,10 @@
 export * from "./accounts";
+export * from "./chapters";
 export * from "./content-type-study-modes";
 export * from "./content-types";
-export * from "./chapters";
 export * from "./correct-answers";
 export * from "./materials";
+export * from "./phrase-questions";
 export * from "./question-statistics";
 export * from "./questions";
 export * from "./study-modes";
@@ -12,4 +13,3 @@ export * from "./user-answers";
 export * from "./vocabulary-entries";
 export * from "./vocabulary-questions";
 export * from "./vocabulary-relations";
-export * from "./phrase-questions";

@@ -7,4 +7,3 @@ export interface StudyModeRepository {
   findAll(): Promise<StudyModeDefinition[]>;
   save(studyMode: StudyModeDefinition): Promise<StudyModeDefinition>;
 }
-

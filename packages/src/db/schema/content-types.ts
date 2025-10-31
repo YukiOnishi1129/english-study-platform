@@ -11,4 +11,3 @@ export const contentTypes = pgTable("content_types", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
-

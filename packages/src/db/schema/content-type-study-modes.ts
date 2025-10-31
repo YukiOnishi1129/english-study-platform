@@ -19,4 +19,3 @@ export const contentTypeStudyModes = pgTable("content_type_study_modes", {
     .notNull()
     .$onUpdate(() => new Date()),
 });
-

@@ -7,4 +7,3 @@ export interface ContentTypeStudyModeRepository {
   save(mapping: ContentTypeStudyMode): Promise<ContentTypeStudyMode>;
   deleteByContentTypeId(contentTypeId: string): Promise<void>;
 }
-

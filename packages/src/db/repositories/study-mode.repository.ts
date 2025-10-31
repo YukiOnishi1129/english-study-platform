@@ -1,7 +1,7 @@
 import {
   StudyModeDefinition as DomainStudyMode,
-  type StudyModeRepository,
   type StudyModeCode,
+  type StudyModeRepository,
 } from "@acme/shared/domain";
 import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { eq } from "drizzle-orm";
@@ -24,11 +24,7 @@ export class StudyModeRepositoryImpl implements StudyModeRepository {
   }
 
   async findByCode(code: StudyModeCode): Promise<DomainStudyMode | null> {
-    const [row] = await db
-      .select()
-      .from(studyModes)
-      .where(eq(studyModes.code, code))
-      .limit(1);
+    const [row] = await db.select().from(studyModes).where(eq(studyModes.code, code)).limit(1);
 
     if (!row) {
       return null;
@@ -82,4 +78,3 @@ export class StudyModeRepositoryImpl implements StudyModeRepository {
       updatedAt: row.updatedAt,
     });
 }
-

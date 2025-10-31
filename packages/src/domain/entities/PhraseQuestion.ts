@@ -24,4 +24,3 @@ export class PhraseQuestion {
     this.audioUrl = params.audioUrl ?? null;
   }
 }
-
