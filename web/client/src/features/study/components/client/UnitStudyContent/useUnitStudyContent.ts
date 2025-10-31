@@ -547,13 +547,45 @@ export function useUnitStudyContent(
     answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : null;
   const isLastQuestion = questionCount > 0 && currentIndex >= questionCount - 1;
 
-  const moveToNextQuestion = useCallback(() => {
-    if (questionCount === 0) {
-      return;
+  const moveToNextQuestion = useCallback(
+    (options: { wrapAround?: boolean } = {}) => {
+      if (questionCount === 0) {
+        return;
+      }
+      setCurrentIndex((prev) => {
+        const nextIndex = prev + 1;
+        if (nextIndex >= questionCount) {
+          return options.wrapAround ? 0 : prev;
+        }
+        return nextIndex;
+      });
+      resetStateForNextQuestion();
+    },
+    [questionCount, resetStateForNextQuestion],
+  );
+
+  const findNextUnitId = useCallback(() => {
+    if (!materialDetail || !data) {
+      return null;
     }
-    setCurrentIndex((prev) => (prev + 1) % questionCount);
-    resetStateForNextQuestion();
-  }, [questionCount, resetStateForNextQuestion]);
+    const orderedChapters = materialDetail.chapters
+      .slice()
+      .sort((a, b) => a.order - b.order);
+    const orderedUnits = orderedChapters.flatMap((chapter) =>
+      chapter.units.slice().sort((a, b) => a.order - b.order),
+    );
+    const currentUnitId = data.unit.id;
+    const currentUnitIndex = orderedUnits.findIndex(
+      (unit) => unit.id === currentUnitId,
+    );
+    if (
+      currentUnitIndex === -1 ||
+      currentUnitIndex >= orderedUnits.length - 1
+    ) {
+      return null;
+    }
+    return orderedUnits[currentUnitIndex + 1]?.id ?? null;
+  }, [data, materialDetail]);
 
   const handleNext = useCallback(() => {
     if (questionCount === 0) {
@@ -561,11 +593,16 @@ export function useUnitStudyContent(
     }
     const isLastQuestion = currentIndex >= questionCount - 1;
     if (isLastQuestion) {
-      moveToNextQuestion();
+      const nextUnitId = findNextUnitId();
+      if (nextUnitId) {
+        router.push(`/units/${nextUnitId}/study` as Route);
+        return;
+      }
+      moveToNextQuestion({ wrapAround: true });
       return;
     }
     moveToNextQuestion();
-  }, [currentIndex, moveToNextQuestion, questionCount]);
+  }, [currentIndex, findNextUnitId, moveToNextQuestion, questionCount, router]);
 
   const submitAnswer = useMutation({
     mutationFn: async (

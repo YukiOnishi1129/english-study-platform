@@ -129,8 +129,7 @@ export function UnitStudyQuestionCard({
   const createSynonymKey = _createValueKeyGenerator(`synonym-${question.id}`);
   const createAntonymKey = _createValueKeyGenerator(`antonym-${question.id}`);
   const createRelatedKey = _createValueKeyGenerator(`related-${question.id}`);
-  const headword =
-    question.vocabulary?.headword ?? question.headword ?? null;
+  const headword = question.vocabulary?.headword ?? question.headword ?? null;
   const canSpeakHeadword = headword ? _canSpeakEnglish(headword) : false;
 
   return (
