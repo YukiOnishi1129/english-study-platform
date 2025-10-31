@@ -37,6 +37,7 @@ interface UnitStudyQuestionCardProps {
   onNext: () => void;
   disableNext: boolean;
   onRetryCurrent: () => void;
+  onRestartUnit: () => void;
   status: "idle" | "correct" | "incorrect";
   statusLabel: string;
   answeredCount: number;
@@ -53,9 +54,14 @@ interface UnitStudyQuestionCardProps {
   availableModes: StudyMode[];
   selectedMode: StudyMode;
   onChangeMode: (mode: StudyMode) => void;
-  isLastQuestion: boolean;
-  onRestartUnit: () => void;
 }
+
+const MODE_LABEL: Record<StudyMode, string> = {
+  jp_to_en: "英→日",
+  en_to_jp: "日→英",
+  sentence: "英作文",
+  default: "標準",
+};
 
 function getStatusIcon(status: "idle" | "correct" | "incorrect") {
   if (status === "correct") return CheckCircle2;
@@ -99,6 +105,7 @@ export function UnitStudyQuestionCard({
   onNext,
   disableNext,
   onRetryCurrent,
+  onRestartUnit,
   status,
   statusLabel,
   answeredCount,
@@ -115,75 +122,10 @@ export function UnitStudyQuestionCard({
   availableModes,
   selectedMode,
   onChangeMode,
-  isLastQuestion,
-  onRestartUnit,
 }: UnitStudyQuestionCardProps) {
   const StatusIcon = getStatusIcon(status);
-  const isSentenceMode = selectedMode === "sentence";
   const hasAnswered = status !== "idle";
-  const vocabulary = question.vocabulary ?? null;
-  const headwordText =
-    vocabulary?.headword ??
-    (question.headword && question.headword.trim().length > 0
-      ? question.headword
-      : null);
-  const shouldShowSeparateHeadword =
-    headwordText !== null &&
-    canSpeakEnglish(headwordText) &&
-    (selectedMode === "en_to_jp" ||
-      !question.acceptableAnswers.some(
-        (answer) =>
-          normalizeForComparison(answer) ===
-          normalizeForComparison(headwordText),
-      ));
-  const isHeadwordSpeaking = headwordText === speakingAnswer;
-  const sentenceTargetWord = question.sentenceTargetWord ?? null;
-  const isSentenceTargetSpeaking = sentenceTargetWord === speakingAnswer;
-
-  const renderVocabularyList = (label: string, items: string[] | undefined) => {
-    if (!items || items.length === 0) {
-      return null;
-    }
-    const buildKey = createValueKeyGenerator(label);
-    return (
-      <div className="space-y-1 text-xs text-slate-600">
-        <span className="font-semibold text-indigo-600">{label}</span>
-        <div className="flex flex-wrap gap-2">
-          {items.map((item) => {
-            const key = buildKey(item);
-            const speakable = canSpeakEnglish(item);
-            const isSpeaking = speakingAnswer === item;
-            return (
-              <div
-                key={key}
-                className="flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
-              >
-                <span>{item}</span>
-                {speakable ? (
-                  <button
-                    type="button"
-                    onClick={() => onSpeakAnswer(item)}
-                    disabled={isSubmitting || isSpeaking}
-                    className="rounded-full p-0.5 text-indigo-600 transition hover:text-indigo-500 disabled:opacity-60"
-                  >
-                    <Volume2 className="size-3.5" aria-hidden="true" />
-                    <span className="sr-only">{`${item} を音声で聞く`}</span>
-                  </button>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const shouldShowDefinition =
-    question.definitionJa &&
-    question.definitionJa.trim().length > 0 &&
-    question.definitionJa.trim() !== question.promptText.trim();
-
-  const buildAnswerKey = createValueKeyGenerator(`${question.id}-answer`);
+  const _isLastQuestion = remainingCount === 0;
 
   return (
     <Card className="border border-indigo-200/70 bg-white/95 shadow-md">
@@ -211,10 +153,10 @@ export function UnitStudyQuestionCard({
                 type="button"
                 variant={mode === selectedMode ? "default" : "outline"}
                 size="sm"
-                onClick={() => mode !== selectedMode && onChangeMode(mode)}
-                disabled={isSubmitting}
+                onClick={() => onChangeMode(mode)}
+                disabled={isSubmitting || mode === selectedMode}
               >
-                {MODE_LABELS[mode]}
+                {MODE_LABEL[mode]}
               </Button>
             ))}
           </div>
@@ -223,42 +165,9 @@ export function UnitStudyQuestionCard({
           {question.title} {question.promptText}
         </CardTitle>
         {question.promptNote ? (
-          <p className="whitespace-pre-line text-sm text-slate-500">
+          <p className="text-sm whitespace-pre-line text-slate-500">
             {question.promptNote}
           </p>
-        ) : null}
-        {isSentenceMode && question.sentencePromptJa ? (
-          <div className="space-y-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-3 text-sm text-indigo-900">
-            <div className="space-y-1">
-              <span className="font-semibold text-indigo-700">
-                以下の文章を英語で書いてください
-              </span>
-              <p className="whitespace-pre-line">{question.sentencePromptJa}</p>
-            </div>
-            {sentenceTargetWord ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-semibold text-indigo-700">
-                  この単語を使ってください
-                </span>
-                <span className="text-base font-semibold text-indigo-800">
-                  {sentenceTargetWord}
-                </span>
-                {canSpeakEnglish(sentenceTargetWord) ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                    onClick={() => onSpeakAnswer(sentenceTargetWord)}
-                    disabled={isSentenceTargetSpeaking}
-                  >
-                    <Volume2 className="size-4" />
-                    {isSentenceTargetSpeaking ? "再生中..." : "音声"}
-                  </Button>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
         ) : null}
         <CardDescription className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
           <span>
@@ -349,7 +258,7 @@ export function UnitStudyQuestionCard({
               <p className="text-xs text-indigo-600">
                 「次の問題へ進む」を押すと、次のクイズに挑戦できます。
               </p>
-              {isLastQuestion && hasAnswered ? (
+              {hasAnswered ? (
                 <div className="space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-xs text-emerald-800">
                   <p className="font-semibold text-sm">
                     このUNITの学習が一巡しました。もう一度最初から挑戦してみましょうか？
@@ -401,159 +310,130 @@ export function UnitStudyQuestionCard({
               <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
                 正解例
               </p>
-              {shouldShowSeparateHeadword && headwordText ? (
-                <div className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-2 text-sm text-indigo-900">
-                  <span className="font-semibold text-indigo-700">
-                    {headwordText}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                    onClick={() => onSpeakAnswer(headwordText)}
-                    disabled={isHeadwordSpeaking}
-                  >
-                    <Volume2 className="size-4" />
-                    {isHeadwordSpeaking ? "再生中..." : "音声"}
-                  </Button>
-                </div>
-              ) : null}
               <ul className="list-disc space-y-1 pl-5 text-sm text-indigo-900">
                 {question.acceptableAnswers.map((answer) => (
-                  <li
-                    key={buildAnswerKey(answer)}
-                    className="flex items-center gap-2"
-                  >
+                  <li key={answer} className="flex items-center gap-2">
                     <span>{answer}</span>
-                    {canSpeakEnglish(answer) ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                        onClick={() => onSpeakAnswer(answer)}
-                        disabled={speakingAnswer === answer}
-                      >
-                        <Volume2 className="size-4" />
-                        {speakingAnswer === answer ? "再生中..." : "音声"}
-                      </Button>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {shouldShowDefinition ? (
-              <div className="rounded-xl border border-indigo-100 bg-white/80 px-3 py-2 text-sm text-slate-700">
-                <span className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
-                  日本語の意味
-                </span>
-                <p className="mt-1">{question.definitionJa}</p>
-              </div>
-            ) : null}
-
-            {vocabulary ? (
-              <div className="space-y-2 rounded-xl border border-indigo-100 bg-white/80 px-3 py-3 text-sm text-slate-800">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-base font-semibold text-indigo-700">
-                    {vocabulary.headword}
-                  </span>
-                  {vocabulary.headword &&
-                  canSpeakEnglish(vocabulary.headword) ? (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                      onClick={() => {
-                        if (vocabulary.headword) {
-                          onSpeakAnswer(vocabulary.headword);
-                        }
-                      }}
-                      disabled={speakingAnswer === vocabulary.headword}
+                      onClick={() => onSpeakAnswer(answer)}
+                      disabled={speakingAnswer === answer}
                     >
                       <Volume2 className="size-4" />
-                      {speakingAnswer === vocabulary.headword
-                        ? "再生中..."
-                        : "音声"}
+                      {speakingAnswer === answer ? "再生中..." : "音声"}
                     </Button>
-                  ) : null}
-                  {vocabulary.partOfSpeech ? (
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700">
-                      {vocabulary.partOfSpeech}
-                    </span>
-                  ) : null}
-                  {vocabulary.pronunciation ? (
-                    <span className="text-xs text-muted-foreground">
-                      {vocabulary.pronunciation}
-                    </span>
-                  ) : null}
-                </div>
-                {vocabulary.definitionJa ? (
-                  <p className="text-sm text-slate-700">
-                    日本語訳: {vocabulary.definitionJa}
-                  </p>
-                ) : null}
-                {vocabulary.memo ? (
-                  <p className="text-xs text-muted-foreground">
-                    メモ: {vocabulary.memo}
-                  </p>
-                ) : null}
-                {renderVocabularyList("類義語", vocabulary.synonyms)}
-                {renderVocabularyList("対義語", vocabulary.antonyms)}
-                {renderVocabularyList("関連語", vocabulary.relatedWords)}
-                {vocabulary.exampleSentenceEn ||
-                vocabulary.exampleSentenceJa ? (
-                  <div className="space-y-1 rounded-lg bg-slate-50/80 px-3 py-2 text-xs text-slate-700">
-                    {vocabulary.exampleSentenceEn ? (
-                      <div className="flex items-start gap-2">
-                        <span className="mt-0.5 font-semibold text-indigo-600">
-                          英:
-                        </span>
-                        <span className="flex-1">
-                          {vocabulary.exampleSentenceEn}
-                        </span>
-                        {canSpeakEnglish(vocabulary.exampleSentenceEn) ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                            onClick={() => {
-                              if (vocabulary.exampleSentenceEn) {
-                                onSpeakAnswer(vocabulary.exampleSentenceEn);
-                              }
-                            }}
-                            disabled={
-                              speakingAnswer === vocabulary.exampleSentenceEn
-                            }
-                          >
-                            <Volume2 className="size-4" />
-                            {speakingAnswer === vocabulary.exampleSentenceEn
-                              ? "再生中..."
-                              : "音声"}
-                          </Button>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    {vocabulary.exampleSentenceJa ? (
-                      <p>
-                        <span className="font-semibold text-indigo-600">
-                          和:
-                        </span>{" "}
-                        {vocabulary.exampleSentenceJa}
-                      </p>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             {question.explanation ? (
               <p className="text-xs text-indigo-800/90">
                 解説: {question.explanation}
               </p>
+            ) : null}
+
+            {question.vocabulary ? (
+              <div className="space-y-2 rounded-xl border border-indigo-100 bg-white/80 px-3 py-3 text-sm text-slate-800">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-base font-semibold text-indigo-700">
+                    {question.vocabulary.headword}
+                  </span>
+                  {question.vocabulary.partOfSpeech ? (
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700">
+                      {question.vocabulary.partOfSpeech}
+                    </span>
+                  ) : null}
+                  {question.vocabulary.pronunciation ? (
+                    <span className="text-xs text-muted-foreground">
+                      {question.vocabulary.pronunciation}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-sm text-slate-700">
+                  日本語訳: {question.vocabulary.definitionJa}
+                </p>
+                {question.vocabulary.memo ? (
+                  <p className="text-xs text-muted-foreground">
+                    メモ: {question.vocabulary.memo}
+                  </p>
+                ) : null}
+                {question.vocabulary.synonyms.length > 0 ? (
+                  <div className="text-xs text-slate-600">
+                    <span className="font-semibold text-indigo-600">
+                      類義語
+                    </span>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {question.vocabulary.synonyms.map((item) => (
+                        <span
+                          key={`syn-${item}`}
+                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {question.vocabulary.antonyms.length > 0 ? (
+                  <div className="text-xs text-slate-600">
+                    <span className="font-semibold text-indigo-600">
+                      対義語
+                    </span>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {question.vocabulary.antonyms.map((item) => (
+                        <span
+                          key={`ant-${item}`}
+                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {question.vocabulary.relatedWords.length > 0 ? (
+                  <div className="text-xs text-slate-600">
+                    <span className="font-semibold text-indigo-600">
+                      関連語
+                    </span>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {question.vocabulary.relatedWords.map((item) => (
+                        <span
+                          key={`rel-${item}`}
+                          className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] text-indigo-700"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {question.vocabulary.exampleSentenceEn ||
+                question.vocabulary.exampleSentenceJa ? (
+                  <div className="space-y-1 rounded-lg bg-slate-50/80 px-3 py-2 text-xs text-slate-700">
+                    {question.vocabulary.exampleSentenceEn ? (
+                      <p>
+                        <span className="font-semibold text-indigo-600">
+                          英:
+                        </span>{" "}
+                        {question.vocabulary.exampleSentenceEn}
+                      </p>
+                    ) : null}
+                    {question.vocabulary.exampleSentenceJa ? (
+                      <p>
+                        <span className="font-semibold text-indigo-600">
+                          和:
+                        </span>{" "}
+                        {question.vocabulary.exampleSentenceJa}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             ) : null}
 
             {currentStatistics ? (
@@ -586,6 +466,27 @@ export function UnitStudyQuestionCard({
                       : "まだこれから！"}
                   </span>
                 </div>
+                {Object.entries(currentStatistics.byMode).length > 0 ? (
+                  <div className="mt-2 space-y-2 border-t border-indigo-100 pt-2">
+                    <p className="text-[11px] font-semibold text-indigo-600">
+                      モード別の成績
+                    </p>
+                    {Object.entries(currentStatistics.byMode).map(
+                      ([mode, stat]) => (
+                        <div
+                          key={mode}
+                          className="flex items-center justify-between text-[11px]"
+                        >
+                          <span>{MODE_LABEL[mode as StudyMode]}</span>
+                          <span>
+                            {Math.round(stat.accuracy * 100)}% (
+                            {stat.correctCount}/{stat.totalAttempts})
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <p className="text-xs text-indigo-700/80">

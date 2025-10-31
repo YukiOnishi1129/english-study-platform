@@ -52,12 +52,11 @@ export async function UnitStudyPageTemplate({
       }),
   });
 
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const storageKey = `unit-study-mode-${unitId}`;
-  const fallbackKey = GLOBAL_PREFERRED_MODE_KEY;
   const candidateValues = [
     cookieStore.get(storageKey)?.value ?? null,
-    cookieStore.get(fallbackKey)?.value ?? null,
+    cookieStore.get(GLOBAL_PREFERRED_MODE_KEY)?.value ?? null,
   ];
 
   let initialPreferredMode: StudyMode | null = null;

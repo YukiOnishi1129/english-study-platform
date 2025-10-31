@@ -9,6 +9,14 @@ export const StudyModeSchema = z.enum([
 
 export type StudyMode = z.infer<typeof StudyModeSchema>;
 
+const QuestionStatisticsPayloadSchema = z.object({
+  totalAttempts: z.number().int().nonnegative(),
+  correctCount: z.number().int().nonnegative(),
+  incorrectCount: z.number().int().nonnegative(),
+  accuracy: z.number().min(0).max(1),
+  lastAttemptedAt: z.string().nullable(),
+});
+
 export const SubmitUnitAnswerRequestSchema = z.object({
   unitId: z.uuid(),
   questionId: z.uuid(),
@@ -22,13 +30,10 @@ export type SubmitUnitAnswerRequest = z.infer<
 
 export const SubmitUnitAnswerResponseSchema = z.object({
   isCorrect: z.boolean(),
-  statistics: z.object({
-    totalAttempts: z.number().int().nonnegative(),
-    correctCount: z.number().int().nonnegative(),
-    incorrectCount: z.number().int().nonnegative(),
-    accuracy: z.number().min(0).max(1),
-    lastAttemptedAt: z.string().nullable(),
-  }),
+  statistics: QuestionStatisticsPayloadSchema,
+  modeStatistics: z
+    .record(StudyModeSchema, QuestionStatisticsPayloadSchema)
+    .optional(),
 });
 
 export type SubmitUnitAnswerResponse = z.infer<

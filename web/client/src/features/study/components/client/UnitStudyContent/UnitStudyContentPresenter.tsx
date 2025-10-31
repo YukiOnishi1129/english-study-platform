@@ -51,8 +51,9 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     isSubmitting,
     onSelectQuestion,
     onNavigateUnit,
+    availableModes,
+    selectedMode,
     onChangeMode,
-    isLastQuestion,
   } = props;
 
   if (isLoading) {
@@ -131,7 +132,6 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
               availableModes={availableModes}
               selectedMode={selectedMode}
               onChangeMode={onChangeMode}
-              isLastQuestion={isLastQuestion}
             />
 
             <UnitStudyStatisticsCard statistics={currentStatistics} />

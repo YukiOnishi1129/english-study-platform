@@ -5,7 +5,7 @@ import {
   UserAnswerRepositoryImpl,
   VocabularyEntryRepositoryImpl,
 } from "@acme/shared/db";
-import { UserAnswer } from "@acme/shared/domain";
+import { type StudyMode, UserAnswer } from "@acme/shared/domain";
 
 import {
   type NextStudyTargetDto,
@@ -20,7 +20,7 @@ function normalizeJapanese(value: string): string {
   return value
     .trim()
     .replace(/\s+/g, "")
-    .replace(/[\u3000]/g, "") // 全角スペース除去
+    .replace(/[\u3000]/g, "")
     .toLowerCase();
 }
 
@@ -31,6 +31,14 @@ function normalizeSentence(value: string): string {
 interface QuestionReference {
   unitId: string;
   questionId: string;
+}
+
+interface SerializedStatistics {
+  totalAttempts: number;
+  correctCount: number;
+  incorrectCount: number;
+  accuracy: number;
+  lastAttemptedAt: string | null;
 }
 
 export class StudyService {
@@ -101,31 +109,25 @@ export class StudyService {
     });
   }
 
-  async submitUnitAnswer(options: {
-    accountId: string;
-    unitId: string;
-    questionId: string;
+  private async isCorrectAnswer(options: {
+    mode: StudyMode;
     answerText: string;
-    mode: "jp_to_en" | "en_to_jp" | "sentence" | "default";
-  }) {
-    const { accountId, unitId, questionId, answerText, mode } = options;
-
-    const question = await this.questionRepository.findById(questionId);
-    if (!question || question.unitId !== unitId) {
-      throw new Error("QUESTION_NOT_FOUND");
-    }
-
-    const answers =
-      await this.correctAnswerRepository.findByQuestionId(questionId);
-
-    let isCorrect = false;
+    questionId: string;
+    questionJapanese: string;
+    vocabularyEntryId?: string;
+  }): Promise<boolean> {
+    const {
+      mode,
+      answerText,
+      questionId,
+      questionJapanese,
+      vocabularyEntryId,
+    } = options;
     const normalizedAnswer = normalizeAnswer(answerText);
 
     if (mode === "en_to_jp") {
-      const entry = question.vocabularyEntryId
-        ? await this.vocabularyEntryRepository.findById(
-            question.vocabularyEntryId,
-          )
+      const entry = vocabularyEntryId
+        ? await this.vocabularyEntryRepository.findById(vocabularyEntryId)
         : null;
 
       const candidates: string[] = [];
@@ -134,75 +136,119 @@ export class StudyService {
           .split(/[/、,・]/)
           .map((value) => value.trim())
           .filter(Boolean);
-        for (const value of parts) {
-          candidates.push(value);
-        }
+        candidates.push(...parts);
       }
       if (entry?.memo) {
         const parts = entry.memo
           .split(/[/、,・]/)
           .map((value) => value.trim())
           .filter(Boolean);
-        for (const value of parts) {
-          candidates.push(value);
-        }
+        candidates.push(...parts);
       }
-      candidates.push(question.japanese);
+      candidates.push(questionJapanese);
 
       const normalizedCandidates = candidates.map((value) =>
         normalizeJapanese(value),
       );
-      isCorrect = normalizedCandidates.some(
+      return normalizedCandidates.some(
         (value) => value === normalizeJapanese(answerText),
       );
-    } else if (mode === "sentence") {
-      const entry = question.vocabularyEntryId
-        ? await this.vocabularyEntryRepository.findById(
-            question.vocabularyEntryId,
-          )
+    }
+
+    if (mode === "sentence") {
+      const entry = vocabularyEntryId
+        ? await this.vocabularyEntryRepository.findById(vocabularyEntryId)
         : null;
       const expected = entry?.exampleSentenceEn ?? null;
       if (expected) {
-        isCorrect =
-          normalizeSentence(expected) === normalizeSentence(answerText);
-      } else {
-        isCorrect = answers.some(
-          (answer) => normalizeAnswer(answer.answerText) === normalizedAnswer,
-        );
+        return normalizeSentence(expected) === normalizeSentence(answerText);
       }
-    } else {
-      isCorrect = answers.some(
-        (answer) => normalizeAnswer(answer.answerText) === normalizedAnswer,
-      );
     }
+
+    const answers =
+      await this.correctAnswerRepository.findByQuestionId(questionId);
+    return answers.some(
+      (answer) => normalizeAnswer(answer.answerText) === normalizedAnswer,
+    );
+  }
+
+  private serializeStatistics(stats: {
+    totalAttempts: number;
+    correctCount: number;
+    incorrectCount: number;
+    accuracy: number;
+    lastAttemptedAt: Date | null;
+  }): SerializedStatistics {
+    return {
+      totalAttempts: stats.totalAttempts,
+      correctCount: stats.correctCount,
+      incorrectCount: stats.incorrectCount,
+      accuracy: stats.accuracy,
+      lastAttemptedAt: stats.lastAttemptedAt
+        ? stats.lastAttemptedAt.toISOString()
+        : null,
+    };
+  }
+
+  async submitUnitAnswer(options: {
+    accountId: string;
+    unitId: string;
+    questionId: string;
+    answerText: string;
+    mode: StudyMode;
+  }) {
+    const { accountId, unitId, questionId, answerText, mode } = options;
+
+    const question = await this.questionRepository.findById(questionId);
+    if (!question || question.unitId !== unitId) {
+      throw new Error("QUESTION_NOT_FOUND");
+    }
+
+    const isCorrect = await this.isCorrectAnswer({
+      mode,
+      answerText,
+      questionId,
+      questionJapanese: question.japanese,
+      vocabularyEntryId: question.vocabularyEntryId,
+    });
 
     const userAnswer = new UserAnswer({
       userId: accountId,
       questionId,
       userAnswerText: answerText,
       isCorrect,
+      mode,
       isManuallyMarked: false,
       answeredAt: new Date(),
     });
 
     await this.userAnswerRepository.save(userAnswer);
 
-    const statistics = await this.questionStatisticsRepository.incrementCounts(
-      accountId,
-      questionId,
-      isCorrect,
-    );
+    const { aggregate, mode: modeStatistics } =
+      await this.questionStatisticsRepository.incrementCounts(
+        accountId,
+        questionId,
+        mode,
+        isCorrect,
+      );
 
     return {
       isCorrect,
-      statistics: {
-        totalAttempts: statistics.totalAttempts,
-        correctCount: statistics.correctCount,
-        incorrectCount: statistics.incorrectCount,
-        accuracy: statistics.accuracy,
-        lastAttemptedAt: statistics.lastAttemptedAt
-          ? statistics.lastAttemptedAt.toISOString()
-          : null,
+      statistics: this.serializeStatistics({
+        totalAttempts: aggregate.totalAttempts,
+        correctCount: aggregate.correctCount,
+        incorrectCount: aggregate.incorrectCount,
+        accuracy: aggregate.accuracy,
+        lastAttemptedAt: aggregate.lastAttemptedAt,
+      }),
+      modeStatistics: {
+        [mode]: this.serializeStatistics({
+          totalAttempts: modeStatistics.totalAttempts,
+          correctCount: modeStatistics.correctCount,
+          incorrectCount: modeStatistics.incorrectCount,
+          accuracy: modeStatistics.accuracy,
+          lastAttemptedAt: modeStatistics.lastAttemptedAt,
+        }),
       },
     } as const;
   }

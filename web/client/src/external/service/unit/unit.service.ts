@@ -8,12 +8,39 @@ import {
   VocabularyEntryRepositoryImpl,
   VocabularyRelationRepositoryImpl,
 } from "@acme/shared/db";
+import {
+  QUESTION_STATISTICS_MODES,
+  type QuestionStatisticsMode,
+  STUDY_MODES,
+  type StudyMode,
+} from "@acme/shared/domain";
 
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { UnitDetailSchema } from "@/external/dto/unit/unit.query.dto";
 
 function serialize(date: Date): string {
   return date.toISOString();
+}
+
+type DomainQuestionStatistics = Awaited<
+  ReturnType<QuestionStatisticsRepositoryImpl["findByUserAndQuestionIds"]>
+>[number];
+
+function serializeStatistics(
+  stat: DomainQuestionStatistics | undefined | null,
+) {
+  if (!stat) {
+    return null;
+  }
+  return {
+    totalAttempts: stat.totalAttempts,
+    correctCount: stat.correctCount,
+    incorrectCount: stat.incorrectCount,
+    accuracy: stat.accuracy,
+    lastAttemptedAt: stat.lastAttemptedAt
+      ? serialize(stat.lastAttemptedAt)
+      : null,
+  } as const;
 }
 
 export class UnitService {
@@ -91,6 +118,10 @@ export class UnitService {
 
     const questions = await this.questionRepository.findByUnitId(unit.id);
     const questionIds = questions.map((question) => question.id);
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
     const vocabularyEntryIds = Array.from(
       new Set(
         questions
@@ -126,19 +157,35 @@ export class UnitService {
       );
     }
 
-    const statisticsMap = accountId
-      ? await this.questionStatisticsRepository
-          .findByUserAndQuestionIds(accountId, questionIds)
-          .then((stats) =>
-            stats.reduce<Record<string, (typeof stats)[number]>>(
-              (acc, item) => {
-                acc[item.questionId] = item;
-                return acc;
-              },
-              {},
-            ),
-          )
-      : {};
+    const statisticsMap = new Map<
+      string,
+      {
+        aggregate?: DomainQuestionStatistics;
+        perMode: Partial<Record<StudyMode, DomainQuestionStatistics>>;
+      }
+    >();
+
+    if (accountId) {
+      const modes: QuestionStatisticsMode[] = QUESTION_STATISTICS_MODES;
+      const stats =
+        await this.questionStatisticsRepository.findByUserAndQuestionIds(
+          accountId,
+          questionIds,
+          modes,
+        );
+
+      stats.forEach((stat) => {
+        const entry = statisticsMap.get(stat.questionId) ?? {
+          perMode: {},
+        };
+        if (stat.mode === "aggregate") {
+          entry.aggregate = stat;
+        } else if (STUDY_MODES.includes(stat.mode as StudyMode)) {
+          entry.perMode[stat.mode as StudyMode] = stat;
+        }
+        statisticsMap.set(stat.questionId, entry);
+      });
+    }
 
     const questionDtos = await Promise.all(
       questions.map(async (question) => {
@@ -149,6 +196,23 @@ export class UnitService {
         const vocabularyRecord = question.vocabularyEntryId
           ? (vocabularyEntryMap.get(question.vocabularyEntryId) ?? null)
           : null;
+
+        const statsEntry = statisticsMap.get(question.id);
+        const aggregateStats = serializeStatistics(statsEntry?.aggregate);
+        const perModeStats =
+          statsEntry && Object.keys(statsEntry.perMode).length > 0
+            ? Object.entries(statsEntry.perMode).reduce<
+                Record<
+                  StudyMode,
+                  NonNullable<ReturnType<typeof serializeStatistics>>
+                >
+              >((acc, [mode, stat]) => {
+                if (stat) {
+                  acc[mode as StudyMode] = serializeStatistics(stat)!;
+                }
+                return acc;
+              }, {})
+            : undefined;
 
         return {
           id: question.id,
@@ -175,21 +239,12 @@ export class UnitService {
               return null;
             }
             const { entry, relations } = vocabularyRecord;
-            const synonyms = relations
-              .filter((relation) => relation.relationType === "synonym")
-              .map((relation) => relation.relatedText)
-              .filter((text) => text.length > 0)
-              .sort((a, b) => a.localeCompare(b, "ja"));
-            const antonyms = relations
-              .filter((relation) => relation.relationType === "antonym")
-              .map((relation) => relation.relatedText)
-              .filter((text) => text.length > 0)
-              .sort((a, b) => a.localeCompare(b, "ja"));
-            const relatedWords = relations
-              .filter((relation) => relation.relationType === "related")
-              .map((relation) => relation.relatedText)
-              .filter((text) => text.length > 0)
-              .sort((a, b) => a.localeCompare(b, "ja"));
+            const buildList = (type: string) =>
+              relations
+                .filter((relation) => relation.relationType === type)
+                .map((relation) => relation.relatedText)
+                .filter((text) => text.length > 0)
+                .sort((a, b) => a.localeCompare(b, "ja"));
 
             return {
               id: entry.id,
@@ -198,28 +253,15 @@ export class UnitService {
               partOfSpeech: entry.partOfSpeech ?? null,
               definitionJa: entry.definitionJa,
               memo: entry.memo ?? null,
-              synonyms,
-              antonyms,
-              relatedWords,
+              synonyms: buildList("synonym"),
+              antonyms: buildList("antonym"),
+              relatedWords: buildList("related"),
               exampleSentenceEn: entry.exampleSentenceEn ?? null,
               exampleSentenceJa: entry.exampleSentenceJa ?? null,
             };
           })(),
-          statistics: (() => {
-            const stat = accountId ? statisticsMap[question.id] : undefined;
-            if (!stat) {
-              return null;
-            }
-            return {
-              totalAttempts: stat.totalAttempts,
-              correctCount: stat.correctCount,
-              incorrectCount: stat.incorrectCount,
-              accuracy: stat.accuracy,
-              lastAttemptedAt: stat.lastAttemptedAt
-                ? serialize(stat.lastAttemptedAt)
-                : null,
-            };
-          })(),
+          statistics: aggregateStats,
+          modeStatistics: perModeStats,
         };
       }),
     );

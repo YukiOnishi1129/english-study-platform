@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { StudyModeSchema } from "@/external/dto/study/submit-unit-answer.dto";
+
 export const GetUnitDetailRequestSchema = z.object({
   unitId: z.uuid(),
   accountId: z.uuid().optional().nullable(),
@@ -19,7 +21,7 @@ export type UnitDetailCorrectAnswerDto = z.infer<
   typeof UnitDetailCorrectAnswerSchema
 >;
 
-const UnitDetailVocabularySchema = z.object({
+export const UnitDetailVocabularySchema = z.object({
   id: z.string().min(1),
   headword: z.string().min(1),
   pronunciation: z.string().nullable(),
@@ -44,7 +46,7 @@ export const UnitDetailQuestionSchema = z.object({
   prompt: z.string().nullable(),
   hint: z.string().nullable(),
   explanation: z.string().nullable(),
-  questionType: z.string(),
+  questionType: z.string().min(1),
   vocabularyEntryId: z.string().nullable(),
   headword: z.string().nullable(),
   order: z.number().int(),
@@ -61,6 +63,19 @@ export const UnitDetailQuestionSchema = z.object({
       lastAttemptedAt: z.string().nullable(),
     })
     .nullable(),
+  modeStatistics: z
+    .record(
+      StudyModeSchema,
+      z.object({
+        totalAttempts: z.number().int().nonnegative(),
+        correctCount: z.number().int().nonnegative(),
+        incorrectCount: z.number().int().nonnegative(),
+        accuracy: z.number().min(0).max(1),
+        lastAttemptedAt: z.string().nullable(),
+      }),
+    )
+    .optional(),
+  vocabulary: UnitDetailVocabularySchema.nullable(),
 });
 
 export type UnitDetailQuestionDto = z.infer<typeof UnitDetailQuestionSchema>;

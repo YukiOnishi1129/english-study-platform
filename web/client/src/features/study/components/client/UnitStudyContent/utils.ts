@@ -1,3 +1,4 @@
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 
 import type {
@@ -45,9 +46,27 @@ export function buildBreadcrumb(
 
 export function mapStatistics(
   stats: UnitDetailDto["questions"][number]["statistics"],
+  modeStats?: UnitDetailDto["questions"][number]["modeStatistics"],
 ): UnitStudyQuestionStatisticsViewModel | null {
   if (!stats) {
     return null;
+  }
+
+  const byMode: Partial<
+    Record<StudyMode, UnitStudyQuestionStatisticsViewModel>
+  > = {};
+
+  if (modeStats) {
+    Object.entries(modeStats).forEach(([mode, value]) => {
+      byMode[mode as StudyMode] = {
+        totalAttempts: value.totalAttempts,
+        correctCount: value.correctCount,
+        incorrectCount: value.incorrectCount,
+        accuracy: value.accuracy,
+        lastAttemptedAt: value.lastAttemptedAt,
+        byMode: {},
+      } satisfies UnitStudyQuestionStatisticsViewModel;
+    });
   }
 
   return {
@@ -56,6 +75,7 @@ export function mapStatistics(
     incorrectCount: stats.incorrectCount,
     accuracy: stats.accuracy,
     lastAttemptedAt: stats.lastAttemptedAt,
+    byMode,
   } satisfies UnitStudyQuestionStatisticsViewModel;
 }
 
