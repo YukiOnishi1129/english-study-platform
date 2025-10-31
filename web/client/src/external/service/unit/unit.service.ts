@@ -118,10 +118,6 @@ export class UnitService {
 
     const questions = await this.questionRepository.findByUnitId(unit.id);
     const questionIds = questions.map((question) => question.id);
-<<<<<<< HEAD
-=======
-
->>>>>>> main
     const vocabularyEntryIds = Array.from(
       new Set(
         questions
@@ -207,8 +203,9 @@ export class UnitService {
                   NonNullable<ReturnType<typeof serializeStatistics>>
                 >
               >((acc, [mode, stat]) => {
-                if (stat) {
-                  acc[mode as StudyMode] = serializeStatistics(stat)!;
+                const serialized = serializeStatistics(stat);
+                if (serialized) {
+                  acc[mode as StudyMode] = serialized;
                 }
                 return acc;
               }, {})

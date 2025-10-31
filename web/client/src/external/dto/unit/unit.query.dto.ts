@@ -53,7 +53,6 @@ export const UnitDetailQuestionSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   correctAnswers: z.array(UnitDetailCorrectAnswerSchema),
-  vocabulary: UnitDetailVocabularySchema.nullable(),
   statistics: z
     .object({
       totalAttempts: z.number().int().nonnegative(),

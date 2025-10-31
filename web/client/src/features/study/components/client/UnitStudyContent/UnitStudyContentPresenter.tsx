@@ -24,6 +24,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     questions,
     availableModes,
     selectedMode,
+    onChangeMode,
     accountId,
     progressLabel,
     answeredCount,
@@ -51,9 +52,6 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     isSubmitting,
     onSelectQuestion,
     onNavigateUnit,
-    availableModes,
-    selectedMode,
-    onChangeMode,
   } = props;
 
   if (isLoading) {

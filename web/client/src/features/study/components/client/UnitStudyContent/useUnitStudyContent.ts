@@ -41,13 +41,17 @@ export interface UnitStudyBreadcrumbItem {
   href: string | null;
 }
 
-export interface UnitStudyQuestionStatisticsViewModel {
+export interface UnitStudyModeStatisticsViewModel {
   totalAttempts: number;
   correctCount: number;
   incorrectCount: number;
   accuracy: number;
   lastAttemptedAt: string | null;
-  byMode: Partial<Record<StudyMode, UnitStudyQuestionStatisticsViewModel>>;
+}
+
+export interface UnitStudyQuestionStatisticsViewModel
+  extends UnitStudyModeStatisticsViewModel {
+  byMode: Partial<Record<StudyMode, UnitStudyModeStatisticsViewModel>>;
 }
 
 export interface UnitStudyQuestionBase {
@@ -88,13 +92,6 @@ interface UnitStudyQuestionBase {
 }
 
 type StudyStatus = "idle" | "correct" | "incorrect";
-
-const _STUDY_MODE_LABEL: Record<StudyMode, string> = {
-  jp_to_en: "英→日",
-  en_to_jp: "日→英",
-  sentence: "英作文",
-  default: "標準",
-};
 
 function getAvailableModes(
   question: UnitDetailDto["questions"][number],
@@ -450,7 +447,8 @@ export function useUnitStudyContent(
         ? "また挑戦してみよう"
         : "解答を待っています";
   const remainingCount = questionCount - currentIndex - 1;
-  const isLastQuestion = questionCount > 0 && currentIndex >= questionCount - 1;
+  const _isLastQuestion =
+    questionCount > 0 && currentIndex >= questionCount - 1;
 
   const handleInputChange = useCallback((value: string) => {
     setInputValue(value);
@@ -598,9 +596,7 @@ export function useUnitStudyContent(
             ...(questionStatisticsMap[currentQuestion.id]?.byMode ?? {}),
             ...(result.modeStatistics
               ? Object.entries(result.modeStatistics).reduce<
-                  Partial<
-                    Record<StudyMode, UnitStudyQuestionStatisticsViewModel>
-                  >
+                  Partial<Record<StudyMode, UnitStudyModeStatisticsViewModel>>
                 >((acc, [mode, stats]) => {
                   acc[mode as StudyMode] = {
                     totalAttempts: stats.totalAttempts,
@@ -608,7 +604,6 @@ export function useUnitStudyContent(
                     incorrectCount: stats.incorrectCount,
                     accuracy: stats.accuracy,
                     lastAttemptedAt: stats.lastAttemptedAt,
-                    byMode: {},
                   };
                   return acc;
                 }, {})

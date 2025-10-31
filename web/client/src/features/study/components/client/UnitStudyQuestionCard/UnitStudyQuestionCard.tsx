@@ -69,7 +69,7 @@ function getStatusIcon(status: "idle" | "correct" | "incorrect") {
   return CircleHelp;
 }
 
-const MODE_LABELS: Record<StudyMode, string> = {
+const _MODE_LABELS: Record<StudyMode, string> = {
   jp_to_en: "英→日",
   en_to_jp: "日→英",
   sentence: "英作文",
@@ -78,14 +78,14 @@ const MODE_LABELS: Record<StudyMode, string> = {
 
 const JAPANESE_CHAR_PATTERN = /[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]/u;
 
-function canSpeakEnglish(text: string): boolean {
+function _canSpeakEnglish(text: string): boolean {
   if (!text.trim()) {
     return false;
   }
   return !JAPANESE_CHAR_PATTERN.test(text);
 }
 
-function createValueKeyGenerator(prefix: string) {
+function _createValueKeyGenerator(prefix: string) {
   const occurrences = new Map<string, number>();
   return (value: string) => {
     const occurrence = occurrences.get(value) ?? 0;
@@ -500,6 +500,6 @@ export function UnitStudyQuestionCard({
   );
 }
 
-function normalizeForComparison(value: string): string {
+function _normalizeForComparison(value: string): string {
   return value.trim().toLowerCase();
 }
