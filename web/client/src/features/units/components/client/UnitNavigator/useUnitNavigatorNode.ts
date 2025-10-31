@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import type { UnitDetailQuestionStatisticsDto } from "@/external/dto/unit/unit.query.dto";
 import { mapStatistics } from "@/features/study/components/client/UnitStudyContent/utils";
 import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 
@@ -40,6 +41,18 @@ function mapQuestionToNavigator(
   } satisfies NavigatorQuestion;
 }
 
+function transformModeStats(
+  stats: UnitDetailQuestionStatisticsDto,
+): NavigatorQuestion["modeStatistics"] {
+  return {
+    totalAttempts: stats.totalAttempts,
+    correctCount: stats.correctCount,
+    incorrectCount: stats.incorrectCount,
+    accuracy: stats.accuracy,
+    lastAttemptedAt: stats.lastAttemptedAt,
+  };
+}
+
 export function useUnitNavigatorNodeView(props: UnitNavigatorNodeProps) {
   const {
     unit,
@@ -48,6 +61,7 @@ export function useUnitNavigatorNodeView(props: UnitNavigatorNodeProps) {
     isExpanded,
     currentQuestionId,
     currentUnitQuestions,
+    displayMode,
   } = props;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -79,8 +93,27 @@ export function useUnitNavigatorNodeView(props: UnitNavigatorNodeProps) {
       return [];
     }
 
-    return data.questions.map(mapQuestionToNavigator);
-  }, [currentUnitQuestions, data, isCurrentUnit]);
+    const targetMode = displayMode;
+
+    return data.questions.map((question) => {
+      const base = mapQuestionToNavigator(question);
+      const modeStats = question.modeStatistics?.[targetMode] ?? null;
+
+      const displayText =
+        targetMode === "en_to_jp"
+          ? (question.headword ??
+            question.correctAnswers[0]?.answerText ??
+            question.japanese)
+          : question.japanese;
+
+      return {
+        ...base,
+        displayText,
+        mode: targetMode,
+        modeStatistics: modeStats ? transformModeStats(modeStats) : null,
+      };
+    });
+  }, [currentUnitQuestions, data, displayMode, isCurrentUnit]);
 
   const solvedRate =
     unit.questionCount > 0

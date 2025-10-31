@@ -1,4 +1,5 @@
 import type { MaterialDetailDto } from "@/external/dto/material/material.detail.dto";
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import type { UnitDetailQuestionDto } from "@/external/dto/unit/unit.query.dto";
 
 import type { UnitStudyQuestionViewModel } from "@/features/study/components/client/UnitStudyContent/useUnitStudyContent";
@@ -10,6 +11,7 @@ export interface UnitNavigatorNodeProps {
   isExpanded: boolean;
   currentQuestionId: string | null;
   currentUnitQuestions: UnitStudyQuestionViewModel[];
+  displayMode: StudyMode;
   onToggle: () => void;
   onSelectQuestion: (questionId: string) => void;
   onNavigateUnit: (unitId: string, questionId?: string) => void;

@@ -16,6 +16,7 @@ export function NavigatorContent(props: NavigatorContentProps) {
     onToggleUnit,
     onSelectQuestion,
     onNavigateUnit,
+    displayMode,
   } = props;
 
   if (!materialDetail) {
@@ -61,6 +62,7 @@ export function NavigatorContent(props: NavigatorContentProps) {
                     isExpanded={expandedUnitId === unit.id}
                     currentQuestionId={currentQuestionId}
                     currentUnitQuestions={currentUnitQuestions}
+                    displayMode={displayMode}
                     onToggle={() => onToggleUnit(unit.id)}
                     onSelectQuestion={onSelectQuestion}
                     onNavigateUnit={onNavigateUnit}

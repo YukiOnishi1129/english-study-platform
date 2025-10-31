@@ -28,6 +28,7 @@ export function StudyNavigatorPresenter(props: StudyNavigatorPresenterProps) {
     currentQuestionId,
     questions,
     accountId,
+    displayMode,
     expandedUnitId,
     isNavigatorReady,
     isOpen,
@@ -45,6 +46,7 @@ export function StudyNavigatorPresenter(props: StudyNavigatorPresenterProps) {
       currentUnitQuestions={questions}
       accountId={accountId}
       expandedUnitId={expandedUnitId}
+      displayMode={displayMode}
       onToggleUnit={onToggleUnit}
       onSelectQuestion={onSelectQuestionInternal}
       onNavigateUnit={onNavigateUnitInternal}

@@ -85,6 +85,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
             currentQuestionId={currentQuestion.id}
             currentUnitQuestions={questions}
             accountId={accountId}
+            displayMode={selectedMode}
             onSelectQuestion={onSelectQuestion}
             onNavigateUnit={onNavigateUnit}
             maxHeight="calc(100vh - 12rem)"
@@ -152,6 +153,7 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
           currentQuestionId={currentQuestion.id}
           questions={questions}
           accountId={accountId}
+          displayMode={selectedMode}
           onSelectQuestion={onSelectQuestion}
           onNavigateUnit={onNavigateUnit}
         />
