@@ -17,6 +17,35 @@ const QuestionStatisticsPayloadSchema = z.object({
   lastAttemptedAt: z.string().nullable(),
 });
 
+const QuestionModeStatisticsSchema = z
+  .object({
+    jp_to_en: QuestionStatisticsPayloadSchema.optional(),
+    en_to_jp: QuestionStatisticsPayloadSchema.optional(),
+    sentence: QuestionStatisticsPayloadSchema.optional(),
+    default: QuestionStatisticsPayloadSchema.optional(),
+  })
+  .partial()
+  .transform((value) => {
+    const entries = Object.entries(value).filter(
+      ([, stats]) => stats !== undefined,
+    ) as Array<[StudyMode, z.infer<typeof QuestionStatisticsPayloadSchema>]>;
+
+    if (entries.length === 0) {
+      return undefined;
+    }
+
+    const record: Record<
+      StudyMode,
+      z.infer<typeof QuestionStatisticsPayloadSchema>
+    > = {} as Record<StudyMode, z.infer<typeof QuestionStatisticsPayloadSchema>>;
+
+    for (const [mode, stats] of entries) {
+      record[mode] = stats;
+    }
+
+    return record;
+  });
+
 export const SubmitUnitAnswerRequestSchema = z.object({
   unitId: z.uuid(),
   questionId: z.uuid(),
@@ -31,9 +60,7 @@ export type SubmitUnitAnswerRequest = z.infer<
 export const SubmitUnitAnswerResponseSchema = z.object({
   isCorrect: z.boolean(),
   statistics: QuestionStatisticsPayloadSchema,
-  modeStatistics: z
-    .record(StudyModeSchema, QuestionStatisticsPayloadSchema)
-    .optional(),
+  modeStatistics: QuestionModeStatisticsSchema.optional(),
 });
 
 export type SubmitUnitAnswerResponse = z.infer<
