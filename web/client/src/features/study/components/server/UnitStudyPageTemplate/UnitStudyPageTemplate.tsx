@@ -52,7 +52,7 @@ export async function UnitStudyPageTemplate({
       }),
   });
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const storageKey = `unit-study-mode-${unitId}`;
   const candidateValues = [
     cookieStore.get(storageKey)?.value ?? null,

@@ -58,6 +58,9 @@ export function mapStatistics(
 
   if (modeStats) {
     Object.entries(modeStats).forEach(([mode, value]) => {
+      if (!value) {
+        return;
+      }
       const serialized: UnitStudyModeStatisticsViewModel = {
         totalAttempts: value.totalAttempts,
         correctCount: value.correctCount,

@@ -162,7 +162,7 @@ export class UnitService {
     >();
 
     if (accountId) {
-      const modes: QuestionStatisticsMode[] = QUESTION_STATISTICS_MODES;
+      const modes: QuestionStatisticsMode[] = [...QUESTION_STATISTICS_MODES];
       const stats =
         await this.questionStatisticsRepository.findByUserAndQuestionIds(
           accountId,
@@ -198,9 +198,11 @@ export class UnitService {
         const perModeStats =
           statsEntry && Object.keys(statsEntry.perMode).length > 0
             ? Object.entries(statsEntry.perMode).reduce<
-                Record<
-                  StudyMode,
-                  NonNullable<ReturnType<typeof serializeStatistics>>
+                Partial<
+                  Record<
+                    StudyMode,
+                    NonNullable<ReturnType<typeof serializeStatistics>>
+                  >
                 >
               >((acc, [mode, stat]) => {
                 const serialized = serializeStatistics(stat);
@@ -258,7 +260,10 @@ export class UnitService {
             };
           })(),
           statistics: aggregateStats,
-          modeStatistics: perModeStats,
+          modeStatistics:
+            perModeStats && Object.keys(perModeStats).length > 0
+              ? perModeStats
+              : undefined,
         };
       }),
     );

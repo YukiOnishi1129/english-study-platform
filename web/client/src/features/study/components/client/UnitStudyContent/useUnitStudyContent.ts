@@ -54,14 +54,6 @@ export interface UnitStudyQuestionStatisticsViewModel
   byMode: Partial<Record<StudyMode, UnitStudyModeStatisticsViewModel>>;
 }
 
-export interface UnitStudyQuestionBase {
-  id: string;
-  order: number;
-  source: UnitDetailDto["questions"][number];
-  availableModes: StudyMode[];
-  defaultMode: StudyMode;
-}
-
 export interface UnitStudyQuestionViewModel {
   id: string;
   title: string;
@@ -526,6 +518,7 @@ export function useUnitStudyContent(
     questionCount > 0 ? `${currentIndex + 1} / ${questionCount}` : "0 / 0";
   const accuracyRate =
     answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : null;
+  const isLastQuestion = questionCount > 0 && currentIndex >= questionCount - 1;
 
   const moveToNextQuestion = useCallback(() => {
     if (questionCount === 0) {
@@ -780,5 +773,6 @@ export function useUnitStudyContent(
     encouragement,
     statusLabel,
     remainingCount,
+    isLastQuestion,
   };
 }

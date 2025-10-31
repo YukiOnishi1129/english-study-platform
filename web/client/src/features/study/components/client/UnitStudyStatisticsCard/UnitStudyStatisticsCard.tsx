@@ -69,18 +69,23 @@ export function UnitStudyStatisticsCard({
           <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-3 text-xs text-slate-700">
             <p className="font-semibold text-indigo-600">モード別の記録</p>
             <div className="mt-2 space-y-1">
-              {Object.entries(statistics.byMode).map(([mode, value]) => (
-                <div
-                  key={mode}
-                  className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-1"
-                >
-                  <span>{MODE_LABEL[mode as StudyMode]}</span>
-                  <span>
-                    {Math.round(value.accuracy * 100)}% ({value.correctCount}/
-                    {value.totalAttempts})
-                  </span>
-                </div>
-              ))}
+              {Object.entries(statistics.byMode).map(([mode, value]) => {
+                if (!value) {
+                  return null;
+                }
+                return (
+                  <div
+                    key={mode}
+                    className="flex items-center justify-between rounded-lg bg-white/70 px-3 py-1"
+                  >
+                    <span>{MODE_LABEL[mode as StudyMode]}</span>
+                    <span>
+                      {Math.round(value.accuracy * 100)}% ({value.correctCount}/
+                      {value.totalAttempts})
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : null}

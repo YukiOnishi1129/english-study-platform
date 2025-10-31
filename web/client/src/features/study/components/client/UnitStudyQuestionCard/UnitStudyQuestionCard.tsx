@@ -472,18 +472,23 @@ export function UnitStudyQuestionCard({
                       モード別の成績
                     </p>
                     {Object.entries(currentStatistics.byMode).map(
-                      ([mode, stat]) => (
-                        <div
-                          key={mode}
-                          className="flex items-center justify-between text-[11px]"
-                        >
-                          <span>{MODE_LABEL[mode as StudyMode]}</span>
-                          <span>
-                            {Math.round(stat.accuracy * 100)}% (
-                            {stat.correctCount}/{stat.totalAttempts})
-                          </span>
-                        </div>
-                      ),
+                      ([mode, stat]) => {
+                        if (!stat) {
+                          return null;
+                        }
+                        return (
+                          <div
+                            key={mode}
+                            className="flex items-center justify-between text-[11px]"
+                          >
+                            <span>{MODE_LABEL[mode as StudyMode]}</span>
+                            <span>
+                              {Math.round(stat.accuracy * 100)}% (
+                              {stat.correctCount}/{stat.totalAttempts})
+                            </span>
+                          </div>
+                        );
+                      },
                     )}
                   </div>
                 ) : null}
