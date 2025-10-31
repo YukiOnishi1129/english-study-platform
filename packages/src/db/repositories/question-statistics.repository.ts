@@ -9,6 +9,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "../client";
 import { questionStatistics } from "../schema/question-statistics";
+import { studyModes } from "../schema/study-modes";
 
 export type QuestionStatisticsRow = InferSelectModel<typeof questionStatistics>;
 export type NewQuestionStatistics = InferInsertModel<typeof questionStatistics>;
@@ -147,6 +148,8 @@ export class QuestionStatisticsRepositoryImpl implements QuestionStatisticsRepos
     aggregate: DomainQuestionStatistics;
     mode: DomainQuestionStatistics;
   }> {
+    const resolvedStudyModeId = studyModeId ?? (await this.resolveStudyModeId(mode));
+
     const aggregate = await this.upsertCounts(
       userId,
       questionId,
@@ -161,8 +164,22 @@ export class QuestionStatisticsRepositoryImpl implements QuestionStatisticsRepos
       contentTypeId,
       mode,
       isCorrect,
-      studyModeId,
+      resolvedStudyModeId,
     );
     return { aggregate, mode: modeStat };
+  }
+
+  private async resolveStudyModeId(mode: StudyMode): Promise<string> {
+    const [row] = await db
+      .select({ id: studyModes.id })
+      .from(studyModes)
+      .where(eq(studyModes.code, mode))
+      .limit(1);
+
+    if (!row) {
+      throw new Error(`Study mode "${mode}" is not registered`);
+    }
+
+    return row.id;
   }
 }
