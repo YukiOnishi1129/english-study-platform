@@ -1,7 +1,23 @@
-export const STUDY_MODES = ["jp_to_en", "en_to_jp", "sentence", "default"] as const;
+export const STUDY_MODE_CODES = [
+  "jp_to_en",
+  "en_to_jp",
+  "sentence",
+  "conversation_roleplay",
+  "listening_comprehension",
+  "writing_review",
+] as const;
 
-export type StudyMode = (typeof STUDY_MODES)[number];
+// Backward compatibility alias
+export const STUDY_MODES = STUDY_MODE_CODES;
 
-export const QUESTION_STATISTICS_MODES = ["aggregate", ...STUDY_MODES] as const;
+export type StudyModeCode = (typeof STUDY_MODE_CODES)[number];
+
+export type StudyMode = StudyModeCode;
+
+export const QUESTION_STATISTICS_MODES = ["aggregate", ...STUDY_MODE_CODES] as const;
 
 export type QuestionStatisticsMode = (typeof QUESTION_STATISTICS_MODES)[number];
+
+export function isStudyModeCode(value: string): value is StudyModeCode {
+  return (STUDY_MODE_CODES as readonly string[]).includes(value);
+}

@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 export interface UnitParams {
   id?: string;
   chapterId: string;
+  contentTypeId: string;
   name: string;
   description?: string;
   order: number;
@@ -13,6 +14,7 @@ export interface UnitParams {
 export class Unit {
   public readonly id: string;
   public readonly chapterId: string;
+  public readonly contentTypeId: string;
   public readonly name: string;
   public readonly description?: string;
   public readonly order: number;
@@ -22,6 +24,7 @@ export class Unit {
   constructor(params: UnitParams) {
     this.id = params.id ?? crypto.randomUUID();
     this.chapterId = params.chapterId;
+    this.contentTypeId = params.contentTypeId;
     this.name = params.name;
     this.description = params.description;
     this.order = params.order ?? 0;

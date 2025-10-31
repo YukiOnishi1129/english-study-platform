@@ -1,4 +1,5 @@
 import { index, integer, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { contentTypes } from "./content-types";
 import { units } from "./units";
 import { vocabularyEntries } from "./vocabulary-entries";
 
@@ -9,11 +10,14 @@ export const questions = pgTable(
     unitId: uuid("unit_id")
       .notNull()
       .references(() => units.id, { onDelete: "cascade" }),
-    japanese: text("japanese").notNull(),
+    contentTypeId: uuid("content_type_id")
+      .notNull()
+      .references(() => contentTypes.id),
+    questionVariant: varchar("question_variant", { length: 50 }).notNull().default("phrase"),
+    japanese: text("japanese"),
     prompt: text("prompt"),
     hint: text("hint"),
     explanation: text("explanation"),
-    questionType: varchar("question_type", { length: 30 }).notNull().default("phrase"),
     vocabularyEntryId: uuid("vocabulary_entry_id").references(() => vocabularyEntries.id, {
       onDelete: "set null",
     }),
@@ -28,6 +32,6 @@ export const questions = pgTable(
     unitIdIndex: index("idx_questions_unit_id").on(table.unitId),
     orderIndex: index("idx_questions_order").on(table.unitId, table.order),
     vocabularyEntryIndex: index("idx_questions_vocabulary_entry").on(table.vocabularyEntryId),
-    questionTypeIndex: index("idx_questions_type").on(table.questionType),
+    typeIndex: index("idx_questions_type").on(table.contentTypeId, table.questionVariant),
   }),
 );

@@ -22,6 +22,7 @@ export class MaterialRepositoryImpl implements MaterialRepository {
       name: data.name,
       description: data.description ?? undefined,
       order: data.order,
+      contentTypeId: data.contentTypeId,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -37,6 +38,7 @@ export class MaterialRepositoryImpl implements MaterialRepository {
           name: data.name,
           description: data.description ?? undefined,
           order: data.order,
+          contentTypeId: data.contentTypeId,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         }),
@@ -51,6 +53,7 @@ export class MaterialRepositoryImpl implements MaterialRepository {
         name: material.name,
         description: material.description ?? null,
         order: material.order,
+        contentTypeId: material.contentTypeId,
         createdAt: material.createdAt,
         updatedAt: material.updatedAt,
       })
@@ -60,6 +63,7 @@ export class MaterialRepositoryImpl implements MaterialRepository {
           name: material.name,
           description: material.description ?? null,
           order: material.order,
+          contentTypeId: material.contentTypeId,
           updatedAt: new Date(),
         },
       })
@@ -74,6 +78,7 @@ export class MaterialRepositoryImpl implements MaterialRepository {
       name: result.name,
       description: result.description ?? undefined,
       order: result.order,
+      contentTypeId: result.contentTypeId,
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     });

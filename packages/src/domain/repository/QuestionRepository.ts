@@ -5,6 +5,7 @@ export interface QuestionRepository {
   findByUnitId(unitId: string): Promise<Question[]>;
   findByUnitIds(unitIds: string[]): Promise<Question[]>;
   findByIds(ids: string[]): Promise<Question[]>;
+  findByContentTypeId(contentTypeId: string): Promise<Question[]>;
   findByVocabularyEntryId(entryId: string): Promise<Question[]>;
   findFirstByCreatedAt(): Promise<Question | null>;
   save(question: Question): Promise<Question>;

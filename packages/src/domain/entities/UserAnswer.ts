@@ -6,9 +6,11 @@ export interface UserAnswerParams {
   id?: string;
   userId: string;
   questionId: string;
+  contentTypeId?: string;
   userAnswerText: string;
   isCorrect: boolean;
   mode: StudyMode;
+  studyModeId?: string | null;
   isManuallyMarked?: boolean;
   answeredAt?: Date;
   createdAt?: Date;
@@ -19,9 +21,11 @@ export class UserAnswer {
   public readonly id: string;
   public readonly userId: string;
   public readonly questionId: string;
+  public readonly contentTypeId?: string;
   public readonly userAnswerText: string;
   public readonly isCorrect: boolean;
   public readonly mode: StudyMode;
+  public readonly studyModeId: string | null;
   public readonly isManuallyMarked: boolean;
   public readonly answeredAt: Date;
   public readonly createdAt: Date;
@@ -31,9 +35,11 @@ export class UserAnswer {
     this.id = params.id ?? crypto.randomUUID();
     this.userId = params.userId;
     this.questionId = params.questionId;
+    this.contentTypeId = params.contentTypeId;
     this.userAnswerText = params.userAnswerText;
     this.isCorrect = params.isCorrect;
     this.mode = params.mode;
+    this.studyModeId = params.studyModeId ?? null;
     this.isManuallyMarked = params.isManuallyMarked ?? false;
     this.answeredAt = params.answeredAt ?? new Date();
     this.createdAt = params.createdAt ?? new Date();

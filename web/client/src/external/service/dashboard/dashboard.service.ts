@@ -131,11 +131,11 @@ export class DashboardService {
 
       const answeredQuestionSet = new Set<string>();
       if (questionIds.length > 0) {
-        const stats =
-          await this.questionStatisticsRepository.findByUserAndQuestionIds(
-            accountId,
-            questionIds,
-          );
+        const stats = await this.questionStatisticsRepository.findByUserAndQuestionIds(
+          accountId,
+          questionIds,
+          undefined,
+        );
         stats.forEach((stat) => {
           if (stat.correctCount > 0) {
             answeredQuestionSet.add(stat.questionId);

@@ -215,6 +215,7 @@ export class StudyService {
     const userAnswer = new UserAnswer({
       userId: accountId,
       questionId,
+      contentTypeId: question.contentTypeId,
       userAnswerText: answerText,
       isCorrect,
       mode,
@@ -228,6 +229,7 @@ export class StudyService {
       await this.questionStatisticsRepository.incrementCounts(
         accountId,
         questionId,
+        question.contentTypeId,
         mode,
         isCorrect,
       );

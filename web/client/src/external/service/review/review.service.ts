@@ -133,6 +133,7 @@ export class ReviewService {
         ? await this.questionStatisticsRepository.findByUserAndQuestionIds(
             accountId,
             questionIds,
+            undefined,
           )
         : [];
 

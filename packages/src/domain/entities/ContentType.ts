@@ -1,36 +1,35 @@
 import crypto from "node:crypto";
 
-export interface MaterialParams {
+import type { ContentTypeCode } from "../value-objects";
+
+export interface ContentTypeParams {
   id?: string;
+  code: ContentTypeCode;
   name: string;
-  description?: string;
-  order: number;
-  contentTypeId: string;
+  description?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export class Material {
+export class ContentType {
   public readonly id: string;
+  public readonly code: ContentTypeCode;
   public readonly name: string;
-  public readonly description?: string;
-  public readonly order: number;
-  public readonly contentTypeId: string;
+  public readonly description: string | null;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
-  constructor(params: MaterialParams) {
+  constructor(params: ContentTypeParams) {
     this.id = params.id ?? crypto.randomUUID();
+    this.code = params.code;
     this.name = params.name;
-    this.description = params.description;
-    this.order = params.order ?? 0;
-    this.contentTypeId = params.contentTypeId;
+    this.description = params.description ?? null;
     this.createdAt = params.createdAt ?? new Date();
     this.updatedAt = params.updatedAt ?? new Date();
   }
 
-  static create(params: Omit<MaterialParams, "id" | "createdAt" | "updatedAt">): Material {
-    return new Material({
+  static create(params: Omit<ContentTypeParams, "id" | "createdAt" | "updatedAt">): ContentType {
+    return new ContentType({
       ...params,
       id: crypto.randomUUID(),
       createdAt: new Date(),
@@ -38,3 +37,4 @@ export class Material {
     });
   }
 }
+

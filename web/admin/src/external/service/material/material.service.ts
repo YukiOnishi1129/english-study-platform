@@ -705,6 +705,8 @@ export class MaterialService {
         const updatedQuestion = new Question({
           id: existing.id,
           unitId: existing.unitId,
+          contentTypeId: existing.contentTypeId ?? unit.contentTypeId,
+          variant: existing.variant ?? "phrase",
           japanese: row.japanese,
           hint: row.hint ?? undefined,
           explanation: row.explanation ?? undefined,
@@ -732,6 +734,8 @@ export class MaterialService {
       const finalOrder = reserveOrder(row.order);
       const newQuestion = Question.create({
         unitId: unit.id,
+        contentTypeId: unit.contentTypeId,
+        variant: "phrase",
         japanese: row.japanese,
         hint: row.hint ?? undefined,
         explanation: row.explanation ?? undefined,
@@ -969,11 +973,12 @@ export class MaterialService {
         targetQuestion = new Question({
           id: targetQuestion.id,
           unitId: targetQuestion.unitId,
+          contentTypeId: targetQuestion.contentTypeId ?? unit.contentTypeId,
+          variant: "vocabulary",
           japanese: definitionText,
           prompt: row.prompt ?? undefined,
           hint: targetQuestion.hint ?? undefined,
           explanation: targetQuestion.explanation ?? undefined,
-          questionType: "jp_to_en",
           vocabularyEntryId: savedEntry.id,
           order: finalOrder,
           createdAt: targetQuestion.createdAt,
@@ -984,11 +989,12 @@ export class MaterialService {
         finalOrder = reserveOrder(row.order);
         targetQuestion = Question.create({
           unitId: unit.id,
+          contentTypeId: unit.contentTypeId,
+          variant: "vocabulary",
           japanese: definitionText,
           prompt: row.prompt ?? undefined,
           hint: undefined,
           explanation: undefined,
-          questionType: "jp_to_en",
           vocabularyEntryId: savedEntry.id,
           order: finalOrder,
         });
@@ -1034,11 +1040,12 @@ export class MaterialService {
     const updatedQuestion = new Question({
       id: existing.id,
       unitId: existing.unitId,
+      contentTypeId: existing.contentTypeId,
+      variant: existing.variant,
       japanese: payload.japanese,
       prompt: payload.prompt ?? undefined,
       hint: payload.hint ?? undefined,
       explanation: payload.explanation ?? undefined,
-      questionType: existing.questionType,
       vocabularyEntryId: existing.vocabularyEntryId ?? undefined,
       order,
       createdAt: existing.createdAt,
@@ -1154,6 +1161,8 @@ export class MaterialService {
       return new Question({
         id: existing.id,
         unitId: existing.unitId,
+        contentTypeId: existing.contentTypeId,
+        variant: existing.variant,
         japanese: existing.japanese,
         hint: existing.hint ?? undefined,
         explanation: existing.explanation ?? undefined,
