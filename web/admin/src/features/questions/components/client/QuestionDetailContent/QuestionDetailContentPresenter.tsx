@@ -226,6 +226,14 @@ export function QuestionDetailContentPresenter(
                 </p>
               </div>
             ) : null}
+            {detail.question.annotation ? (
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-gray-800">注釈</h3>
+                <p className="whitespace-pre-wrap text-sm text-gray-700">
+                  {detail.question.annotation}
+                </p>
+              </div>
+            ) : null}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <h3 className="text-sm font-semibold text-gray-800">
@@ -316,6 +324,16 @@ export function QuestionDetailContentPresenter(
               <h2 className="text-xl font-semibold text-gray-900">問題文</h2>
               <p className="whitespace-pre-wrap text-gray-900">
                 {detail.question.japanese}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-gray-800">注釈</h3>
+              <p className="whitespace-pre-wrap text-sm text-gray-600">
+                {detail.question.annotation ?? (
+                  <span className="text-xs text-gray-400">
+                    登録されていません
+                  </span>
+                )}
               </p>
             </div>
             {detail.question.prompt ? (

@@ -61,6 +61,7 @@ export interface UnitStudyQuestionViewModel {
   title: string;
   variant: string;
   japanese: string;
+  annotation: string | null;
   promptText: string;
   promptNote: string | null;
   sentencePromptJa: string | null;
@@ -219,6 +220,7 @@ function resolveQuestionView(
     answerLabel,
     answerPlaceholder,
     navigatorLabel,
+    annotation: data.annotation,
     definitionJa: vocabulary?.definitionJa ?? data.japanese,
     statistics,
     activeModeStatistics,

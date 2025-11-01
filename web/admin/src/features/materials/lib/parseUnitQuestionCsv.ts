@@ -3,6 +3,7 @@ type RawCsvRow = string[];
 export interface UnitQuestionCsvRow {
   questionId?: string;
   japanese: string;
+  annotation?: string;
   correctAnswers: string[];
   hint?: string;
   explanation?: string;
@@ -21,6 +22,7 @@ const HEADER_ALIASES: Record<string, keyof UnitQuestionCsvRow> = {
   問題ID: "questionId",
   日本語: "japanese",
   英語例文: "promptEn",
+  注釈: "annotation",
   ヒント: "hint",
   解説: "explanation",
   並び順: "order",
@@ -167,6 +169,7 @@ export function parseUnitQuestionCsv(
     const questionId = getCell("questionId") || undefined;
     const hint = getCell("hint") || undefined;
     const explanation = getCell("explanation") || undefined;
+    const annotation = getCell("annotation") || undefined;
     const promptEn = getCell("promptEn") || undefined;
     const audioUrl = getCell("audioUrl") || undefined;
 
@@ -224,6 +227,7 @@ export function parseUnitQuestionCsv(
       questionId,
       japanese,
       hint,
+      annotation,
       explanation,
       order,
       promptEn,

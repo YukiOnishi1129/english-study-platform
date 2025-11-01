@@ -81,6 +81,7 @@ export interface UnitDetailQuestionDto {
   unitId: string;
   contentType: ContentTypeDto;
   japanese: string;
+  annotation: string | null;
   prompt: string | null;
   hint: string | null;
   explanation: string | null;

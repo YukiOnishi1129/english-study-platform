@@ -12,6 +12,7 @@ export async function updateQuestionAction(
   const unitIdEntry = formData.get("unitId");
   const japaneseEntry = formData.get("japanese");
   const promptEntry = formData.get("prompt");
+  const annotationEntry = formData.get("annotation");
   const hintEntry = formData.get("hint");
   const explanationEntry = formData.get("explanation");
   const orderEntry = formData.get("order");
@@ -72,6 +73,7 @@ export async function updateQuestionAction(
       unitId,
       japanese,
       prompt: optionalText(promptEntry),
+      annotation: optionalText(annotationEntry),
       hint: optionalText(hintEntry),
       explanation: optionalText(explanationEntry),
       order:

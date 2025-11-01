@@ -412,6 +412,7 @@ export class MaterialService {
           unitId: question.unitId,
           contentType: toContentTypeDto(questionContentType),
           japanese: japaneseText,
+          annotation: question.annotation ?? null,
           prompt: phraseDetails?.promptEn ?? question.prompt ?? null,
           hint: phraseDetails?.hint ?? question.hint ?? null,
           explanation:
@@ -574,6 +575,7 @@ export class MaterialService {
       unitId: question.unitId,
       contentType: toContentTypeDto(resolveContentType(question.contentTypeId)),
       japanese: japaneseText,
+      annotation: question.annotation ?? null,
       prompt: phraseDetails?.promptEn ?? question.prompt ?? null,
       hint: phraseDetails?.hint ?? question.hint ?? null,
       explanation: phraseDetails?.explanation ?? question.explanation ?? null,
@@ -900,6 +902,7 @@ export class MaterialService {
           contentTypeId: existing.contentTypeId ?? unit.contentTypeId,
           variant: existing.variant ?? "phrase",
           japanese: row.japanese,
+          annotation: row.annotation ?? existing.annotation ?? undefined,
           prompt: row.promptEn ?? existing.prompt ?? undefined,
           hint: row.hint ?? existing.hint ?? undefined,
           explanation: row.explanation ?? existing.explanation ?? undefined,
@@ -955,6 +958,7 @@ export class MaterialService {
         contentTypeId: unit.contentTypeId,
         variant: "phrase",
         japanese: row.japanese,
+        annotation: row.annotation ?? undefined,
         prompt: row.promptEn ?? undefined,
         hint: row.hint ?? undefined,
         explanation: row.explanation ?? undefined,
@@ -1184,6 +1188,11 @@ export class MaterialService {
         await this.vocabularyRelationRepository.saveMany(relations);
       }
 
+      const annotationProvided = row.annotation !== undefined;
+      const normalizedAnnotation = annotationProvided
+        ? (row.annotation ?? "").trim()
+        : "";
+
       let targetQuestion: Question | null = null;
       if (row.questionId) {
         targetQuestion =
@@ -1207,6 +1216,11 @@ export class MaterialService {
           contentTypeId: targetQuestion.contentTypeId ?? unit.contentTypeId,
           variant: "vocabulary",
           japanese: definitionText,
+          annotation: annotationProvided
+            ? normalizedAnnotation.length > 0
+              ? normalizedAnnotation
+              : undefined
+            : (targetQuestion.annotation ?? undefined),
           prompt: row.prompt ?? undefined,
           hint: targetQuestion.hint ?? undefined,
           explanation: targetQuestion.explanation ?? undefined,
@@ -1223,6 +1237,10 @@ export class MaterialService {
           contentTypeId: unit.contentTypeId,
           variant: "vocabulary",
           japanese: definitionText,
+          annotation:
+            annotationProvided && normalizedAnnotation.length > 0
+              ? normalizedAnnotation
+              : undefined,
           prompt: row.prompt ?? undefined,
           hint: undefined,
           explanation: undefined,
@@ -1287,6 +1305,7 @@ export class MaterialService {
       contentTypeId: existing.contentTypeId,
       variant: existing.variant,
       japanese: payload.japanese,
+      annotation: payload.annotation ?? existing.annotation ?? undefined,
       prompt: payload.prompt ?? undefined,
       hint: payload.hint ?? undefined,
       explanation: payload.explanation ?? undefined,
@@ -1448,6 +1467,7 @@ export class MaterialService {
         contentTypeId: existing.contentTypeId,
         variant: existing.variant,
         japanese: existing.japanese,
+        annotation: existing.annotation ?? undefined,
         hint: existing.hint ?? undefined,
         explanation: existing.explanation ?? undefined,
         order: index + 1,

@@ -55,6 +55,7 @@ export const unitDetailQuestionSchema: z.ZodType<UnitDetailQuestionDto> =
     unitId: z.string(),
     contentType: contentTypeSchema,
     japanese: z.string(),
+    annotation: z.string().nullable(),
     prompt: z.string().nullable(),
     hint: z.string().nullable(),
     explanation: z.string().nullable(),

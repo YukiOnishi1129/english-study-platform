@@ -49,7 +49,7 @@ export function UnitQuestionCsvImporterPresenter(
           </a>
         </div>
         <div className="rounded-md bg-slate-50 px-4 py-3 text-xs text-slate-600">
-          必須列: 日本語, 英語正解1。任意: 関連ID, 並び順, ヒント, 解説,
+          必須列: 日本語, 英語正解1。任意: 関連ID, 並び順, 注釈, ヒント, 解説,
           英語正解2〜。 英語正解の列は `英語正解1`, `英語正解2`, ...
           と連番で追加してください。関連IDを空欄にすると新規追加として扱われます。
         </div>
@@ -182,6 +182,7 @@ export function UnitQuestionCsvImporterPresenter(
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">関連ID</th>
                   <th className="px-4 py-3">日本語</th>
+                  <th className="px-4 py-3">注釈</th>
                   <th className="px-4 py-3">英語例文</th>
                   <th className="px-4 py-3">英語正解</th>
                   <th className="px-4 py-3">ヒント</th>
@@ -206,6 +207,11 @@ export function UnitQuestionCsvImporterPresenter(
                     </td>
                     <td className="px-4 py-3 whitespace-pre-wrap text-gray-900">
                       {row.japanese}
+                    </td>
+                    <td className="px-4 py-3 whitespace-pre-wrap text-gray-600">
+                      {row.annotation ?? (
+                        <span className="text-xs text-gray-400">―</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 whitespace-pre-wrap text-gray-700">
                       {row.promptEn ?? (

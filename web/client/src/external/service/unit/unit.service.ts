@@ -259,6 +259,7 @@ export class UnitService {
           unitId: question.unitId,
           contentType: toContentTypeDto(questionContentType),
           japanese: question.japanese ?? "",
+          annotation: question.annotation ?? null,
           prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,

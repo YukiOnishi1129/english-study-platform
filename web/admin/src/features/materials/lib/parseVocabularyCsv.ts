@@ -10,6 +10,7 @@ export interface VocabularyCsvRow {
   definitionJa: string;
   definitionVariants: string[];
   prompt?: string;
+  annotation?: string;
   answerCandidates: string[];
   synonyms: string[];
   antonyms: string[];
@@ -33,6 +34,7 @@ const HEADER_ALIASES: Record<string, keyof VocabularyCsvRow> = {
   発音: "pronunciation",
   品詞: "partOfSpeech",
   プロンプト: "prompt",
+  注釈: "annotation",
   "例文(英)": "exampleSentenceEn",
   "例文(和)": "exampleSentenceJa",
 };
@@ -329,6 +331,9 @@ export function parseVocabularyCsv(content: string): ParseVocabularyCsvResult {
       definitionJa: uniqueDefinitionCells[0],
       definitionVariants: uniqueDefinitionCells.slice(1),
       prompt: getCell("prompt") || undefined,
+      annotation: headerIndexMap.has("annotation")
+        ? getCell("annotation")
+        : undefined,
       answerCandidates,
       synonyms,
       antonyms,

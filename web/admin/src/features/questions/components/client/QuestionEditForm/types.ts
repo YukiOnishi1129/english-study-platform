@@ -6,6 +6,7 @@ export interface QuestionEditFormDefaultValues {
   unitId: string;
   japanese: string;
   prompt: string | null;
+  annotation: string | null;
   hint: string | null;
   explanation: string | null;
   order: number;

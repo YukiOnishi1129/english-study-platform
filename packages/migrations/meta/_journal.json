@@ -36,6 +36,13 @@
       "when": 1761925879806,
       "tag": "0005_content_type_refactor",
       "breakpoints": false
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762100000000,
+      "tag": "0006_add_question_annotation",
+      "breakpoints": false
     }
   ]
 }

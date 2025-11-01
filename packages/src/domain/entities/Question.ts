@@ -7,6 +7,7 @@ export interface QuestionParams {
   contentTypeId: string;
   variant?: QuestionVariant;
   japanese?: string;
+  annotation?: string;
   prompt?: string;
   hint?: string;
   explanation?: string;
@@ -23,6 +24,7 @@ export class Question {
   public readonly variant: QuestionVariant;
   // Backward compatible fields (legacy)
   public readonly japanese?: string;
+  public readonly annotation?: string;
   public readonly prompt?: string;
   public readonly hint?: string;
   public readonly explanation?: string;
@@ -37,6 +39,7 @@ export class Question {
     this.contentTypeId = params.contentTypeId;
     this.variant = params.variant ?? "phrase";
     this.japanese = params.japanese;
+    this.annotation = params.annotation;
     this.prompt = params.prompt;
     this.hint = params.hint;
     this.explanation = params.explanation;

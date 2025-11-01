@@ -77,6 +77,7 @@ export const UnitDetailQuestionSchema = z.object({
   unitId: z.string().min(1),
   contentType: ContentTypeSchema,
   japanese: z.string(),
+  annotation: z.string().nullable(),
   prompt: z.string().nullable(),
   hint: z.string().nullable(),
   explanation: z.string().nullable(),

@@ -12,6 +12,7 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 | 関連ID         | 任意 | 既存問題を更新する場合に指定。空欄の場合は新規問題として扱われます。`問題ID` という列名でも読み込めます。          |
 | 並び順         | 任意 | 数値で指定。空欄の場合は既存順序を維持。新規の場合は末尾に追加されます（CSV 解析後、UI 上で並び順を確認できます）。 |
 | 日本語         | ✅   | 出題テキスト（`phrase_questions.prompt_ja`）。                                                                          |
+| 注釈           | 任意 | 学習時に常に表示する補足（`questions.annotation`）。文脈や前提条件を伝える際に利用します。                             |
 | 英語例文       | 任意 | 参考英訳（`phrase_questions.prompt_en`）。                                                                              |
 | ヒント         | 任意 | 問題に対する補助ヒント（`phrase_questions.hint`）。                                                                     |
 | 解説           | 任意 | 問題の解説や補足（`phrase_questions.explanation`）。                                                                    |
@@ -36,6 +37,7 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 | 英単語               | ✅   | 見出し語（`vocabulary_questions.headword`）。 |
 | 日本語訳1            | ✅   | 主要な訳語（`vocabulary_questions.definition_ja`）。回答判定にも利用。 |
 | 日本語訳2〜          | 任意 | 追加の訳語。CorrectAnswer としても登録（`correct_answers`）。 |
+| 注釈                 | 任意 | 出題時に常時表示する補足メモ（`questions.annotation`）。 |
 | 品詞                 | 任意 | `noun`, `verb`, `adj.` など。 |
 | 発音                 | 任意 | 読み方やIPA表記。 |
 | メモ                 | 任意 | 備考欄（`vocabulary_questions.memo`）。 |
@@ -54,11 +56,11 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 
 ## 2. サンプル CSV
 
-| 関連ID | 並び順 | 日本語               | 英語例文           | ヒント                    | 解説                                  | 音声URL | 英語正解1       | 英語正解2     |
-|--------|--------|----------------------|--------------------|---------------------------|---------------------------------------|---------|-----------------|---------------|
-|        | 1      | 朝の挨拶をしましょう | Good morning.      | 朝は Good morning が定番 | フォーマルな場面でも Good morning を使う |         | Good morning.   | Morning!      |
-| q-1234 | 2      | こんにちはと伝える   | Hello.             | Hi はカジュアル           | 既存問題を上書き（関連ID 指定）       |         | Hello.          | Hi.           |
-|        |        | 誰かに会えて嬉しいと伝える | Nice to see you. |                           |                                       |         | Nice to see you | Great to see you! |
+| 関連ID | 並び順 | 日本語               | 注釈                         | 英語例文           | ヒント                    | 解説                                  | 音声URL | 英語正解1       | 英語正解2     |
+|--------|--------|----------------------|------------------------------|--------------------|---------------------------|---------------------------------------|---------|-----------------|---------------|
+|        | 1      | 朝の挨拶をしましょう | ※同僚へ声を掛けるシーンを想定 | Good morning.      | 朝は Good morning が定番 | フォーマルな場面でも Good morning を使う |         | Good morning.   | Morning!      |
+| q-1234 | 2      | こんにちはと伝える   | ※既存問題を更新              | Hello.             | Hi はカジュアル           | 既存問題を上書き（関連ID 指定）       |         | Hello.          | Hi.           |
+|        |        | 誰かに会えて嬉しいと伝える |                              | Nice to see you.   |                           |                                       |         | Nice to see you | Great to see you! |
 
 - 1 行につき 1 問を表します。
 - `関連ID` が空欄の行は新規問題になります。
@@ -69,11 +71,11 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 
 ### 2.1 語彙教材用サンプル
 
-| 語彙ID | 問題ID | 並び順 | 英単語 | 日本語訳1 | 日本語訳2 | 品詞 | プロンプト                     | 正解候補1 | 正解候補2 | 類義語1 | 対義語1 | 関連語1 | 例文(英)                               | 例文(和)                         |
-|--------|--------|--------|--------|-----------|-----------|------|--------------------------------|-----------|-----------|---------|---------|---------|----------------------------------------|----------------------------------|
-|        |        | 1      | accept | 受け入れる | 受諾する  | verb |                                | accept    | accept it | receive | refuse  | admit   | We must accept the offer immediately. | 我々はその提案をすぐに受け入れる必要がある。 |
-| vocab-1|        | 2      | cheerful | 陽気な   | 快活な    | adj. |                                | cheerful | bright    | joyful  | gloomy  | upbeat  | Her cheerful voice brightened the room. | 彼女の陽気な声が部屋を明るくした。        |
-| vocab-2| q-888  | 3      | contribute | 貢献する | 寄与する | verb | この単語を1文で使ってください | contribute |          | donate  | withhold| support | She contributes to the community weekly. | 彼女は毎週地域社会に貢献している。        |
+| 語彙ID | 問題ID | 並び順 | 英単語 | 日本語訳1 | 日本語訳2 | 注釈                         | 品詞 | プロンプト                     | 正解候補1 | 正解候補2 | 類義語1 | 対義語1 | 関連語1 | 例文(英)                               | 例文(和)                         |
+|--------|--------|--------|--------|-----------|-----------|------------------------------|------|--------------------------------|-----------|-----------|---------|---------|---------|----------------------------------------|----------------------------------|
+|        |        | 1      | accept | 受け入れる | 受諾する  | ※前の会話の返答を想定        | verb |                                | accept    | accept it | receive | refuse  | admit   | We must accept the offer immediately. | 我々はその提案をすぐに受け入れる必要がある。 |
+| vocab-1|        | 2      | cheerful | 陽気な   | 快活な    |                                | adj. |                                | cheerful | bright    | joyful  | gloomy  | upbeat  | Her cheerful voice brightened the room. | 彼女の陽気な声が部屋を明るくした。        |
+| vocab-2| q-888  | 3      | contribute | 貢献する | 寄与する |                                | verb | この単語を1文で使ってください | contribute |          | donate  | withhold| support | She contributes to the community weekly. | 彼女は毎週地域社会に貢献している。        |
 
 - 語彙エントリと問題設定をまとめて1行に記述します。
 - 学習モードはCSVで指定せず、学習セッション開始時にUIから「JP→EN」「EN→JP」「例文」などを切り替える想定です。

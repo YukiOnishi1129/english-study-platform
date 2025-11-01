@@ -193,6 +193,12 @@
 | unit_id | UUID | NOT NULL, FOREIGN KEY | ユニットID |
 | content_type_id | UUID | NOT NULL, FOREIGN KEY | 教材タイプID |
 | question_variant | VARCHAR(50) | NOT NULL | サブテーブル識別子（例: vocabulary, phrase） |
+| japanese | TEXT | NULL | 出題テキスト（語彙の場合は定義、フレーズの場合は日本語文） |
+| annotation | TEXT | NULL | 出題時に常に表示する注釈・補足 |
+| prompt | TEXT | NULL | 追加プロンプト（英語指示など） |
+| hint | TEXT | NULL | ヒント（学習画面でトグル表示） |
+| explanation | TEXT | NULL | 解説・補足説明 |
+| vocabulary_entry_id | UUID | NULL, FOREIGN KEY | 紐づく語彙エントリID（語彙問題のみ） |
 | order | INTEGER | NOT NULL, DEFAULT 0 | 表示順 |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 更新日時 |
@@ -207,6 +213,7 @@
 
 - `unit_id` REFERENCES units(id) ON DELETE CASCADE
 - `content_type_id` REFERENCES content_types(id)
+- `vocabulary_entry_id` REFERENCES vocabulary_entries(id) ON DELETE SET NULL
 
 **制約:**
 

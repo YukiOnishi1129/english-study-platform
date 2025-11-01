@@ -215,6 +215,12 @@ export function UnitStudyQuestionCard({
             {question.promptNote}
           </p>
         ) : null}
+        {question.annotation ? (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <span className="font-semibold">注釈:</span>{" "}
+            <span className="whitespace-pre-line">{question.annotation}</span>
+          </div>
+        ) : null}
         <CardDescription className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
           <span>
             「答える → 答えをチェック →

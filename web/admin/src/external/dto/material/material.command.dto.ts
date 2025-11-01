@@ -100,6 +100,7 @@ const ImportUnitQuestionRowSchema = z.object({
     .transform((value) => (value && value.length > 0 ? value : undefined)),
   order: z.number().int().positive().optional(),
   japanese: z.string().trim().min(1, "日本語を入力してください。"),
+  annotation: OPTIONAL_TEXT_SCHEMA,
   promptEn: OPTIONAL_TEXT_SCHEMA,
   audioUrl: OPTIONAL_TEXT_SCHEMA,
   hint: OPTIONAL_TEXT_SCHEMA,
@@ -129,6 +130,7 @@ const ImportVocabularyRowSchema = z.object({
   definitionJa: z.string().trim().min(1, "日本語訳1を入力してください。"),
   definitionVariants: OPTIONAL_TEXT_ARRAY_SCHEMA,
   prompt: OPTIONAL_TEXT_SCHEMA,
+  annotation: OPTIONAL_TEXT_SCHEMA,
   answerCandidates: z
     .array(z.string().trim().min(1, "正解候補は1文字以上で入力してください。"))
     .min(1, "正解候補を1つ以上入力してください。"),
@@ -171,6 +173,7 @@ export const UpdateQuestionRequestSchema = z.object({
   unitId: z.string().min(1, "unitIdが指定されていません。"),
   japanese: z.string().trim().min(1, "日本語を入力してください。"),
   prompt: OPTIONAL_TEXT_SCHEMA,
+  annotation: OPTIONAL_TEXT_SCHEMA,
   hint: OPTIONAL_TEXT_SCHEMA,
   explanation: OPTIONAL_TEXT_SCHEMA,
   order: z.number().int().positive().optional(),
