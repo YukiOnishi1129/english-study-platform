@@ -1,3 +1,9 @@
+export interface ContentTypeDto {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface MaterialUnitSummaryDto {
   id: string;
   name: string;
@@ -6,6 +12,7 @@ export interface MaterialUnitSummaryDto {
   createdAt: string;
   updatedAt: string;
   questionCount: number;
+  contentType: ContentTypeDto;
 }
 
 export interface MaterialChapterSummaryDto {
@@ -20,6 +27,7 @@ export interface MaterialChapterSummaryDto {
   updatedAt: string;
   units: MaterialUnitSummaryDto[];
   children: MaterialChapterSummaryDto[];
+  contentType: ContentTypeDto;
 }
 
 export interface MaterialHierarchyItemDto {
@@ -29,6 +37,7 @@ export interface MaterialHierarchyItemDto {
   order: number;
   createdAt: string;
   updatedAt: string;
+  contentType: ContentTypeDto;
   chapters: MaterialChapterSummaryDto[];
 }
 
@@ -70,11 +79,12 @@ export interface VocabularyEntryDetailDto {
 export interface UnitDetailQuestionDto {
   id: string;
   unitId: string;
+  contentType: ContentTypeDto;
   japanese: string;
   prompt: string | null;
   hint: string | null;
   explanation: string | null;
-  questionType: string;
+  variant: string;
   vocabularyEntryId: string | null;
   headword: string | null;
   order: number;
@@ -93,6 +103,7 @@ export interface UnitDetailChapterDto {
   order: number;
   createdAt: string;
   updatedAt: string;
+  contentType: ContentTypeDto;
 }
 
 export interface UnitDetailMaterialDto {
@@ -102,6 +113,7 @@ export interface UnitDetailMaterialDto {
   order: number;
   createdAt: string;
   updatedAt: string;
+  contentType: ContentTypeDto;
 }
 
 export interface UnitDetailUnitDto {
@@ -112,6 +124,7 @@ export interface UnitDetailUnitDto {
   order: number;
   createdAt: string;
   updatedAt: string;
+  contentType: ContentTypeDto;
 }
 
 export interface UnitDetailDto {

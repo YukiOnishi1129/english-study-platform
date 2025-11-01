@@ -20,6 +20,7 @@ export class UnitRepositoryImpl implements UnitRepository {
     return new DomainUnit({
       id: data.id,
       chapterId: data.chapterId,
+      contentTypeId: data.contentTypeId,
       name: data.name,
       description: data.description ?? undefined,
       order: data.order,
@@ -40,6 +41,7 @@ export class UnitRepositoryImpl implements UnitRepository {
         new DomainUnit({
           id: data.id,
           chapterId: data.chapterId,
+          contentTypeId: data.contentTypeId,
           name: data.name,
           description: data.description ?? undefined,
           order: data.order,
@@ -55,6 +57,7 @@ export class UnitRepositoryImpl implements UnitRepository {
       .values({
         id: unit.id,
         chapterId: unit.chapterId,
+        contentTypeId: unit.contentTypeId,
         name: unit.name,
         description: unit.description ?? null,
         order: unit.order,
@@ -67,6 +70,7 @@ export class UnitRepositoryImpl implements UnitRepository {
           name: unit.name,
           description: unit.description ?? null,
           order: unit.order,
+          contentTypeId: unit.contentTypeId,
           updatedAt: new Date(),
         },
       })
@@ -79,6 +83,7 @@ export class UnitRepositoryImpl implements UnitRepository {
     return new DomainUnit({
       id: result.id,
       chapterId: result.chapterId,
+      contentTypeId: result.contentTypeId,
       name: result.name,
       description: result.description ?? undefined,
       order: result.order,

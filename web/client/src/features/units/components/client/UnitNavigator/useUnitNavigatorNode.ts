@@ -17,7 +17,7 @@ function extractOrderFromTitle(title: string): number {
 }
 
 function buildNavigatorText(question: NavigatorQuestionSource): string {
-  if (question.questionType === "en_to_jp") {
+  if (question.vocabulary) {
     return (
       question.headword ??
       question.correctAnswers[0]?.answerText ??

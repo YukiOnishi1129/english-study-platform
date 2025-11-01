@@ -21,11 +21,35 @@
 
 ### 【教材ドメイン】
 
+- **ContentType**: 教材タイプ
+  - id: string (UUID)
+  - code: string (例: "vocabulary", "phrase", "conversation")
+  - name: string
+  - description: string | null
+  - createdAt: Date
+  - updatedAt: Date
+  - 備考: 教材・章・ユニット・問題が共有する学習スタイル。今後タイプ追加を想定。
+
+- **StudyMode**: 学習モード
+  - id: string (UUID)
+  - code: string (例: "jp_to_en", "en_to_jp", "sentence")
+  - name: string
+  - description: string | null
+  - createdAt: Date
+  - updatedAt: Date
+
+- **ContentTypeStudyMode**: 教材タイプと学習モードの対応
+  - contentTypeId: string (FK)
+  - studyModeId: string (FK)
+  - priority: number (デフォルト表示順)
+  - isDefault: boolean (教材タイプにおけるデフォルトモード)
+
 - **Material**: 教材
   - id: string (UUID)
   - name: string
   - description: string
   - order: number
+  - contentTypeId: string (FK)
   - createdAt: Date
   - updatedAt: Date
 
@@ -36,6 +60,7 @@
   - name: string
   - order: number
   - level: number (階層の深さ 0から)
+  - contentTypeId: string (FK) — material から継承、一貫性を維持
   - createdAt: Date
   - updatedAt: Date
 
@@ -44,21 +69,39 @@
   - chapterId: string (FK)
   - name: string
   - order: number
+  - contentTypeId: string (FK) — chapter/material と同じタイプであることを保証
   - createdAt: Date
   - updatedAt: Date
 
 - **Question**: 問題
   - id: string (UUID)
   - unitId: string (FK)
-  - japanese: string (問題文)
-  - prompt: string | null (追加指示や語彙ヒント)
-  - hint: string | null
-  - explanation: string | null
-  - questionType: QuestionType (デフォルトは"phrase"。語彙セッションではランタイムで学習モードを切り替え)
-  - vocabularyEntryId: string | null (語彙教材の場合)
+  - contentTypeId: string (FK)
   - order: number
   - createdAt: Date
   - updatedAt: Date
+  - 備考: 出題共通のメタデータのみを保持。タイプ別詳細はサブエンティティに分割。
+
+- **VocabularyQuestion**: 語彙問題（Question に 1:1）
+  - questionId: string (PK & FK)
+  - headword: string
+  - pronunciation: string | null
+  - partOfSpeech: string | null
+  - definitionJa: string
+  - memo: string | null
+  - exampleSentenceEn: string | null
+  - exampleSentenceJa: string | null
+
+- **PhraseQuestion**: 例文問題（Question に 1:1）
+  - questionId: string (PK & FK)
+  - promptJa: string
+  - promptEn: string | null
+  - hint: string | null
+  - explanation: string | null
+  - audioUrl: string | null
+
+- **ConversationQuestion** / **WritingQuestion** 等
+  - 将来的なタイプ追加に備え、Question と 1:1 のサブエンティティを増やす設計とする。
 
 - **CorrectAnswer**: 正解
   - id: string (UUID)
@@ -98,6 +141,8 @@
   - id: string (UUID)
   - userId: string (FK)
   - questionId: string (FK)
+  - contentTypeId: string (FK)
+  - studyModeId: string (FK)
   - userAnswerText: string
   - isCorrect: boolean
   - isManuallyMarked: boolean (デフォルト: false)
@@ -109,6 +154,8 @@
   - id: string (UUID)
   - userId: string (FK)
   - questionId: string (FK)
+  - contentTypeId: string (FK)
+  - studyModeId: string | null (FK) — 集計粒度。"aggregate" 相当は別管理
   - totalAttempts: number (デフォルト: 0)
   - correctCount: number (デフォルト: 0)
   - incorrectCount: number (デフォルト: 0)
@@ -157,15 +204,29 @@
     - `getParentPath()`: 親の章パスを取得
     - `toArray()`: 配列形式で各階層を取得
 
-### QuestionType（出題タイプ）
+### ContentTypeCode（教材タイプコード）
 
-- 値: `phrase` | `jp_to_en` | `en_to_jp` | `cloze` | `free_sentence`
-- ビジネスルール:
-    - UI層での判定ロジック・表示切替の基準（語彙セッションではランタイム選択）
-    - 語彙CSVではモード列を持たず、VocabularyEntryに紐づくQuestionは共通データを提供
+- 値例: `vocabulary`, `phrase`, `conversation`, `listening`, `writing`
+- ビジネスルール: 教材・ユニット・問題が参照するタイプを一意に識別
 - メソッド例:
-    - `requiresVocabularyEntry()`: 語彙エントリの紐付けが必須かどうか
-    - `isFreeForm()`: 自由記述採点が必要かどうか
+    - `supportsVocabulary()`: 語彙系フィールドを持つか
+    - `defaultModes()`: デフォルトのStudyMode一覧を返す
+
+### StudyModeCode（学習モードコード）
+
+- 値例: `jp_to_en`, `en_to_jp`, `sentence`, `conversation_roleplay`
+- ビジネスルール: 各教材タイプで利用可能なモードを制御
+- メソッド例:
+    - `requiresInputField()`: 入力欄が必要か（選択式などに備え）
+    - `supportsSpeechSynthesis()`: 読み上げに対応するか
+
+### QuestionVariant（問題バリアント）
+
+- 値: `vocabulary`, `phrase`, `conversation`, `writing` など
+- ビジネスルール: Question が参照するサブテーブルを判定
+- メソッド例:
+    - `tableName()`: 永続化テーブル名を返す
+    - `isVocabularyVariant()`: 語彙系かどうか
 
 ### VocabularyRelationType（語彙関連タイプ）
 
@@ -210,15 +271,16 @@
 ### Material集約
 
 - **集約ルート**: Material
-- **含まれるもの**: Material → Chapter（階層） → Unit → Question → CorrectAnswer (+ VocabularyEntry → VocabularyRelation)
+- **含まれるもの**: Material → Chapter（階層） → Unit → Question → 各種サブ問題 → CorrectAnswer (+ VocabularyEntry → VocabularyRelation)
 - **整合性ルール**:
+    - Material/Chapter/Unit/Question は同一の contentType を保持する
     - Chapterの親子関係が循環しない
     - Chapterのlevelとparentの関係が整合している
     - 同一親配下のorder値は重複しない
     - Questionには最低1つのCorrectAnswerが必要
     - CorrectAnswerのorderは1から連番
-    - questionTypeが語彙系の場合、vocabularyEntryIdが必須
-    - Material内のVocabularyEntry.headwordは重複させない
+    - QuestionVariantごとに必要なサブエンティティが存在する
+    - VocabularyQuestionの場合、Material内のVocabularyEntry.headwordは重複させない
 
 ### StudyRecord集約
 
@@ -227,6 +289,7 @@
 - **整合性ルール**:
     - totalAttempts = correctCount + incorrectCount
     - 統計値とUserAnswerの実データが整合している
+    - contentTypeId と studyModeId の整合性が ContentTypeStudyMode に存在する
     - DailyStudyLogの合計値が実際の解答数と一致
 
 ---
@@ -262,13 +325,14 @@
     - ユーザー回答と正解の照合（完全一致）
     - 複数正解のいずれかにマッチするか
     - 大文字小文字の正規化
-    - questionTypeごとのロジック切り替え（語彙挿入、自由作文、選択式など）※語彙教材では学習セッションがモードを指定
+    - contentType/StudyModeごとのロジック切り替え（語彙モード、例文モード、ロールプレイなど）
 - **手動修正**
     - 不正解から正解への変更
     - 統計への反映
 - **語彙表示**
-    - VocabularyEntryが紐づく場合、品詞・類義語・対義語を提示
-    - 学習モードに応じたプロンプト生成と説明文を提供
+    - VocabularyQuestionの場合、品詞・類義語・対義語を提示
+    - StudyModeに応じたプロンプト生成と説明文を提供
+    - PhraseQuestionなど他Variantでは、例文や音声の提示ルールが異なる
 
 ### QuestionStatistics
 

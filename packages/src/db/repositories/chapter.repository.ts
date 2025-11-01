@@ -25,6 +25,7 @@ export class ChapterRepositoryImpl implements ChapterRepository {
       description: data.description ?? undefined,
       order: data.order,
       level: data.level,
+      contentTypeId: data.contentTypeId,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     });
@@ -47,6 +48,7 @@ export class ChapterRepositoryImpl implements ChapterRepository {
           description: data.description ?? undefined,
           order: data.order,
           level: data.level,
+          contentTypeId: data.contentTypeId,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         }),
@@ -70,6 +72,7 @@ export class ChapterRepositoryImpl implements ChapterRepository {
           description: data.description ?? undefined,
           order: data.order,
           level: data.level,
+          contentTypeId: data.contentTypeId,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         }),
@@ -87,6 +90,7 @@ export class ChapterRepositoryImpl implements ChapterRepository {
         description: chapter.description ?? null,
         order: chapter.order,
         level: chapter.level,
+        contentTypeId: chapter.contentTypeId,
         createdAt: chapter.createdAt,
         updatedAt: chapter.updatedAt,
       })
@@ -97,6 +101,7 @@ export class ChapterRepositoryImpl implements ChapterRepository {
           description: chapter.description ?? null,
           order: chapter.order,
           level: chapter.level,
+          contentTypeId: chapter.contentTypeId,
           updatedAt: new Date(),
         },
       })
@@ -114,6 +119,7 @@ export class ChapterRepositoryImpl implements ChapterRepository {
       description: result.description ?? undefined,
       order: result.order,
       level: result.level,
+      contentTypeId: result.contentTypeId,
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     });

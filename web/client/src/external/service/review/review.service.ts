@@ -133,6 +133,7 @@ export class ReviewService {
         ? await this.questionStatisticsRepository.findByUserAndQuestionIds(
             accountId,
             questionIds,
+            undefined,
           )
         : [];
 
@@ -167,7 +168,7 @@ export class ReviewService {
           unitName: unit?.name ?? "",
           unitOrder: unit?.order ?? unitOrderMap.get(question.unitId) ?? 0,
           questionOrder: question.order,
-          japanese: question.japanese,
+          japanese: question.japanese ?? "",
           totalAttempts,
           correctCount,
           incorrectCount,

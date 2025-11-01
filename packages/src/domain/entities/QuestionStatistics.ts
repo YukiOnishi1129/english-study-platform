@@ -6,7 +6,9 @@ export interface QuestionStatisticsParams {
   id?: string;
   userId: string;
   questionId: string;
+  contentTypeId?: string;
   mode?: QuestionStatisticsMode;
+  studyModeId?: string | null;
   totalAttempts?: number;
   correctCount?: number;
   incorrectCount?: number;
@@ -19,7 +21,9 @@ export class QuestionStatistics {
   public readonly id: string;
   public readonly userId: string;
   public readonly questionId: string;
+  public readonly contentTypeId?: string;
   public readonly mode: QuestionStatisticsMode;
+  public readonly studyModeId: string | null;
   public readonly totalAttempts: number;
   public readonly correctCount: number;
   public readonly incorrectCount: number;
@@ -31,7 +35,9 @@ export class QuestionStatistics {
     this.id = params.id ?? crypto.randomUUID();
     this.userId = params.userId;
     this.questionId = params.questionId;
+    this.contentTypeId = params.contentTypeId;
     this.mode = params.mode ?? "aggregate";
+    this.studyModeId = params.studyModeId ?? null;
     this.totalAttempts = params.totalAttempts ?? 0;
     this.correctCount = params.correctCount ?? 0;
     this.incorrectCount = params.incorrectCount ?? 0;
@@ -65,7 +71,9 @@ export class QuestionStatistics {
       id: this.id,
       userId: this.userId,
       questionId: this.questionId,
+      contentTypeId: this.contentTypeId,
       mode: this.mode,
+      studyModeId: this.studyModeId,
       totalAttempts: this.totalAttempts + 1,
       correctCount: this.correctCount + (isCorrect ? 1 : 0),
       incorrectCount: this.incorrectCount + (isCorrect ? 0 : 1),

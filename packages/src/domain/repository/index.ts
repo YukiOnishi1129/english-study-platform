@@ -1,10 +1,15 @@
 export type { AccountRepository } from "./AccountRepository";
 export type { ChapterRepository } from "./ChapterRepository";
+export type { ContentTypeRepository } from "./ContentTypeRepository";
+export type { ContentTypeStudyModeRepository } from "./ContentTypeStudyModeRepository";
 export type { CorrectAnswerRepository } from "./CorrectAnswerRepository";
 export type { MaterialRepository } from "./MaterialRepository";
+export type { PhraseQuestionRepository } from "./PhraseQuestionRepository";
 export type { QuestionRepository } from "./QuestionRepository";
 export type { QuestionStatisticsRepository } from "./QuestionStatisticsRepository";
+export type { StudyModeRepository } from "./StudyModeRepository";
 export type { UnitRepository } from "./UnitRepository";
 export type { UserAnswerRepository } from "./UserAnswerRepository";
 export type { VocabularyEntryRepository } from "./VocabularyEntryRepository";
+export type { VocabularyQuestionRepository } from "./VocabularyQuestionRepository";
 export type { VocabularyRelationRepository } from "./VocabularyRelationRepository";

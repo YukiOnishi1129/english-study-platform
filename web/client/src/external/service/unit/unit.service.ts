@@ -1,5 +1,6 @@
 import {
   ChapterRepositoryImpl,
+  ContentTypeRepositoryImpl,
   CorrectAnswerRepositoryImpl,
   MaterialRepositoryImpl,
   QuestionRepositoryImpl,
@@ -8,6 +9,7 @@ import {
   VocabularyEntryRepositoryImpl,
   VocabularyRelationRepositoryImpl,
 } from "@acme/shared/db";
+import type { ContentType } from "@acme/shared/domain";
 import {
   QUESTION_STATISTICS_MODES,
   type QuestionStatisticsMode,
@@ -20,6 +22,14 @@ import { UnitDetailSchema } from "@/external/dto/unit/unit.query.dto";
 
 function serialize(date: Date): string {
   return date.toISOString();
+}
+
+function toContentTypeDto(contentType: ContentType) {
+  return {
+    id: contentType.id,
+    code: contentType.code,
+    name: contentType.name,
+  } as const;
 }
 
 type DomainQuestionStatistics = Awaited<
@@ -50,8 +60,10 @@ export class UnitService {
   private questionRepository: QuestionRepositoryImpl;
   private correctAnswerRepository: CorrectAnswerRepositoryImpl;
   private questionStatisticsRepository: QuestionStatisticsRepositoryImpl;
+  private contentTypeRepository: ContentTypeRepositoryImpl;
   private vocabularyEntryRepository: VocabularyEntryRepositoryImpl;
   private vocabularyRelationRepository: VocabularyRelationRepositoryImpl;
+  private contentTypeCache: Map<string, ContentType>;
 
   constructor() {
     this.unitRepository = new UnitRepositoryImpl();
@@ -60,8 +72,26 @@ export class UnitService {
     this.questionRepository = new QuestionRepositoryImpl();
     this.correctAnswerRepository = new CorrectAnswerRepositoryImpl();
     this.questionStatisticsRepository = new QuestionStatisticsRepositoryImpl();
+    this.contentTypeRepository = new ContentTypeRepositoryImpl();
     this.vocabularyEntryRepository = new VocabularyEntryRepositoryImpl();
     this.vocabularyRelationRepository = new VocabularyRelationRepositoryImpl();
+    this.contentTypeCache = new Map();
+  }
+
+  private async resolveContentType(
+    contentTypeId: string,
+  ): Promise<ContentType> {
+    const cached = this.contentTypeCache.get(contentTypeId);
+    if (cached) {
+      return cached;
+    }
+    const contentType =
+      await this.contentTypeRepository.findById(contentTypeId);
+    if (!contentType) {
+      throw new Error(`CONTENT_TYPE_NOT_FOUND:${contentTypeId}`);
+    }
+    this.contentTypeCache.set(contentTypeId, contentType);
+    return contentType;
   }
 
   private async buildChapterPath(
@@ -71,6 +101,7 @@ export class UnitService {
     let current = await this.chapterRepository.findById(chapterId);
 
     while (current) {
+      const contentType = await this.resolveContentType(current.contentTypeId);
       path.push({
         id: current.id,
         materialId: current.materialId,
@@ -81,6 +112,7 @@ export class UnitService {
         order: current.order,
         createdAt: serialize(current.createdAt),
         updatedAt: serialize(current.updatedAt),
+        contentType: toContentTypeDto(contentType),
       });
 
       if (!current.parentChapterId) {
@@ -113,10 +145,14 @@ export class UnitService {
     if (!material) {
       throw new Error("MATERIAL_NOT_FOUND");
     }
+    const materialContentType = await this.resolveContentType(
+      material.contentTypeId,
+    );
 
     const chapterPath = await this.buildChapterPath(chapter.id);
 
     const questions = await this.questionRepository.findByUnitId(unit.id);
+    const unitContentType = await this.resolveContentType(unit.contentTypeId);
     const questionIds = questions.map((question) => question.id);
     const vocabularyEntryIds = Array.from(
       new Set(
@@ -167,6 +203,7 @@ export class UnitService {
         await this.questionStatisticsRepository.findByUserAndQuestionIds(
           accountId,
           questionIds,
+          undefined,
           modes,
         );
 
@@ -213,14 +250,19 @@ export class UnitService {
               }, {})
             : undefined;
 
+        const questionContentType = await this.resolveContentType(
+          question.contentTypeId,
+        );
+
         return {
           id: question.id,
           unitId: question.unitId,
-          japanese: question.japanese,
+          contentType: toContentTypeDto(questionContentType),
+          japanese: question.japanese ?? "",
           prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,
-          questionType: question.questionType,
+          variant: question.variant,
           vocabularyEntryId: question.vocabularyEntryId ?? null,
           headword: vocabularyRecord ? vocabularyRecord.entry.headword : null,
           order: question.order,
@@ -276,6 +318,7 @@ export class UnitService {
         order: material.order,
         createdAt: serialize(material.createdAt),
         updatedAt: serialize(material.updatedAt),
+        contentType: toContentTypeDto(materialContentType),
       },
       chapterPath,
       unit: {
@@ -286,6 +329,7 @@ export class UnitService {
         order: unit.order,
         createdAt: serialize(unit.createdAt),
         updatedAt: serialize(unit.updatedAt),
+        contentType: toContentTypeDto(unitContentType),
       },
       questions: questionDtos.sort((a, b) => a.order - b.order),
     };

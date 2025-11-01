@@ -28,9 +28,14 @@ const OPTIONAL_TEXT_ARRAY_SCHEMA = z
       : [],
   );
 
+const CONTENT_TYPE_ID_SCHEMA = z
+  .string()
+  .min(1, "教材タイプを選択してください。");
+
 export const CreateMaterialRequestSchema = z.object({
   name: NAME_SCHEMA,
   description: DESCRIPTION_SCHEMA,
+  contentTypeId: CONTENT_TYPE_ID_SCHEMA,
 });
 export type CreateMaterialRequest = z.infer<typeof CreateMaterialRequestSchema>;
 

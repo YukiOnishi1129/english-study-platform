@@ -7,6 +7,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { contentTypes } from "./content-types";
 import { materials } from "./materials";
 
 export const chapters = pgTable("chapters", {
@@ -21,6 +22,9 @@ export const chapters = pgTable("chapters", {
   description: text("description"),
   order: integer("order").notNull().default(0),
   level: integer("level").notNull(),
+  contentTypeId: uuid("content_type_id")
+    .notNull()
+    .references(() => contentTypes.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

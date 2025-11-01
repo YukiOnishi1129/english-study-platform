@@ -3,6 +3,7 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../client";
+import { studyModes } from "../schema/study-modes";
 import { userAnswers } from "../schema/user-answers";
 
 export type UserAnswer = InferSelectModel<typeof userAnswers>;
@@ -10,13 +11,21 @@ export type NewUserAnswer = InferInsertModel<typeof userAnswers>;
 
 export class UserAnswerRepositoryImpl implements UserAnswerRepository {
   async save(answer: DomainUserAnswer): Promise<DomainUserAnswer> {
+    if (!answer.contentTypeId) {
+      throw new Error("UserAnswer.contentTypeId is required");
+    }
+
+    const studyModeId = answer.studyModeId ?? (await this.resolveStudyModeId(answer.mode));
+
     const [result] = await db
       .insert(userAnswers)
       .values({
         id: answer.id,
         userId: answer.userId,
         questionId: answer.questionId,
-        mode: answer.mode,
+        contentTypeId: answer.contentTypeId,
+        studyModeId,
+        modeCode: answer.mode,
         userAnswerText: answer.userAnswerText,
         isCorrect: answer.isCorrect,
         isManuallyMarked: answer.isManuallyMarked,
@@ -34,7 +43,9 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
       id: result.id,
       userId: result.userId,
       questionId: result.questionId,
-      mode: result.mode,
+      contentTypeId: result.contentTypeId ?? undefined,
+      studyModeId: result.studyModeId ?? undefined,
+      mode: result.modeCode as DomainUserAnswer["mode"],
       userAnswerText: result.userAnswerText,
       isCorrect: result.isCorrect,
       isManuallyMarked: result.isManuallyMarked,
@@ -58,7 +69,9 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
           id: row.id,
           userId: row.userId,
           questionId: row.questionId,
-          mode: row.mode,
+          contentTypeId: row.contentTypeId ?? undefined,
+          studyModeId: row.studyModeId ?? undefined,
+          mode: row.modeCode as DomainUserAnswer["mode"],
           userAnswerText: row.userAnswerText,
           isCorrect: row.isCorrect,
           isManuallyMarked: row.isManuallyMarked,
@@ -87,7 +100,9 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
           id: row.id,
           userId: row.userId,
           questionId: row.questionId,
-          mode: row.mode,
+          contentTypeId: row.contentTypeId ?? undefined,
+          studyModeId: row.studyModeId ?? undefined,
+          mode: row.modeCode as DomainUserAnswer["mode"],
           userAnswerText: row.userAnswerText,
           isCorrect: row.isCorrect,
           isManuallyMarked: row.isManuallyMarked,
@@ -96,5 +111,19 @@ export class UserAnswerRepositoryImpl implements UserAnswerRepository {
           updatedAt: row.updatedAt,
         }),
     );
+  }
+
+  private async resolveStudyModeId(mode: DomainUserAnswer["mode"]): Promise<string> {
+    const [row] = await db
+      .select({ id: studyModes.id })
+      .from(studyModes)
+      .where(eq(studyModes.code, mode))
+      .limit(1);
+
+    if (!row) {
+      throw new Error(`Study mode "${mode}" is not registered`);
+    }
+
+    return row.id;
   }
 }

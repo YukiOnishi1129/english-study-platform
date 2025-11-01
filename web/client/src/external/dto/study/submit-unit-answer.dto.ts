@@ -4,7 +4,9 @@ export const StudyModeSchema = z.enum([
   "jp_to_en",
   "en_to_jp",
   "sentence",
-  "default",
+  "conversation_roleplay",
+  "listening_comprehension",
+  "writing_review",
 ]);
 
 export type StudyMode = z.infer<typeof StudyModeSchema>;
@@ -22,7 +24,9 @@ const QuestionModeStatisticsSchema = z
     jp_to_en: QuestionStatisticsPayloadSchema.optional(),
     en_to_jp: QuestionStatisticsPayloadSchema.optional(),
     sentence: QuestionStatisticsPayloadSchema.optional(),
-    default: QuestionStatisticsPayloadSchema.optional(),
+    conversation_roleplay: QuestionStatisticsPayloadSchema.optional(),
+    listening_comprehension: QuestionStatisticsPayloadSchema.optional(),
+    writing_review: QuestionStatisticsPayloadSchema.optional(),
   })
   .partial()
   .transform((value) => {

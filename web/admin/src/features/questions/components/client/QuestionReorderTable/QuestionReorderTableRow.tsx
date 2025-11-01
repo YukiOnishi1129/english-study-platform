@@ -41,6 +41,13 @@ export function QuestionReorderTableRow(props: QuestionReorderTableRowProps) {
   };
 
   const displayLabel = item.headword ?? item.japanese;
+  const variantLabelMap: Record<string, string> = {
+    vocabulary: "語彙",
+    phrase: "例文",
+    conversation: "会話",
+    writing: "ライティング",
+  };
+  const variantLabel = variantLabelMap[item.variant] ?? item.variant;
 
   return (
     <div
@@ -78,6 +85,9 @@ export function QuestionReorderTableRow(props: QuestionReorderTableRowProps) {
           </span>
           <span className="text-sm font-medium text-gray-900">
             {displayLabel}
+          </span>
+          <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
+            {variantLabel}
           </span>
         </div>
         {item.headword && item.japanese && item.japanese !== item.headword ? (

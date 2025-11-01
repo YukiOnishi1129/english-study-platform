@@ -7,6 +7,11 @@ interface MaterialCardPresenterProps {
   totalChapters: number;
   totalUnits: number;
   updatedAt: Date;
+  contentType: {
+    id: string;
+    code: string;
+    name: string;
+  };
 }
 
 export function MaterialCardPresenter(props: MaterialCardPresenterProps) {
@@ -17,6 +22,7 @@ export function MaterialCardPresenter(props: MaterialCardPresenterProps) {
     totalChapters,
     totalUnits,
     updatedAt,
+    contentType,
   } = props;
 
   return (
@@ -27,6 +33,11 @@ export function MaterialCardPresenter(props: MaterialCardPresenterProps) {
           {description ? (
             <p className="text-sm text-gray-600">{description}</p>
           ) : null}
+          <div>
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+              {contentType.name}
+            </span>
+          </div>
         </header>
 
         <dl className="grid gap-4 rounded-md border border-indigo-50 bg-indigo-50/60 p-4 text-sm text-indigo-800 sm:grid-cols-3">

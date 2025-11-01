@@ -8,6 +8,7 @@ export interface ChapterParams {
   description?: string;
   order: number;
   level: number;
+  contentTypeId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -20,6 +21,7 @@ export class Chapter {
   public readonly description?: string;
   public readonly order: number;
   public readonly level: number;
+  public readonly contentTypeId: string;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -31,6 +33,7 @@ export class Chapter {
     this.description = params.description;
     this.order = params.order ?? 0;
     this.level = params.level;
+    this.contentTypeId = params.contentTypeId;
     this.createdAt = params.createdAt ?? new Date();
     this.updatedAt = params.updatedAt ?? new Date();
   }

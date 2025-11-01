@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { ReviewSessionDataDto } from "@/external/dto/review/review.session.dto";
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
 
 export type StudyStatus = "idle" | "correct" | "incorrect";
+
+const REVIEW_STUDY_MODE: StudyMode = "jp_to_en";
 
 interface UseReviewStudySessionParams {
   session: ReviewSessionDataDto;
@@ -124,7 +127,7 @@ export function useReviewStudySession({
           unitId: currentQuestion.unitId,
           questionId: currentQuestion.questionId,
           answerText: inputValue,
-          mode: "default",
+          mode: REVIEW_STUDY_MODE,
         });
 
         setStatus(result.isCorrect ? "correct" : "incorrect");

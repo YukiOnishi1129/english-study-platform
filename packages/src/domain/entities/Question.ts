@@ -1,14 +1,15 @@
 import crypto from "node:crypto";
-import type { QuestionType } from "../value-objects";
+import type { QuestionVariant } from "../value-objects";
 
 export interface QuestionParams {
   id?: string;
   unitId: string;
-  japanese: string;
+  contentTypeId: string;
+  variant?: QuestionVariant;
+  japanese?: string;
   prompt?: string;
   hint?: string;
   explanation?: string;
-  questionType?: QuestionType;
   vocabularyEntryId?: string | null;
   order: number;
   createdAt?: Date;
@@ -18,11 +19,13 @@ export interface QuestionParams {
 export class Question {
   public readonly id: string;
   public readonly unitId: string;
-  public readonly japanese: string;
+  public readonly contentTypeId: string;
+  public readonly variant: QuestionVariant;
+  // Backward compatible fields (legacy)
+  public readonly japanese?: string;
   public readonly prompt?: string;
   public readonly hint?: string;
   public readonly explanation?: string;
-  public readonly questionType: QuestionType;
   public readonly vocabularyEntryId?: string | null;
   public readonly order: number;
   public readonly createdAt: Date;
@@ -31,11 +34,12 @@ export class Question {
   constructor(params: QuestionParams) {
     this.id = params.id ?? crypto.randomUUID();
     this.unitId = params.unitId;
+    this.contentTypeId = params.contentTypeId;
+    this.variant = params.variant ?? "phrase";
     this.japanese = params.japanese;
     this.prompt = params.prompt;
     this.hint = params.hint;
     this.explanation = params.explanation;
-    this.questionType = params.questionType ?? "phrase";
     this.vocabularyEntryId = params.vocabularyEntryId ?? null;
     this.order = params.order ?? 0;
     this.createdAt = params.createdAt ?? new Date();
@@ -48,7 +52,15 @@ export class Question {
       id: crypto.randomUUID(),
       createdAt: new Date(),
       updatedAt: new Date(),
-      questionType: params.questionType ?? "phrase",
+      variant: params.variant ?? "phrase",
     });
+  }
+
+  /**
+   * Legacy accessor for compatibility with旧API.
+   * 将来的に削除予定。
+   */
+  get questionType(): QuestionVariant {
+    return this.variant;
   }
 }

@@ -208,13 +208,14 @@ export class StudyService {
       mode,
       answerText,
       questionId,
-      questionJapanese: question.japanese,
+      questionJapanese: question.japanese ?? "",
       vocabularyEntryId: question.vocabularyEntryId ?? undefined,
     });
 
     const userAnswer = new UserAnswer({
       userId: accountId,
       questionId,
+      contentTypeId: question.contentTypeId,
       userAnswerText: answerText,
       isCorrect,
       mode,
@@ -228,6 +229,7 @@ export class StudyService {
       await this.questionStatisticsRepository.incrementCounts(
         accountId,
         questionId,
+        question.contentTypeId,
         mode,
         isCorrect,
       );

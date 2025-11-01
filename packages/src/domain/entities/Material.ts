@@ -5,6 +5,7 @@ export interface MaterialParams {
   name: string;
   description?: string;
   order: number;
+  contentTypeId: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -14,6 +15,7 @@ export class Material {
   public readonly name: string;
   public readonly description?: string;
   public readonly order: number;
+  public readonly contentTypeId: string;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -22,6 +24,7 @@ export class Material {
     this.name = params.name;
     this.description = params.description;
     this.order = params.order ?? 0;
+    this.contentTypeId = params.contentTypeId;
     this.createdAt = params.createdAt ?? new Date();
     this.updatedAt = params.updatedAt ?? new Date();
   }

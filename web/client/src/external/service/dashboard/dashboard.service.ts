@@ -135,6 +135,7 @@ export class DashboardService {
           await this.questionStatisticsRepository.findByUserAndQuestionIds(
             accountId,
             questionIds,
+            undefined,
           );
         stats.forEach((stat) => {
           if (stat.correctCount > 0) {

@@ -54,6 +54,16 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     return results.map(this.toDomain);
   }
 
+  async findByContentTypeId(contentTypeId: string): Promise<DomainQuestion[]> {
+    const results = await db
+      .select()
+      .from(questions)
+      .where(eq(questions.contentTypeId, contentTypeId))
+      .orderBy(questions.order);
+
+    return results.map(this.toDomain);
+  }
+
   async findByVocabularyEntryId(entryId: string): Promise<DomainQuestion[]> {
     const results = await db
       .select()
@@ -80,11 +90,12 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       .values({
         id: question.id,
         unitId: question.unitId,
-        japanese: question.japanese,
+        contentTypeId: question.contentTypeId,
+        questionVariant: question.variant,
+        japanese: question.japanese ?? null,
         prompt: question.prompt ?? null,
         hint: question.hint ?? null,
         explanation: question.explanation ?? null,
-        questionType: question.questionType,
         vocabularyEntryId: question.vocabularyEntryId ?? null,
         order: question.order,
         createdAt: question.createdAt,
@@ -93,11 +104,12 @@ export class QuestionRepositoryImpl implements QuestionRepository {
       .onConflictDoUpdate({
         target: questions.id,
         set: {
-          japanese: question.japanese,
+          contentTypeId: question.contentTypeId,
+          questionVariant: question.variant,
+          japanese: question.japanese ?? null,
           prompt: question.prompt ?? null,
           hint: question.hint ?? null,
           explanation: question.explanation ?? null,
-          questionType: question.questionType,
           vocabularyEntryId: question.vocabularyEntryId ?? null,
           order: question.order,
           updatedAt: new Date(),
@@ -150,11 +162,12 @@ export class QuestionRepositoryImpl implements QuestionRepository {
     new DomainQuestion({
       id: data.id,
       unitId: data.unitId,
-      japanese: data.japanese,
+      contentTypeId: data.contentTypeId,
+      variant: data.questionVariant as DomainQuestion["variant"],
+      japanese: data.japanese ?? undefined,
       prompt: data.prompt ?? undefined,
       hint: data.hint ?? undefined,
       explanation: data.explanation ?? undefined,
-      questionType: data.questionType as DomainQuestion["questionType"],
       vocabularyEntryId: data.vocabularyEntryId ?? undefined,
       order: data.order,
       createdAt: data.createdAt,

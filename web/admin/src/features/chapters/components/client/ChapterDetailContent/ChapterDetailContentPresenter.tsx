@@ -57,6 +57,11 @@ function renderChapter(
               {chapter.units.length} UNIT
             </span>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
+              {chapter.contentType.name}
+            </span>
+          </div>
           {chapter.description ? (
             <p className="text-xs text-gray-600">{chapter.description}</p>
           ) : null}
@@ -169,6 +174,11 @@ export function ChapterDetailContentPresenter(
           <p className="text-sm text-gray-600">
             {chapter.description ?? "説明は登録されていません。"}
           </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-700">
+              {chapter.contentType.name}
+            </span>
+          </div>
         </div>
       </header>
 

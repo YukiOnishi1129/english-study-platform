@@ -29,6 +29,8 @@ import {
   mapStatistics,
 } from "./utils";
 
+const FALLBACK_STUDY_MODE: StudyMode = "jp_to_en";
+
 interface UseUnitStudyContentOptions {
   unitId: string;
   accountId: string | null;
@@ -57,7 +59,7 @@ export interface UnitStudyQuestionStatisticsViewModel
 export interface UnitStudyQuestionViewModel {
   id: string;
   title: string;
-  questionType: string;
+  variant: string;
   japanese: string;
   promptText: string;
   promptNote: string | null;
@@ -99,7 +101,7 @@ function getAvailableModes(
     }
     return modes;
   }
-  return ["default"];
+  return [FALLBACK_STUDY_MODE];
 }
 
 function resolveQuestionView(
@@ -147,7 +149,7 @@ function resolveQuestionView(
 
   let acceptableAnswers = baseAcceptableAnswers;
 
-  if (effectiveMode === "jp_to_en" || effectiveMode === "default") {
+  if (effectiveMode === "jp_to_en") {
     promptText = data.japanese;
     navigatorLabel = data.japanese;
     answerLabel = vocabulary ? "英単語で答えてみよう" : "英語で答えてみよう";
@@ -203,7 +205,7 @@ function resolveQuestionView(
   return {
     id: base.id,
     title: `Q${base.order}`,
-    questionType: data.questionType,
+    variant: data.variant,
     japanese: data.japanese,
     promptText,
     promptNote,
@@ -802,8 +804,11 @@ export function useUnitStudyContent(
     questions: resolvedQuestions,
     currentQuestion,
     currentQuestionId: currentQuestion?.id ?? null,
-    availableModes: currentBaseQuestion?.availableModes ?? ["default"],
-    selectedMode: currentMode ?? currentBaseQuestion?.defaultMode ?? "default",
+    availableModes: currentBaseQuestion?.availableModes ?? [
+      FALLBACK_STUDY_MODE,
+    ],
+    selectedMode:
+      currentMode ?? currentBaseQuestion?.defaultMode ?? FALLBACK_STUDY_MODE,
     currentStatistics,
     currentModeStatistics,
     inputValue,

@@ -13,6 +13,7 @@ interface MaterialCardState {
   totalChapters: number;
   totalUnits: number;
   updatedAt: Date;
+  contentType: MaterialHierarchyItemDto["contentType"];
 }
 
 function countChapters(chapters: MaterialChapterSummaryDto[]): number {
@@ -50,5 +51,6 @@ export function useMaterialCard(
     totalChapters: totals.totalChapters,
     totalUnits: totals.totalUnits,
     updatedAt: new Date(material.updatedAt),
+    contentType: material.contentType,
   };
 }
