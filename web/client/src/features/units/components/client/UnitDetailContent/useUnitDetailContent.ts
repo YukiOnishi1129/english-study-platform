@@ -24,7 +24,7 @@ export interface UnitQuestionViewModel {
   hint: string | null;
   explanation: string | null;
   answerSamples: string[];
-  questionType: string;
+  variant: string;
   headword: string | null;
   vocabulary: UnitDetailDto["questions"][number]["vocabulary"];
   statistics: {
@@ -104,7 +104,7 @@ export function useUnitDetailContent(
       answerSamples: question.correctAnswers
         .map((answer) => answer.answerText)
         .slice(0, 3),
-      questionType: question.questionType,
+      variant: question.variant,
       headword: question.headword,
       vocabulary: question.vocabulary,
       statistics: question.statistics

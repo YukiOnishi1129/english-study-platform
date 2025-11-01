@@ -208,7 +208,7 @@ export class StudyService {
       mode,
       answerText,
       questionId,
-      questionJapanese: question.japanese,
+      questionJapanese: question.japanese ?? "",
       vocabularyEntryId: question.vocabularyEntryId ?? undefined,
     });
 

@@ -23,7 +23,9 @@ const MODE_LABEL: Record<StudyMode, string> = {
   jp_to_en: "日→英",
   en_to_jp: "英→日",
   sentence: "英作文",
-  default: "標準",
+  conversation_roleplay: "ロールプレイ",
+  listening_comprehension: "リスニング",
+  writing_review: "ライティング",
 };
 
 export function UnitNavigatorNodePresenter({

@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+const ContentTypeSchema = z.object({
+  id: z.string().min(1),
+  code: z.string().min(1),
+  name: z.string().min(1),
+});
+
+export type ContentTypeDto = z.infer<typeof ContentTypeSchema>;
+
 export const GetUnitDetailRequestSchema = z.object({
   unitId: z.uuid(),
   accountId: z.uuid().optional().nullable(),
@@ -54,7 +62,9 @@ const QuestionModeStatisticsSchema = z
     jp_to_en: QuestionStatisticsPayloadSchema.optional(),
     en_to_jp: QuestionStatisticsPayloadSchema.optional(),
     sentence: QuestionStatisticsPayloadSchema.optional(),
-    default: QuestionStatisticsPayloadSchema.optional(),
+    conversation_roleplay: QuestionStatisticsPayloadSchema.optional(),
+    listening_comprehension: QuestionStatisticsPayloadSchema.optional(),
+    writing_review: QuestionStatisticsPayloadSchema.optional(),
   })
   .partial();
 
@@ -65,11 +75,12 @@ export type UnitDetailQuestionModeStatisticsDto = z.infer<
 export const UnitDetailQuestionSchema = z.object({
   id: z.string().min(1),
   unitId: z.string().min(1),
-  japanese: z.string().min(1),
+  contentType: ContentTypeSchema,
+  japanese: z.string(),
   prompt: z.string().nullable(),
   hint: z.string().nullable(),
   explanation: z.string().nullable(),
-  questionType: z.string().min(1),
+  variant: z.string().min(1),
   vocabularyEntryId: z.string().nullable(),
   headword: z.string().nullable(),
   order: z.number().int(),
@@ -93,6 +104,7 @@ export const UnitDetailChapterSchema = z.object({
   order: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  contentType: ContentTypeSchema,
 });
 
 export type UnitDetailChapterDto = z.infer<typeof UnitDetailChapterSchema>;
@@ -104,6 +116,7 @@ export const UnitDetailMaterialSchema = z.object({
   order: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  contentType: ContentTypeSchema,
 });
 
 export type UnitDetailMaterialDto = z.infer<typeof UnitDetailMaterialSchema>;
@@ -116,6 +129,7 @@ export const UnitDetailUnitSchema = z.object({
   order: z.number().int(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  contentType: ContentTypeSchema,
 });
 
 export type UnitDetailUnitDto = z.infer<typeof UnitDetailUnitSchema>;
