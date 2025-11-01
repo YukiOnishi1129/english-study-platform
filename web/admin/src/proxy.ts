@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-export function middleware() {
-  // Simply pass through - authentication is handled in layout files
+export function proxy() {
+  // Authentication is handled in server components/layouts
   return NextResponse.next();
 }
 
