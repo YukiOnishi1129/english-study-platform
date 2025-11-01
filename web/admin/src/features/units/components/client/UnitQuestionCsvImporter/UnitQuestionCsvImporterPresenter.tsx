@@ -182,9 +182,11 @@ export function UnitQuestionCsvImporterPresenter(
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">関連ID</th>
                   <th className="px-4 py-3">日本語</th>
+                  <th className="px-4 py-3">英語例文</th>
                   <th className="px-4 py-3">英語正解</th>
                   <th className="px-4 py-3">ヒント</th>
                   <th className="px-4 py-3">解説</th>
+                  <th className="px-4 py-3">音声URL</th>
                   <th className="px-4 py-3">並び順</th>
                 </tr>
               </thead>
@@ -205,6 +207,11 @@ export function UnitQuestionCsvImporterPresenter(
                     <td className="px-4 py-3 whitespace-pre-wrap text-gray-900">
                       {row.japanese}
                     </td>
+                    <td className="px-4 py-3 whitespace-pre-wrap text-gray-700">
+                      {row.promptEn ?? (
+                        <span className="text-xs text-gray-400">―</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <ul className="list-disc space-y-1 pl-5">
                         {row.correctAnswers.map((answer) => (
@@ -219,6 +226,11 @@ export function UnitQuestionCsvImporterPresenter(
                     </td>
                     <td className="px-4 py-3 whitespace-pre-wrap text-gray-600">
                       {row.explanation ?? (
+                        <span className="text-xs text-gray-400">―</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 break-all text-xs text-indigo-600">
+                      {row.audioUrl ?? (
                         <span className="text-xs text-gray-400">―</span>
                       )}
                     </td>

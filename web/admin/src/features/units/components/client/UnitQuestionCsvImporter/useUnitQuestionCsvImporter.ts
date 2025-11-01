@@ -29,8 +29,9 @@ const INITIAL_IMPORT_STATUS: ImportStatus = { status: "idle" };
 
 const PAGE_SIZE = 25;
 
-const TEMPLATE_CSV = `関連ID,並び順,日本語,ヒント,解説,英語正解1,英語正解2
-,1,サンプルの日本語文,ヒント例,解説例,Sample answer A,Sample answer B
+const TEMPLATE_CSV =
+  `関連ID,並び順,日本語,英語例文,ヒント,解説,音声URL,英語正解1,英語正解2
+,1,サンプルの日本語文,Sample English sentence,ヒント例,解説例,https://example.com/audio.mp3,Sample answer A,Sample answer B
 `.trim();
 
 export function useUnitQuestionCsvImporter(
@@ -152,6 +153,8 @@ export function useUnitQuestionCsvImporter(
               ? row.order
               : undefined,
           japanese: row.japanese,
+          promptEn: row.promptEn ?? undefined,
+          audioUrl: row.audioUrl ?? undefined,
           hint: row.hint ?? undefined,
           explanation: row.explanation ?? undefined,
           correctAnswers: row.correctAnswers,

@@ -31,9 +31,10 @@ export function MaterialCreateFormPresenter(
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     await onSubmit(formData);
-    event.currentTarget.reset();
+    form.reset();
   };
 
   const isSubmitDisabled =

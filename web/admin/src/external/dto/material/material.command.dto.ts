@@ -100,6 +100,8 @@ const ImportUnitQuestionRowSchema = z.object({
     .transform((value) => (value && value.length > 0 ? value : undefined)),
   order: z.number().int().positive().optional(),
   japanese: z.string().trim().min(1, "日本語を入力してください。"),
+  promptEn: OPTIONAL_TEXT_SCHEMA,
+  audioUrl: OPTIONAL_TEXT_SCHEMA,
   hint: OPTIONAL_TEXT_SCHEMA,
   explanation: OPTIONAL_TEXT_SCHEMA,
   correctAnswers: z
