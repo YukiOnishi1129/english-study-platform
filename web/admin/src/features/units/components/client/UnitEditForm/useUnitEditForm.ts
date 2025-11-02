@@ -2,6 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import { unitKeys } from "@/features/units/queries/keys";
@@ -13,6 +15,7 @@ export function useUnitEditForm(
 ): UnitEditFormPresenterProps {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const lastSubmittedNameRef = useRef<string>(props.defaultValues.name ?? "");
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -40,10 +43,19 @@ export function useUnitEditForm(
       }
 
       router.refresh();
+      const unitName =
+        lastSubmittedNameRef.current || props.defaultValues.name || "UNIT";
+      toast.success(`UNIT「${unitName}」を更新しました。`);
+      lastSubmittedNameRef.current = unitName;
     },
   });
 
   const handleSubmit = async (formData: FormData) => {
+    const nameEntry = formData.get("name");
+    lastSubmittedNameRef.current =
+      typeof nameEntry === "string" && nameEntry.trim().length > 0
+        ? nameEntry.trim()
+        : (props.defaultValues.name ?? "");
     await mutation.mutateAsync(formData);
   };
 

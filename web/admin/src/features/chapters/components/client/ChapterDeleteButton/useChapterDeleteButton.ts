@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import { deleteChapterAction } from "./actions";
@@ -41,36 +42,31 @@ export function useChapterDeleteButton(
 
       return result;
     },
-    onSuccess: async (result) => {
-      const invalidateTasks = [
-        queryClient.invalidateQueries({
-          queryKey: materialKeys.detail(props.materialId),
-        }),
-      ];
-
-      props.ancestorChapterIds.forEach((ancestorId) => {
-        invalidateTasks.push(
-          queryClient.invalidateQueries({
-            queryKey: chapterKeys.detail(ancestorId),
-          }),
-        );
+    onSuccess: (result) => {
+      queryClient.removeQueries({
+        queryKey: chapterKeys.detail(props.chapterId),
       });
-
-      invalidateTasks.push(
-        queryClient.invalidateQueries({
-          queryKey: chapterKeys.detail(props.chapterId),
-        }),
-      );
-
-      await Promise.all(invalidateTasks);
-
       setIsDialogOpen(false);
 
       if (result.redirect) {
         router.push(result.redirect as Parameters<typeof router.push>[0]);
       }
 
-      router.refresh();
+      const invalidateTasks = [
+        queryClient.invalidateQueries({
+          queryKey: materialKeys.detail(props.materialId),
+        }),
+        ...props.ancestorChapterIds.map((ancestorId) =>
+          queryClient.invalidateQueries({
+            queryKey: chapterKeys.detail(ancestorId),
+          }),
+        ),
+      ];
+
+      Promise.all(invalidateTasks).finally(() => {
+        router.refresh();
+      });
+      toast.success(`章「${props.chapterName}」を削除しました。`);
     },
     onError: (error) => {
       setErrorMessage(

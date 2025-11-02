@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import type { FormState } from "@/features/materials/types/formState";
@@ -31,6 +32,7 @@ export function useChapterCreateForm(
 ): UseChapterCreateFormResult {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const lastSubmittedNameRef = useRef<string>("");
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -62,10 +64,16 @@ export function useChapterCreateForm(
       }
 
       router.refresh();
+      const chapterName = lastSubmittedNameRef.current || "新しい章";
+      toast.success(`章「${chapterName}」を追加しました。`);
+      lastSubmittedNameRef.current = "";
     },
   });
 
   const handleSubmit = async (formData: FormData) => {
+    const nameEntry = formData.get("name");
+    lastSubmittedNameRef.current =
+      typeof nameEntry === "string" ? nameEntry.trim() : "";
     await mutation.mutateAsync(formData);
   };
 

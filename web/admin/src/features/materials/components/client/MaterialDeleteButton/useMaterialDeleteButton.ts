@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { materialKeys } from "@/features/materials/queries/keys";
 import { deleteMaterialAction } from "./actions";
 import type { MaterialDeleteButtonProps } from "./types";
@@ -37,16 +38,20 @@ export function useMaterialDeleteButton(
 
       return result;
     },
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: materialKeys.list() }),
-        queryClient.invalidateQueries({
-          queryKey: materialKeys.detail(props.materialId),
-        }),
-      ]);
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: materialKeys.detail(props.materialId),
+      });
       setIsDialogOpen(false);
       router.push("/materials");
-      router.refresh();
+      queryClient
+        .invalidateQueries({ queryKey: materialKeys.list() })
+        .finally(() => {
+          router.refresh();
+        });
+      toast.success(`教材「${props.materialName}」を削除しました。`, {
+        description: "教材一覧へリダイレクトしました。",
+      });
     },
     onError: (error) => {
       setErrorMessage(

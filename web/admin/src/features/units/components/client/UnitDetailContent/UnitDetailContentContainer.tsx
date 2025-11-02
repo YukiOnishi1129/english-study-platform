@@ -20,6 +20,10 @@ export function UnitDetailContent(props: UnitDetailContentProps) {
     onBulkDelete,
   } = useUnitDetailContent({ unitId });
 
+  if (!detail && !isError && !isLoading) {
+    return null;
+  }
+
   return (
     <UnitDetailContentPresenter
       detail={detail}

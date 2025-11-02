@@ -10,6 +10,10 @@ interface MaterialDetailContentProps {
 export function MaterialDetailContent(props: MaterialDetailContentProps) {
   const { data, isLoading, isError } = useMaterialDetailQuery(props.materialId);
 
+  if (!data && !isError && !isLoading) {
+    return null;
+  }
+
   return (
     <MaterialDetailContentPresenter
       materialId={props.materialId}
