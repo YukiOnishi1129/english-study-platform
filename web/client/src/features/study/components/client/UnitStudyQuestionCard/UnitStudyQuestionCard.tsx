@@ -210,7 +210,9 @@ export function UnitStudyQuestionCard({
             ) : null}
           </div>
         ) : null}
-        {question.promptNote && selectedMode !== "sentence" ? (
+        {question.promptNote &&
+        selectedMode !== "sentence" &&
+        (question.variant !== "phrase" || status !== "idle") ? (
           <p className="whitespace-pre-line text-sm text-slate-600">
             {question.promptNote}
           </p>

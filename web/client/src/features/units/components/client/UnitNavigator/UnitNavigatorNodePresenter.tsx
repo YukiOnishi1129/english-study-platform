@@ -93,12 +93,14 @@ export function UnitNavigatorNodePresenter({
                         : "text-slate-600",
                     )}
                   >
-                    <span className="min-w-0 flex-1 truncate">
-                      <span className="font-semibold text-indigo-600">
-                        {question.label}
-                      </span>
-                      <span className="ml-2 text-[11px] text-slate-500">
-                        {question.displayText}
+                    <span className="min-w-0 flex-1">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="shrink-0 font-semibold text-indigo-600">
+                          {question.label}
+                        </span>
+                        <span className="max-w-[14rem] truncate text-[11px] text-slate-500">
+                          {question.displayText}
+                        </span>
                       </span>
                     </span>
                     <span className="ml-auto whitespace-nowrap text-[11px] text-slate-400">
