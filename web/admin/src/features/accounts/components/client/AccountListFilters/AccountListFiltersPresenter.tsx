@@ -128,9 +128,9 @@ export function AccountListFiltersPresenter(props: AccountListFiltersProps) {
       </div>
       <form
         onSubmit={handleSubmit}
-        className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_160px_160px_200px_120px]"
+        className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_220px_220px_240px]"
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 md:col-span-2 lg:col-span-1">
           <label
             htmlFor="account-search"
             className="text-xs font-semibold text-gray-600"
@@ -150,7 +150,7 @@ export function AccountListFiltersPresenter(props: AccountListFiltersProps) {
           <legend className="text-xs font-semibold text-gray-600">
             ロール
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {ROLE_OPTIONS.map((option) => (
               <label
                 key={option.value}
@@ -174,7 +174,7 @@ export function AccountListFiltersPresenter(props: AccountListFiltersProps) {
           <legend className="text-xs font-semibold text-gray-600">
             ステータス
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {STATUS_OPTIONS.map((option) => (
               <label
                 key={option.value}
@@ -219,7 +219,7 @@ export function AccountListFiltersPresenter(props: AccountListFiltersProps) {
           </select>
         </div>
 
-        <div className="flex items-end justify-end gap-2">
+        <div className="flex items-end justify-start gap-2 md:col-span-2 lg:col-span-1 lg:justify-end">
           <Button type="submit" disabled={submitting}>
             フィルターを適用
           </Button>
