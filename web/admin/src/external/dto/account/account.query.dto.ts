@@ -29,7 +29,9 @@ export const ListAccountsRequestSchema = z.object({
     .array(z.enum(["active", "inactive"]))
     .max(2)
     .optional(),
-  orderBy: z.enum(["lastLoginDesc", "lastLoginAsc", "createdDesc"]).optional(),
+  orderBy: z
+    .enum(["lastLoginDesc", "lastLoginAsc", "createdDesc"])
+    .default("lastLoginDesc"),
   page: z.number().int().min(0).default(0),
   limit: z.number().int().min(1).max(100).default(20),
 });

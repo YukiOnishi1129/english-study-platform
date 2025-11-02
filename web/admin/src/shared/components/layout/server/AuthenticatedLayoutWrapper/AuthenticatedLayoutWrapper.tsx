@@ -38,6 +38,12 @@ export async function AuthenticatedLayoutWrapper({
           >
             教材一覧
           </Link>
+          <Link
+            href="/accounts"
+            className="rounded-md px-3 py-2 hover:bg-indigo-50 hover:text-indigo-600"
+          >
+            アカウント管理
+          </Link>
         </nav>
         <p className="text-xs text-slate-400">
           &copy; {new Date().getFullYear()} English Study Platform

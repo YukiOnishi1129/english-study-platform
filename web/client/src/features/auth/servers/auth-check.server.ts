@@ -1,6 +1,6 @@
 import "server-only";
 import { getServerSession } from "next-auth";
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 import { authOptions } from "@/features/auth/lib/options";
 
 export async function getAuthenticatedAccount(): Promise<Account | null> {

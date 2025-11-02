@@ -2,7 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { createOrGetAccount } from "@/external/handler/account/account.command.server";
 import { refreshGoogleTokens } from "@/external/handler/auth/token.command.server";
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 import type { GoogleProfile } from "@/features/auth/types/next-auth";
 
 function buildProfileName(profile: GoogleProfile): string {

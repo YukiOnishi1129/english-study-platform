@@ -6,7 +6,7 @@ import {
   getAccountByProvider,
 } from "@/external/handler/account/account.query.server";
 import { refreshGoogleTokens } from "@/external/handler/auth/token.command.server";
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 import type { GoogleProfile } from "@/features/auth/types/next-auth";
 
 function toFeatureAccount(
