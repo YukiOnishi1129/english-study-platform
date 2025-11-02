@@ -24,7 +24,7 @@ export function StudyNavigatorSidebarPresenter({
 }: StudyNavigatorSidebarPresenterProps) {
   return (
     <Card
-      className="flex h-full flex-col border border-indigo-100 bg-white/95 shadow-sm"
+      className="flex h-full w-full flex-col border border-indigo-100 bg-white/95 shadow-sm"
       style={{ maxHeight }}
     >
       <CardHeader className="flex flex-row items-center gap-2 border-b border-indigo-50 pb-3">

@@ -28,8 +28,8 @@ const INITIAL_IMPORT_STATUS: ImportStatus = { status: "idle" };
 const PAGE_SIZE = 25;
 
 const TEMPLATE_CSV =
-  `語彙ID,問題ID,並び順,英単語,日本語訳1,日本語訳2,品詞,発音,プロンプト,正解候補1,正解候補2,類義語1,対義語1,関連語1,例文(英),例文(和)
-, ,1,accept,受け入れる,受諾する,verb,,この単語を使って英文を作成してください,accept,accept it,receive,refuse,admit,"We must accept the offer immediately.","我々はその提案をすぐに受け入れる必要がある。"`.trim();
+  `語彙ID,問題ID,並び順,英単語,日本語訳1,日本語訳2,注釈,品詞,発音,プロンプト,正解候補1,正解候補2,類義語1,対義語1,関連語1,例文(英),例文(和)
+, ,1,accept,受け入れる,受諾する,※前の会話の返答として使用,verb,,この単語を使って英文を作成してください,accept,accept it,receive,refuse,admit,"We must accept the offer immediately.","我々はその提案をすぐに受け入れる必要がある。"`.trim();
 
 export function useVocabularyCsvImporter(
   props: VocabularyCsvImporterProps,
@@ -155,6 +155,7 @@ export function useVocabularyCsvImporter(
           definitionJa: row.definitionJa,
           definitionVariants: row.definitionVariants,
           prompt: row.prompt,
+          annotation: row.annotation,
           answerCandidates: row.answerCandidates,
           synonyms: row.synonyms,
           antonyms: row.antonyms,

@@ -1,4 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { redirect } from "next/navigation";
 import { getDashboardData } from "@/external/handler/dashboard/dashboard.query.server";
 import { getAuthenticatedAccount } from "@/features/auth/servers/auth-check.server";
 import { DashboardContent } from "@/features/dashboard/components/client/DashboardContent";
@@ -9,7 +10,7 @@ export async function DashboardPageTemplate() {
   const account = await getAuthenticatedAccount();
 
   if (!account) {
-    throw new Error("Authentication error: No account found");
+    redirect("/login");
   }
 
   const queryClient = getQueryClient();

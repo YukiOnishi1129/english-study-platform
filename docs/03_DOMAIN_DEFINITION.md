@@ -333,6 +333,9 @@
     - VocabularyQuestionの場合、品詞・類義語・対義語を提示
     - StudyModeに応じたプロンプト生成と説明文を提供
     - PhraseQuestionなど他Variantでは、例文や音声の提示ルールが異なる
+- **コンテキスト情報の提示**
+    - `annotation` を通じて常時表示する補足文を保持
+    - CSV取り込み・管理画面編集から注釈を設定し、学習画面に即時反映
 
 ### QuestionStatistics
 

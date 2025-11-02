@@ -50,7 +50,7 @@ export function VocabularyCsvImporterPresenter(
         </div>
         <Card className="bg-slate-50 px-4 py-3 text-xs text-slate-600">
           必須列: 英単語, 日本語訳1, 正解候補1。任意: 語彙ID, 問題ID, 並び順,
-          日本語訳2〜, 品詞, 発音, プロンプト, 正解候補2〜,
+          日本語訳2〜, 注釈, 品詞, 発音, プロンプト, 正解候補2〜,
           類義語/対義語/関連語, 例文(英/和)。
         </Card>
       </header>
@@ -199,6 +199,7 @@ export function VocabularyCsvImporterPresenter(
                   <th className="px-4 py-3">語彙ID/問題ID</th>
                   <th className="px-4 py-3">英単語</th>
                   <th className="px-4 py-3">日本語訳</th>
+                  <th className="px-4 py-3">注釈</th>
                   <th className="px-4 py-3">品詞</th>
                   <th className="px-4 py-3">例文（英）</th>
                   <th className="px-4 py-3">例文（和）</th>
@@ -250,6 +251,13 @@ export function VocabularyCsvImporterPresenter(
                           </div>
                         ) : null}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600">
+                      {row.annotation ? (
+                        <p className="whitespace-pre-wrap">{row.annotation}</p>
+                      ) : (
+                        <span>-</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-600">
                       {row.partOfSpeech ?? "-"}

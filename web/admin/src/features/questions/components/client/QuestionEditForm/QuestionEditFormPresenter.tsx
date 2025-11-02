@@ -79,6 +79,26 @@ export function QuestionEditFormPresenter(
         </p>
       </div>
 
+      <div className="space-y-1">
+        <label
+          htmlFor="question-annotation"
+          className="text-sm font-semibold text-gray-800"
+        >
+          注釈
+        </label>
+        <textarea
+          id="question-annotation"
+          name="annotation"
+          rows={2}
+          defaultValue={defaultValues.annotation ?? ""}
+          placeholder="例: ※あれは面白い本ですか？への返答として"
+          className="w-full rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+        />
+        <p className="text-xs text-gray-500">
+          出題時に常に表示する補足情報を入力します。学習者に前提を伝えたい場合に活用してください。（任意）
+        </p>
+      </div>
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label

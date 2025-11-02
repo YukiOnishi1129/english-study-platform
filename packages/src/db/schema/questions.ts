@@ -18,6 +18,7 @@ export const questions = pgTable(
     prompt: text("prompt"),
     hint: text("hint"),
     explanation: text("explanation"),
+    annotation: text("annotation"),
     vocabularyEntryId: uuid("vocabulary_entry_id").references(() => vocabularyEntries.id, {
       onDelete: "set null",
     }),

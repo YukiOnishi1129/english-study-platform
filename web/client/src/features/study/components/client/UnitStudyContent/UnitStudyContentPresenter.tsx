@@ -77,8 +77,8 @@ export function UnitStudyContentPresenter(props: UseUnitStudyContentResult) {
     <div className="space-y-6">
       <UnitStudyBreadcrumb items={breadcrumb} />
 
-      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[320px,minmax(0,1fr)] xl:items-start xl:gap-6">
-        <aside className="hidden xl:sticky xl:top-24 xl:flex xl:h-[calc(100vh-12rem)] xl:w-92 xl:self-start">
+      <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[360px,minmax(0,1fr)] xl:items-start xl:gap-8">
+        <aside className="hidden xl:sticky xl:top-24 xl:flex xl:h-[calc(100vh-12rem)] xl:max-w-[360px] xl:w-full xl:self-start">
           <StudyNavigatorSidebar
             materialDetail={materialDetail}
             currentUnitId={unit.id}

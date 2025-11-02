@@ -412,6 +412,7 @@ export class MaterialService {
           unitId: question.unitId,
           contentType: toContentTypeDto(questionContentType),
           japanese: japaneseText,
+          annotation: question.annotation ?? null,
           prompt: phraseDetails?.promptEn ?? question.prompt ?? null,
           hint: phraseDetails?.hint ?? question.hint ?? null,
           explanation:
@@ -574,6 +575,7 @@ export class MaterialService {
       unitId: question.unitId,
       contentType: toContentTypeDto(resolveContentType(question.contentTypeId)),
       japanese: japaneseText,
+      annotation: question.annotation ?? null,
       prompt: phraseDetails?.promptEn ?? question.prompt ?? null,
       hint: phraseDetails?.hint ?? question.hint ?? null,
       explanation: phraseDetails?.explanation ?? question.explanation ?? null,
@@ -886,6 +888,11 @@ export class MaterialService {
           );
         }
 
+        const existingPhrase =
+          existing.variant === "phrase"
+            ? await this.phraseQuestionRepository.findByQuestionId(existing.id)
+            : null;
+
         usedOrders.delete(existing.order);
         const finalOrder = reserveOrder(row.order ?? existing.order);
 
@@ -895,8 +902,10 @@ export class MaterialService {
           contentTypeId: existing.contentTypeId ?? unit.contentTypeId,
           variant: existing.variant ?? "phrase",
           japanese: row.japanese,
-          hint: row.hint ?? undefined,
-          explanation: row.explanation ?? undefined,
+          annotation: row.annotation ?? existing.annotation ?? undefined,
+          prompt: row.promptEn ?? existing.prompt ?? undefined,
+          hint: row.hint ?? existing.hint ?? undefined,
+          explanation: row.explanation ?? existing.explanation ?? undefined,
           order: finalOrder,
           createdAt: existing.createdAt,
           updatedAt: new Date(),
@@ -904,13 +913,28 @@ export class MaterialService {
 
         const savedQuestion =
           await this.questionRepository.save(updatedQuestion);
+        const promptEn =
+          row.promptEn ??
+          existingPhrase?.promptEn ??
+          savedQuestion.prompt ??
+          null;
+        const phraseHint =
+          row.hint ?? existingPhrase?.hint ?? savedQuestion.hint ?? null;
+        const phraseExplanation =
+          row.explanation ??
+          existingPhrase?.explanation ??
+          savedQuestion.explanation ??
+          null;
+        const audioUrl = row.audioUrl ?? existingPhrase?.audioUrl ?? null;
+
         await this.phraseQuestionRepository.save(
           new PhraseQuestion({
             questionId: savedQuestion.id,
             promptJa: row.japanese,
-            promptEn: savedQuestion.prompt ?? null,
-            hint: row.hint ?? savedQuestion.hint ?? null,
-            explanation: row.explanation ?? savedQuestion.explanation ?? null,
+            promptEn,
+            hint: phraseHint,
+            explanation: phraseExplanation,
+            audioUrl,
           }),
         );
         await this.correctAnswerRepository.deleteByQuestionId(existing.id);
@@ -934,19 +958,24 @@ export class MaterialService {
         contentTypeId: unit.contentTypeId,
         variant: "phrase",
         japanese: row.japanese,
+        annotation: row.annotation ?? undefined,
+        prompt: row.promptEn ?? undefined,
         hint: row.hint ?? undefined,
         explanation: row.explanation ?? undefined,
         order: finalOrder,
       });
 
       const savedQuestion = await this.questionRepository.save(newQuestion);
+      const promptEn = row.promptEn ?? null;
+      const audioUrl = row.audioUrl ?? null;
       await this.phraseQuestionRepository.save(
         new PhraseQuestion({
           questionId: savedQuestion.id,
           promptJa: row.japanese,
-          promptEn: savedQuestion.prompt ?? null,
-          hint: row.hint ?? savedQuestion.hint ?? null,
-          explanation: row.explanation ?? savedQuestion.explanation ?? null,
+          promptEn,
+          hint: row.hint ?? null,
+          explanation: row.explanation ?? null,
+          audioUrl,
         }),
       );
       for (const [index, answerText] of answers.entries()) {
@@ -1159,6 +1188,11 @@ export class MaterialService {
         await this.vocabularyRelationRepository.saveMany(relations);
       }
 
+      const annotationProvided = row.annotation !== undefined;
+      const normalizedAnnotation = annotationProvided
+        ? (row.annotation ?? "").trim()
+        : "";
+
       let targetQuestion: Question | null = null;
       if (row.questionId) {
         targetQuestion =
@@ -1182,6 +1216,11 @@ export class MaterialService {
           contentTypeId: targetQuestion.contentTypeId ?? unit.contentTypeId,
           variant: "vocabulary",
           japanese: definitionText,
+          annotation: annotationProvided
+            ? normalizedAnnotation.length > 0
+              ? normalizedAnnotation
+              : undefined
+            : (targetQuestion.annotation ?? undefined),
           prompt: row.prompt ?? undefined,
           hint: targetQuestion.hint ?? undefined,
           explanation: targetQuestion.explanation ?? undefined,
@@ -1198,6 +1237,10 @@ export class MaterialService {
           contentTypeId: unit.contentTypeId,
           variant: "vocabulary",
           japanese: definitionText,
+          annotation:
+            annotationProvided && normalizedAnnotation.length > 0
+              ? normalizedAnnotation
+              : undefined,
           prompt: row.prompt ?? undefined,
           hint: undefined,
           explanation: undefined,
@@ -1262,6 +1305,7 @@ export class MaterialService {
       contentTypeId: existing.contentTypeId,
       variant: existing.variant,
       japanese: payload.japanese,
+      annotation: payload.annotation ?? existing.annotation ?? undefined,
       prompt: payload.prompt ?? undefined,
       hint: payload.hint ?? undefined,
       explanation: payload.explanation ?? undefined,
@@ -1423,6 +1467,7 @@ export class MaterialService {
         contentTypeId: existing.contentTypeId,
         variant: existing.variant,
         japanese: existing.japanese,
+        annotation: existing.annotation ?? undefined,
         hint: existing.hint ?? undefined,
         explanation: existing.explanation ?? undefined,
         order: index + 1,

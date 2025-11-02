@@ -5,7 +5,16 @@ import {
   QuestionRepositoryImpl,
   QuestionStatisticsRepositoryImpl,
   UnitRepositoryImpl,
+  VocabularyQuestionRepositoryImpl,
 } from "@acme/shared/db";
+import {
+  type Question as DomainQuestion,
+  type VocabularyQuestion as DomainVocabularyQuestion,
+  QUESTION_STATISTICS_MODES,
+  type QuestionStatistics,
+  type QuestionStatisticsMode,
+  type StudyMode,
+} from "@acme/shared/domain";
 
 import {
   type ReviewDataDto,
@@ -16,6 +25,7 @@ import {
 import {
   type ReviewSessionDataDto,
   ReviewSessionDataSchema,
+  type ReviewSessionQuestionDto,
 } from "@/external/dto/review/review.session.dto";
 
 const LOW_ATTEMPT_THRESHOLD = 3;
@@ -39,6 +49,7 @@ export class ReviewService {
   private questionRepository: QuestionRepositoryImpl;
   private questionStatisticsRepository: QuestionStatisticsRepositoryImpl;
   private correctAnswerRepository: CorrectAnswerRepositoryImpl;
+  private vocabularyQuestionRepository: VocabularyQuestionRepositoryImpl;
 
   constructor() {
     this.materialRepository = new MaterialRepositoryImpl();
@@ -47,6 +58,7 @@ export class ReviewService {
     this.questionRepository = new QuestionRepositoryImpl();
     this.questionStatisticsRepository = new QuestionStatisticsRepositoryImpl();
     this.correctAnswerRepository = new CorrectAnswerRepositoryImpl();
+    this.vocabularyQuestionRepository = new VocabularyQuestionRepositoryImpl();
   }
 
   private async buildMaterialReviewData(
@@ -128,16 +140,26 @@ export class ReviewService {
     });
 
     const questionIds = allQuestions.map((question) => question.id);
+    const modes: QuestionStatisticsMode[] = [...QUESTION_STATISTICS_MODES];
     const statsRows =
       questionIds.length > 0
         ? await this.questionStatisticsRepository.findByUserAndQuestionIds(
             accountId,
             questionIds,
             undefined,
+            modes,
           )
         : [];
 
-    const statsMap = new Map(statsRows.map((row) => [row.questionId, row]));
+    const statsMap = new Map<
+      string,
+      Map<QuestionStatisticsMode, QuestionStatistics>
+    >();
+    statsRows.forEach((row) => {
+      const map = statsMap.get(row.questionId) ?? new Map();
+      map.set(row.mode, row);
+      statsMap.set(row.questionId, map);
+    });
 
     const groups: ReviewGroups = {
       weak: [],
@@ -152,15 +174,18 @@ export class ReviewService {
 
       questionList.forEach((question) => {
         totalQuestionCount += 1;
-        const stats = statsMap.get(question.id);
-        const totalAttempts = stats?.totalAttempts ?? 0;
-        const correctCount = stats?.correctCount ?? 0;
-        const incorrectCount = stats?.incorrectCount ?? 0;
+        const statsByMode = statsMap.get(question.id) ?? new Map();
+        const aggregateStats = this.getAggregateStats(statsByMode);
+        const totalAttempts = aggregateStats?.totalAttempts ?? 0;
+        const correctCount = aggregateStats?.correctCount ?? 0;
+        const incorrectCount = aggregateStats?.incorrectCount ?? 0;
         const accuracy =
           totalAttempts > 0 && correctCount >= 0
             ? correctCount / totalAttempts
             : null;
-        const lastAttemptedAt = stats?.lastAttemptedAt ?? null;
+        const lastAttemptedAt = aggregateStats?.lastAttemptedAt ?? null;
+
+        const recommendedMode = this.pickRecommendedMode(statsByMode);
 
         const base: ReviewQuestionDto = {
           questionId: question.id,
@@ -174,6 +199,7 @@ export class ReviewService {
           incorrectCount,
           accuracy,
           lastAttemptedAt,
+          recommendedMode,
         };
 
         if (totalAttempts === 0) {
@@ -232,6 +258,224 @@ export class ReviewService {
         unattemptedCount: groups.unattempted.length,
       },
       groups,
+    };
+  }
+
+  private pickRecommendedMode(
+    statsMap: Map<QuestionStatisticsMode, QuestionStatistics>,
+  ): StudyMode {
+    const candidateStats: Array<[StudyMode, QuestionStatistics]> = [];
+    statsMap.forEach((stat, mode) => {
+      if (mode === "aggregate") {
+        return;
+      }
+      candidateStats.push([mode as StudyMode, stat]);
+    });
+
+    if (candidateStats.length === 0) {
+      return "jp_to_en";
+    }
+
+    const withIncorrect = candidateStats
+      .filter(([, stat]) => stat.incorrectCount > 0)
+      .sort(([, a], [, b]) => {
+        if (a.incorrectCount !== b.incorrectCount) {
+          return b.incorrectCount - a.incorrectCount;
+        }
+        return b.totalAttempts - a.totalAttempts;
+      });
+    if (withIncorrect.length > 0) {
+      return withIncorrect[0][0];
+    }
+
+    const withAttempts = candidateStats
+      .filter(([, stat]) => stat.totalAttempts > 0)
+      .sort(([, a], [, b]) => b.totalAttempts - a.totalAttempts);
+    if (withAttempts.length > 0) {
+      return withAttempts[0][0];
+    }
+
+    return "jp_to_en";
+  }
+
+  private splitCandidates(value?: string | null): string[] {
+    if (!value) {
+      return [];
+    }
+    return value
+      .split(/[/、,・,]/u)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  private getAggregateStats(
+    statsMap: Map<QuestionStatisticsMode, QuestionStatistics>,
+  ): {
+    totalAttempts: number;
+    correctCount: number;
+    incorrectCount: number;
+    lastAttemptedAt: Date | null;
+  } | null {
+    const aggregate = statsMap.get("aggregate");
+    if (aggregate) {
+      return {
+        totalAttempts: aggregate.totalAttempts,
+        correctCount: aggregate.correctCount,
+        incorrectCount: aggregate.incorrectCount,
+        lastAttemptedAt: aggregate.lastAttemptedAt,
+      };
+    }
+
+    let totalAttempts = 0;
+    let correctCount = 0;
+    let incorrectCount = 0;
+    let latest: Date | null = null;
+
+    statsMap.forEach((stat, mode) => {
+      if (mode === "aggregate") {
+        return;
+      }
+      totalAttempts += stat.totalAttempts;
+      correctCount += stat.correctCount;
+      incorrectCount += stat.incorrectCount;
+      if (stat.lastAttemptedAt && (!latest || stat.lastAttemptedAt > latest)) {
+        latest = stat.lastAttemptedAt;
+      }
+    });
+
+    if (totalAttempts === 0 && correctCount === 0 && incorrectCount === 0) {
+      return null;
+    }
+
+    return {
+      totalAttempts,
+      correctCount,
+      incorrectCount,
+      lastAttemptedAt: latest,
+    };
+  }
+
+  private buildReviewSessionQuestion(options: {
+    base: ReviewQuestionDto;
+    detail: DomainQuestion | null | undefined;
+    vocabulary: DomainVocabularyQuestion | undefined;
+    acceptableAnswers: string[];
+  }) {
+    const { base, detail, vocabulary, acceptableAnswers } = options;
+
+    const mode: StudyMode = base.recommendedMode ?? "jp_to_en";
+    const variant = detail?.variant ?? "phrase";
+
+    const promptFromQuestion = detail?.japanese ?? base.japanese;
+    const baseHint = detail?.hint ?? null;
+    const baseExplanation = detail?.explanation ?? null;
+    const promptNote = detail?.prompt ?? null;
+
+    let prompt = promptFromQuestion;
+    let answerLanguage: "en" | "ja" = "en";
+    let answerLabel = "英語で答えましょう";
+    let answerPlaceholder: string | null = "例: 英語で回答";
+    let sentencePromptJa: string | null = null;
+    let sentenceTargetWord: string | null = null;
+    let answers = acceptableAnswers.slice();
+    const vocabularyPartOfSpeech = vocabulary?.partOfSpeech ?? null;
+    const vocabularyPronunciation = vocabulary?.pronunciation ?? null;
+
+    if (variant === "vocabulary" && vocabulary) {
+      if (mode === "en_to_jp") {
+        const candidateSet = new Set<string>();
+        for (const item of this.splitCandidates(vocabulary.definitionJa)) {
+          candidateSet.add(item);
+        }
+        for (const item of this.splitCandidates(vocabulary.memo)) {
+          candidateSet.add(item);
+        }
+        if (promptFromQuestion) {
+          candidateSet.add(promptFromQuestion);
+        }
+
+        answers = Array.from(candidateSet);
+        if (answers.length === 0) {
+          answers = [promptFromQuestion];
+        }
+
+        prompt = vocabulary.headword;
+        answerLanguage = "ja";
+        answerLabel = "日本語で答えましょう";
+        answerPlaceholder = "例: 日本語訳を入力";
+      } else if (mode === "sentence") {
+        const sentenceJa =
+          vocabulary.exampleSentenceJa?.trim() || promptFromQuestion;
+        sentencePromptJa = sentenceJa;
+        prompt = sentenceJa;
+        sentenceTargetWord =
+          vocabulary.headword && vocabulary.headword.trim().length > 0
+            ? vocabulary.headword.trim()
+            : null;
+        answerLanguage = "en";
+        answerLabel = "例文を英語で入力しましょう";
+        answerPlaceholder = "例: 英文を入力";
+        const exampleEn = vocabulary.exampleSentenceEn?.trim();
+        if (exampleEn) {
+          answers = [exampleEn];
+        } else if (answers.length === 0 && promptFromQuestion) {
+          answers = [promptFromQuestion];
+        }
+      } else {
+        // jp_to_en or other modes fallback to English answer
+        prompt = promptFromQuestion;
+        answerLanguage = "en";
+        answerLabel = "英語で答えましょう";
+        answerPlaceholder = "例: 英語で回答";
+        if (answers.length === 0 && vocabulary.headword) {
+          answers = [vocabulary.headword];
+        }
+      }
+    } else {
+      // Non vocabulary variants
+      prompt = promptFromQuestion;
+      answerLanguage = "en";
+      answerLabel =
+        mode === "conversation_roleplay"
+          ? "会話の返答を英語で答えましょう"
+          : "英語で答えましょう";
+      answerPlaceholder = "例: 英語で回答";
+      if (mode !== "jp_to_en") {
+        // If an unsupported mode was selected, fallback to jp_to_en expectations
+        answers = acceptableAnswers.slice();
+      }
+    }
+
+    if (!prompt || prompt.trim().length === 0) {
+      prompt = base.japanese;
+    }
+
+    if (answers.length === 0) {
+      answers = acceptableAnswers.length > 0 ? acceptableAnswers : [prompt];
+    }
+
+    const normalizedAnswers = Array.from(
+      new Set(
+        answers
+          .map((answer) => answer.trim())
+          .filter((answer) => answer.length > 0),
+      ),
+    );
+
+    return {
+      mode,
+      prompt,
+      promptNote,
+      answerLanguage,
+      answerLabel,
+      answerPlaceholder,
+      hint: baseHint,
+      explanation: baseExplanation,
+      acceptableAnswers: normalizedAnswers,
+      vocabularyPartOfSpeech,
+      vocabularyPronunciation,
+      sentencePromptJa,
+      sentenceTargetWord,
     };
   }
 
@@ -329,16 +573,37 @@ export class ReviewService {
       acceptableAnswerMap.set(row.questionId, list);
     });
 
+    const vocabularyQuestionMap =
+      await this.vocabularyQuestionRepository.findByQuestionIds(questionIds);
+
     const questionsWithDetails = groupQuestions.map((question) => {
       const detail = questionDetailMap.get(question.questionId);
       const acceptableAnswers =
         acceptableAnswerMap.get(question.questionId) ?? [];
+      const vocabulary = vocabularyQuestionMap[question.questionId];
+      const view = this.buildReviewSessionQuestion({
+        base: question,
+        detail,
+        vocabulary,
+        acceptableAnswers,
+      });
+
       return {
         ...question,
-        hint: detail?.hint ?? null,
-        explanation: detail?.explanation ?? null,
-        acceptableAnswers,
-      };
+        hint: view.hint,
+        explanation: view.explanation,
+        acceptableAnswers: view.acceptableAnswers,
+        mode: view.mode,
+        prompt: view.prompt,
+        promptNote: view.promptNote,
+        answerLanguage: view.answerLanguage,
+        answerLabel: view.answerLabel,
+        answerPlaceholder: view.answerPlaceholder,
+        vocabularyPartOfSpeech: view.vocabularyPartOfSpeech,
+        vocabularyPronunciation: view.vocabularyPronunciation,
+        sentencePromptJa: view.sentencePromptJa,
+        sentenceTargetWord: view.sentenceTargetWord,
+      } satisfies ReviewSessionQuestionDto;
     });
 
     return ReviewSessionDataSchema.parse({

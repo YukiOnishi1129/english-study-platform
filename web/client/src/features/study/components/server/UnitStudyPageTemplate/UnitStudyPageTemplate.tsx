@@ -1,18 +1,15 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
-import { StudyModeSchema } from "@/external/dto/study/submit-unit-answer.dto";
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { getMaterialDetail } from "@/external/handler/material/material.query.server";
 import { getUnitDetail } from "@/external/handler/unit/unit.query.server";
 import { getAuthenticatedAccount } from "@/features/auth/servers/auth-check.server";
 import { materialKeys } from "@/features/materials/queries";
 import { UnitStudyContent } from "@/features/study/components/client/UnitStudyContent";
+import { getPreferredStudyModeServer } from "@/features/study/servers/preferredStudyMode.server";
 import { unitKeys } from "@/features/units/queries/keys";
 import { getQueryClient } from "@/shared/lib/query-client";
-
-const GLOBAL_PREFERRED_MODE_KEY = "unit-study-mode";
 
 interface UnitStudyPageTemplateProps {
   unitId: string;
@@ -52,24 +49,8 @@ export async function UnitStudyPageTemplate({
       }),
   });
 
-  const cookieStore = await cookies();
-  const storageKey = `unit-study-mode-${unitId}`;
-  const candidateValues = [
-    cookieStore.get(storageKey)?.value ?? null,
-    cookieStore.get(GLOBAL_PREFERRED_MODE_KEY)?.value ?? null,
-  ];
-
-  let initialPreferredMode: StudyMode | null = null;
-  for (const value of candidateValues) {
-    if (!value) {
-      continue;
-    }
-    const parsed = StudyModeSchema.safeParse(value);
-    if (parsed.success) {
-      initialPreferredMode = parsed.data;
-      break;
-    }
-  }
+  const initialPreferredMode: StudyMode | null =
+    await getPreferredStudyModeServer(unitId);
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
@@ -81,4 +62,3 @@ export async function UnitStudyPageTemplate({
     </HydrationBoundary>
   );
 }
-const _GLOBAL_PREFERRED_MODE_KEY = "unit-study-mode";

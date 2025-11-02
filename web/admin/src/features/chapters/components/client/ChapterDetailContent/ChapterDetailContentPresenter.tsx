@@ -8,6 +8,7 @@ import { ChapterDeleteButton } from "@/features/chapters/components/client/Chapt
 import { ChapterUnitList } from "@/features/chapters/components/client/ChapterUnitList";
 import {
   toChapterDetailPath,
+  toChapterEditPath,
   toMaterialDetailPath,
 } from "@/features/materials/lib/paths";
 import { UnitCreateForm } from "@/features/units/components/client/UnitCreateForm";
@@ -179,6 +180,14 @@ export function ChapterDetailContentPresenter(
               {chapter.contentType.name}
             </span>
           </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={toChapterEditPath(chapter.id)}
+            className="inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50"
+          >
+            章を編集
+          </Link>
         </div>
       </header>
 

@@ -37,6 +37,7 @@ export function QuestionEditContentPresenter(
         unitId: detail.unit.id,
         japanese: detail.question.japanese,
         prompt: detail.question.prompt,
+        annotation: detail.question.annotation,
         hint: detail.question.hint,
         explanation: detail.question.explanation,
         order: detail.question.order,
