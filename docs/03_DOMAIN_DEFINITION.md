@@ -14,10 +14,28 @@
   - firstName: string
   - lastName: string
   - role: Role ("admin" | "user")
+  - isActive: boolean (true: 利用可、false: 利用停止)
+  - lastLoginAt: Date | null
   - provider: string (例: "google")
   - providerAccountId: string (OAuth プロバイダー側のID)
   - createdAt: Date
   - updatedAt: Date
+
+- **AccountRoleHistory**: ロール変更履歴
+  - id: string (UUID)
+  - accountId: string (FK)
+  - previousRole: Role
+  - nextRole: Role
+  - changedByAccountId: string (FK, 操作した管理者)
+  - changedAt: Date
+
+- **AccountStatusHistory**: 利用可否変更履歴
+  - id: string (UUID)
+  - accountId: string (FK)
+  - previousStatus: "active" | "inactive"
+  - nextStatus: "active" | "inactive"
+  - changedByAccountId: string (FK)
+  - changedAt: Date
 
 ### 【教材ドメイン】
 
@@ -262,11 +280,13 @@
 ### Account集約
 
 - **集約ルート**: Account
-- **含まれるもの**: Account単体
+- **含まれるもの**: Account単体（AccountRoleHistory / AccountStatusHistory は参照）
 - **整合性ルール**:
     - roleは必ずadminかuserのいずれか
     - emailは一意
     - providerとproviderAccountIdの組み合わせは一意
+    - isActive = false の場合はログイン不可
+    - 自分自身のロール/ステータス変更は禁止
 
 ### Material集約
 
@@ -303,6 +323,13 @@
 - **権限チェック**
     - 管理画面アクセス可否の判定
     - ロールベースの機能制限
+- **ロール変更**
+    - admin⇔user 切り替え時に AccountRoleHistory を生成し、変更者と日時を記録
+    - 操作対象が自身の場合は拒否
+- **利用停止/再開**
+    - isActive を更新し、AccountStatusHistory を記録
+    - 利用停止時はセッションを失効させる（次回アクセスでログアウト）
+    - 再開時は通常ログインに戻す
 
 ### Material集約
 
