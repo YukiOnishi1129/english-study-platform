@@ -1,5 +1,6 @@
 "use client";
 
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import { formatReviewAccuracy } from "@/features/review/lib/formatters";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-
 import type { UseReviewStudySessionResult } from "../useReviewStudySession";
 
 interface SessionHeaderCardProps {
@@ -25,6 +25,15 @@ export function SessionHeaderCard({
   remainingCount,
   currentQuestion,
 }: SessionHeaderCardProps) {
+  const modeLabelMap: Record<StudyMode, string> = {
+    jp_to_en: "日→英",
+    en_to_jp: "英→日",
+    sentence: "英作文",
+    conversation_roleplay: "英会話",
+    listening_comprehension: "リスニング",
+    writing_review: "ライティング",
+  };
+
   return (
     <Card className="border border-indigo-100/70">
       <CardHeader className="space-y-2">
@@ -48,6 +57,9 @@ export function SessionHeaderCard({
         </Badge>
         <Badge className="rounded-full bg-rose-100 px-3 py-1 text-rose-700">
           不正解 {currentQuestion.incorrectCount}
+        </Badge>
+        <Badge className="rounded-full bg-indigo-100 px-3 py-1 text-indigo-700">
+          モード: {modeLabelMap[currentQuestion.mode] ?? "日→英"}
         </Badge>
       </CardContent>
     </Card>

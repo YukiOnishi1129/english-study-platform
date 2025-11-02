@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReviewQuestionDto } from "@/external/dto/review/review.query.dto";
+import type { StudyMode } from "@/external/dto/study/submit-unit-answer.dto";
 import {
   formatReviewAccuracy,
   formatReviewDate,
@@ -35,6 +36,15 @@ export function ReviewQuestionGroup({
   groupKey,
   onStartQuestion,
 }: ReviewQuestionGroupProps) {
+  const MODE_LABELS: Record<StudyMode, string> = {
+    jp_to_en: "日→英",
+    en_to_jp: "英→日",
+    sentence: "英作文",
+    conversation_roleplay: "英会話",
+    listening_comprehension: "リスニング",
+    writing_review: "ライティング",
+  };
+
   return (
     <Card className="border border-indigo-100/70">
       <CardHeader>
@@ -68,6 +78,11 @@ export function ReviewQuestionGroup({
                       <span>
                         最終解答: {formatReviewDate(question.lastAttemptedAt)}
                       </span>
+                      {question.recommendedMode ? (
+                        <span>
+                          推奨モード: {MODE_LABELS[question.recommendedMode]}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <Button

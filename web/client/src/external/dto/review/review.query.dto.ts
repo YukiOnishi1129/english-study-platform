@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { StudyModeSchema } from "@/external/dto/study/submit-unit-answer.dto";
 
 export const GetReviewDataRequestSchema = z.object({
   accountId: z.uuid(),
@@ -19,6 +20,7 @@ export const ReviewQuestionSchema = z.object({
   incorrectCount: z.number().int().nonnegative(),
   accuracy: z.number().min(0).max(1).nullable(),
   lastAttemptedAt: z.date().nullable(),
+  recommendedMode: StudyModeSchema.optional(),
 });
 
 export type ReviewQuestionDto = z.infer<typeof ReviewQuestionSchema>;

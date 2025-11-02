@@ -2,6 +2,7 @@
 
 import { Volume2 } from "lucide-react";
 import { formatReviewDate } from "@/features/review/lib/formatters";
+import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -72,14 +73,42 @@ export function SessionQuestionCard({
   onSpeakAnswer,
 }: SessionQuestionCardProps) {
   const referenceAnswer = currentQuestion.acceptableAnswers[0] ?? "";
+  const placeholder =
+    currentQuestion.answerPlaceholder ??
+    (currentQuestion.answerLanguage === "ja"
+      ? "例: 日本語訳を入力"
+      : "例: 英語で回答");
+  const canSpeakAnswer = currentQuestion.answerLanguage === "en";
 
   return (
     <Card className="border border-indigo-100/70">
       <CardHeader className="space-y-2">
         <CardTitle>Q{currentIndex + 1}</CardTitle>
         <CardDescription className="text-base text-slate-900">
-          {currentQuestion.japanese}
+          {currentQuestion.prompt}
         </CardDescription>
+        {currentQuestion.promptNote ? (
+          <p className="text-sm text-indigo-700">
+            {currentQuestion.promptNote}
+          </p>
+        ) : null}
+        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {currentQuestion.vocabularyPartOfSpeech ? (
+            <Badge variant="secondary" className="rounded-full px-2 py-0.5">
+              {currentQuestion.vocabularyPartOfSpeech}
+            </Badge>
+          ) : null}
+          {currentQuestion.vocabularyPronunciation ? (
+            <Badge variant="outline" className="rounded-full px-2 py-0.5">
+              {currentQuestion.vocabularyPronunciation}
+            </Badge>
+          ) : null}
+          {currentQuestion.sentenceTargetWord ? (
+            <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700">
+              この単語を使う: {currentQuestion.sentenceTargetWord}
+            </span>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={onSubmit} className="space-y-4">
@@ -88,14 +117,15 @@ export function SessionQuestionCard({
               className="text-sm font-medium text-slate-700"
               htmlFor="review-answer-input"
             >
-              英語で答えましょう
+              {currentQuestion.answerLabel}
             </label>
             <Input
               value={inputValue}
               onChange={(event) => onInputChange(event.target.value)}
               id="review-answer-input"
               disabled={isSubmitting || isAnswered}
-              placeholder="Your answer"
+              placeholder={placeholder}
+              lang={currentQuestion.answerLanguage === "ja" ? "ja" : "en"}
               autoComplete="off"
             />
           </div>
@@ -134,7 +164,7 @@ export function SessionQuestionCard({
                 {isHintVisible ? "ヒントを隠す" : "ヒントを見る"}
               </Button>
             ) : null}
-            {referenceAnswer ? (
+            {referenceAnswer && canSpeakAnswer ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -170,17 +200,19 @@ export function SessionQuestionCard({
                 {currentQuestion.acceptableAnswers.map((answer) => (
                   <li key={answer} className="flex items-center gap-2">
                     <span>{answer}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
-                      onClick={() => onSpeakAnswer(answer)}
-                      disabled={speakingAnswer === answer}
-                    >
-                      <Volume2 className="size-4" />
-                      {speakingAnswer === answer ? "再生中..." : "音声"}
-                    </Button>
+                    {canSpeakAnswer ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-1 rounded-full px-2 text-indigo-600 hover:text-indigo-500"
+                        onClick={() => onSpeakAnswer(answer)}
+                        disabled={speakingAnswer === answer}
+                      >
+                        <Volume2 className="size-4" />
+                        {speakingAnswer === answer ? "再生中..." : "音声"}
+                      </Button>
+                    ) : null}
                   </li>
                 ))}
               </ul>

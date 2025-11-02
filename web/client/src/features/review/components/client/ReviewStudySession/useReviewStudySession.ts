@@ -6,7 +6,7 @@ import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-ans
 
 export type StudyStatus = "idle" | "correct" | "incorrect";
 
-const REVIEW_STUDY_MODE: StudyMode = "jp_to_en";
+const FALLBACK_REVIEW_MODE: StudyMode = "jp_to_en";
 
 interface UseReviewStudySessionParams {
   session: ReviewSessionDataDto;
@@ -123,11 +123,13 @@ export function useReviewStudySession({
       setIsSubmitting(true);
       setErrorMessage(null);
       try {
+        const mode = currentQuestion.mode ?? FALLBACK_REVIEW_MODE;
+
         const result = await submitUnitAnswerAction({
           unitId: currentQuestion.unitId,
           questionId: currentQuestion.questionId,
           answerText: inputValue,
-          mode: REVIEW_STUDY_MODE,
+          mode,
         });
 
         setStatus(result.isCorrect ? "correct" : "incorrect");
@@ -189,6 +191,7 @@ export function useReviewStudySession({
     setInputValue("");
     setStatus("idle");
     setErrorMessage(null);
+    setHintVisible(false);
   }, []);
 
   useEffect(() => {
