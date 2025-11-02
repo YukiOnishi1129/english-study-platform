@@ -80,7 +80,7 @@ UNIT 詳細ページ（例: `/materials/{materialId}/chapters/{chapterId}/units/
 - 語彙エントリと問題設定をまとめて1行に記述します。
 - 学習モードはCSVで指定せず、学習セッション開始時にUIから「JP→EN」「EN→JP」「例文」などを切り替える想定です。
 - 類義語／対義語／関連語はVocabularyRelationとして保存され、学習画面のフィードバックに表示されます。
-- 学習モードの指定は CSV 上では行わず、`content_type_study_modes` に定義されたモードを UI で切り替える設計です（例: vocabulary → `jp_to_en`, `en_to_jp`, `sentence`）。
+- 学習モードの指定は CSV 上では行わず、`content_type_study_modes` に定義されたモードを UI で切り替える設計です（例: vocabulary → `jp_to_en`, `en_to_jp`, `sentence`）。通常のUNIT学習ではユーザーが切り替え、復習セッションでは蓄積した統計から推奨モードが自動選択されます。
 
 ---
 
