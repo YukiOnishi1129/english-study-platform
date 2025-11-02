@@ -93,6 +93,7 @@ function renderChapter(
               chapterId={chapter.id}
               materialId={material.id}
               chapterName={chapter.name}
+              redirectToUnitDetail={false}
             />
             <ChapterCreateForm
               materialId={material.id}

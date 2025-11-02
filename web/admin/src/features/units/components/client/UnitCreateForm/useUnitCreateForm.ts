@@ -38,7 +38,9 @@ export function useUnitCreateForm(
 
       await Promise.all(tasks);
 
-      if (result.redirect) {
+      const shouldRedirect = props.redirectToUnitDetail ?? true;
+
+      if (shouldRedirect && result.redirect) {
         router.push(result.redirect as Parameters<typeof router.push>[0]);
       }
 
