@@ -1,4 +1,4 @@
-export type { AccountRepository } from "./AccountRepository";
+export type { AccountListQuery, AccountRepository } from "./AccountRepository";
 export type { ChapterRepository } from "./ChapterRepository";
 export type { ContentTypeRepository } from "./ContentTypeRepository";
 export type { ContentTypeStudyModeRepository } from "./ContentTypeStudyModeRepository";

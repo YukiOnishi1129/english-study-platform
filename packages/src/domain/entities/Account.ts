@@ -90,4 +90,20 @@ export class Account {
       updatedAt: new Date(),
     });
   }
+
+  withRole(role: Role): Account {
+    return new Account({
+      ...this,
+      role,
+      updatedAt: new Date(),
+    });
+  }
+
+  withStatus(isActive: boolean): Account {
+    return new Account({
+      ...this,
+      isActive,
+      updatedAt: new Date(),
+    });
+  }
 }
