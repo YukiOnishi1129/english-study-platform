@@ -5,6 +5,7 @@ export interface UnitCreateFormProps {
   chapterName: string;
   materialId: string;
   invalidateChapterId?: string;
+  redirectToUnitDetail?: boolean;
 }
 
 export interface UnitCreateFormPresenterProps {

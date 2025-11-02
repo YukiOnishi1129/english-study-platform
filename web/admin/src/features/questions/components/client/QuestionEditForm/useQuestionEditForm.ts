@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import type { FormState } from "@/features/materials/types/formState";
@@ -25,6 +26,9 @@ export function useQuestionEditForm(
   const queryClient = useQueryClient();
   const [answers, setAnswers] = useState(() =>
     toAnswerFields(props.defaultValues.correctAnswers),
+  );
+  const lastSubmittedPromptRef = useRef<string>(
+    props.defaultValues.japanese ?? "",
   );
 
   useEffect(() => {
@@ -67,14 +71,25 @@ export function useQuestionEditForm(
       }
 
       router.refresh();
+      const prompt =
+        lastSubmittedPromptRef.current ||
+        props.defaultValues.japanese ||
+        "問題";
+      toast.success(`問題「${prompt}」を更新しました。`);
+      lastSubmittedPromptRef.current = prompt;
     },
   });
 
   const handleSubmit = useCallback(
     async (formData: FormData) => {
+      const japaneseEntry = formData.get("japanese");
+      lastSubmittedPromptRef.current =
+        typeof japaneseEntry === "string" && japaneseEntry.trim().length > 0
+          ? japaneseEntry.trim()
+          : (props.defaultValues.japanese ?? "");
       await mutation.mutateAsync(formData);
     },
-    [mutation],
+    [mutation, props.defaultValues.japanese],
   );
 
   const handleAnswerChange = useCallback((id: string, value: string) => {

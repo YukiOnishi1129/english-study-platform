@@ -2,6 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import { createUnitAction } from "./actions";
@@ -15,6 +17,7 @@ export function useUnitCreateForm(
 ): UnitCreateFormPresenterProps {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const lastSubmittedNameRef = useRef<string>("");
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -38,15 +41,23 @@ export function useUnitCreateForm(
 
       await Promise.all(tasks);
 
-      if (result.redirect) {
+      const shouldRedirect = props.redirectToUnitDetail ?? true;
+
+      if (shouldRedirect && result.redirect) {
         router.push(result.redirect as Parameters<typeof router.push>[0]);
       }
 
       router.refresh();
+      const unitName = lastSubmittedNameRef.current || "新しいUNIT";
+      toast.success(`UNIT「${unitName}」を追加しました。`);
+      lastSubmittedNameRef.current = "";
     },
   });
 
   const handleSubmit = async (formData: FormData) => {
+    const nameEntry = formData.get("name");
+    lastSubmittedNameRef.current =
+      typeof nameEntry === "string" ? nameEntry.trim() : "";
     await mutation.mutateAsync(formData);
   };
 

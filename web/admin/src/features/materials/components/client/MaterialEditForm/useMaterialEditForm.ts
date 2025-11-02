@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { materialKeys } from "@/features/materials/queries/keys";
 import type { FormState } from "@/features/materials/types/formState";
 import { updateMaterialAction } from "./actions";
@@ -21,6 +22,7 @@ export function useMaterialEditForm(
 ): UseMaterialEditFormResult {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const lastSubmittedNameRef = useRef<string>(props.defaultValues.name ?? "");
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -43,14 +45,23 @@ export function useMaterialEditForm(
       }
 
       router.refresh();
+      const materialName =
+        lastSubmittedNameRef.current || props.defaultValues.name || "教材";
+      toast.success(`教材「${materialName}」を更新しました。`);
+      lastSubmittedNameRef.current = materialName;
     },
   });
 
   const handleSubmit = useCallback(
     async (formData: FormData) => {
+      const nameEntry = formData.get("name");
+      lastSubmittedNameRef.current =
+        typeof nameEntry === "string" && nameEntry.trim().length > 0
+          ? nameEntry.trim()
+          : (props.defaultValues.name ?? "");
       await mutation.mutateAsync(formData);
     },
-    [mutation],
+    [mutation, props.defaultValues.name],
   );
 
   const status: FormState["status"] = mutation.isSuccess

@@ -3,9 +3,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { toChapterDetailPath } from "@/features/materials/lib/paths";
 import { materialKeys } from "@/features/materials/queries/keys";
+import { unitKeys } from "@/features/units/queries/keys";
 import { deleteUnitAction } from "./actions";
 import type { UnitDeleteButtonContainerProps } from "./UnitDeleteButtonContainer";
 
@@ -41,19 +43,25 @@ export function useUnitDeleteButton(
 
       return result;
     },
-    onSuccess: async () => {
-      await Promise.all([
+    onSuccess: () => {
+      queryClient.removeQueries({
+        queryKey: unitKeys.detail(props.unitId),
+      });
+      setIsDialogOpen(false);
+      router.push(toChapterDetailPath(props.chapterId));
+      Promise.all([
         queryClient.invalidateQueries({
           queryKey: materialKeys.detail(props.materialId),
         }),
         queryClient.invalidateQueries({
           queryKey: chapterKeys.detail(props.chapterId),
         }),
-      ]);
-
-      setIsDialogOpen(false);
-      router.push(toChapterDetailPath(props.chapterId));
-      router.refresh();
+      ]).finally(() => {
+        router.refresh();
+      });
+      toast.success(`UNIT「${props.unitName}」を削除しました。`, {
+        description: "章の詳細にリダイレクトしました。",
+      });
     },
     onError: (error) => {
       setErrorMessage(

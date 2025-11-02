@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
+import { toast } from "sonner";
 import { chapterKeys } from "@/features/chapters/queries/keys";
 import { materialKeys } from "@/features/materials/queries/keys";
 import type { FormState } from "@/features/materials/types/formState";
@@ -22,6 +23,7 @@ export function useChapterEditForm(
 ): UseChapterEditFormResult {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const lastSubmittedNameRef = useRef<string>(props.defaultValues.name ?? "");
 
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -56,14 +58,23 @@ export function useChapterEditForm(
       }
 
       router.refresh();
+      const chapterName =
+        lastSubmittedNameRef.current || props.defaultValues.name || "章";
+      toast.success(`章「${chapterName}」を更新しました。`);
+      lastSubmittedNameRef.current = chapterName;
     },
   });
 
   const handleSubmit = useCallback(
     async (formData: FormData) => {
+      const nameEntry = formData.get("name");
+      lastSubmittedNameRef.current =
+        typeof nameEntry === "string" && nameEntry.trim().length > 0
+          ? nameEntry.trim()
+          : (props.defaultValues.name ?? "");
       await mutation.mutateAsync(formData);
     },
-    [mutation],
+    [mutation, props.defaultValues.name],
   );
 
   const status: FormState["status"] = mutation.isSuccess

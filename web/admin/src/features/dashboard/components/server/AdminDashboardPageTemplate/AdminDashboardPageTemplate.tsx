@@ -39,19 +39,14 @@ export async function AdminDashboardPageTemplate() {
         <article className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">
-              次の開発項目
+              ユーザー管理
             </h2>
             <p className="mt-2 text-gray-600">
-              学習進捗のダッシュボードや問題編集機能など、管理機能を順次整備していきます。
+              学習者アカウントのロール確認や無効化、利用状況の把握が行える専用画面を今後追加予定です。
             </p>
           </div>
-          <div className="mt-6">
-            <Link
-              href="/materials/import"
-              className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
-            >
-              旧CSVプレビューを見る
-            </Link>
+          <div className="mt-6 text-sm text-gray-500">
+            機能の準備が整い次第、サイドメニューにリンクを表示します。
           </div>
         </article>
       </section>
