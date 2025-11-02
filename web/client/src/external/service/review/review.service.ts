@@ -175,7 +175,7 @@ export class ReviewService {
       questionList.forEach((question) => {
         totalQuestionCount += 1;
         const statsByMode = statsMap.get(question.id) ?? new Map();
-        const aggregateStats = statsByMode.get("aggregate") ?? null;
+        const aggregateStats = this.getAggregateStats(statsByMode);
         const totalAttempts = aggregateStats?.totalAttempts ?? 0;
         const correctCount = aggregateStats?.correctCount ?? 0;
         const incorrectCount = aggregateStats?.incorrectCount ?? 0;
@@ -306,6 +306,53 @@ export class ReviewService {
       .split(/[/、,・,]/u)
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
+  }
+
+  private getAggregateStats(
+    statsMap: Map<QuestionStatisticsMode, QuestionStatistics>,
+  ): {
+    totalAttempts: number;
+    correctCount: number;
+    incorrectCount: number;
+    lastAttemptedAt: Date | null;
+  } | null {
+    const aggregate = statsMap.get("aggregate");
+    if (aggregate) {
+      return {
+        totalAttempts: aggregate.totalAttempts,
+        correctCount: aggregate.correctCount,
+        incorrectCount: aggregate.incorrectCount,
+        lastAttemptedAt: aggregate.lastAttemptedAt,
+      };
+    }
+
+    let totalAttempts = 0;
+    let correctCount = 0;
+    let incorrectCount = 0;
+    let latest: Date | null = null;
+
+    statsMap.forEach((stat, mode) => {
+      if (mode === "aggregate") {
+        return;
+      }
+      totalAttempts += stat.totalAttempts;
+      correctCount += stat.correctCount;
+      incorrectCount += stat.incorrectCount;
+      if (stat.lastAttemptedAt && (!latest || stat.lastAttemptedAt > latest)) {
+        latest = stat.lastAttemptedAt;
+      }
+    });
+
+    if (totalAttempts === 0 && correctCount === 0 && incorrectCount === 0) {
+      return null;
+    }
+
+    return {
+      totalAttempts,
+      correctCount,
+      incorrectCount,
+      lastAttemptedAt: latest,
+    };
   }
 
   private buildReviewSessionQuestion(options: {
