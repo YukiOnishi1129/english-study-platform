@@ -20,6 +20,7 @@ import type {
 import type { UnitDetailDto } from "@/external/dto/unit/unit.query.dto";
 import { submitUnitAnswerAction } from "@/external/handler/study/submit-unit-answer.command.action";
 import { useMaterialDetailQuery } from "@/features/materials/queries";
+import { updatePreferredStudyModeAction } from "@/features/study/actions/updatePreferredStudyModeAction";
 import { unitKeys } from "@/features/units/queries/keys";
 import { useUnitDetailQuery } from "@/features/units/queries/useUnitDetailQuery";
 import {
@@ -743,11 +744,18 @@ export function useUnitStudyContent(
     (questionId: string, nextMode: StudyMode) => {
       setModeByQuestion({ [questionId]: nextMode });
       setPreferredMode(nextMode);
+
+      void updatePreferredStudyModeAction({ unitId, mode: nextMode }).catch(
+        (error) => {
+          console.error("Failed to persist preferred study mode", error);
+        },
+      );
+
       if (currentBaseQuestion && currentBaseQuestion.id === questionId) {
         resetStateForNextQuestion();
       }
     },
-    [currentBaseQuestion, resetStateForNextQuestion],
+    [currentBaseQuestion, resetStateForNextQuestion, unitId],
   );
 
   const handleToggleHint = useCallback(() => {
