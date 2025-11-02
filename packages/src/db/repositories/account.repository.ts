@@ -7,6 +7,23 @@ import { accounts } from "../schema/accounts";
 export type Account = InferSelectModel<typeof accounts>;
 export type NewAccount = InferInsertModel<typeof accounts>;
 
+function mapToDomainAccount(data: Account): DomainAccount {
+  return new DomainAccount({
+    id: data.id,
+    email: data.email,
+    firstName: data.firstName ?? undefined,
+    lastName: data.lastName ?? undefined,
+    role: data.role,
+    isActive: data.isActive,
+    lastLoginAt: data.lastLoginAt ?? null,
+    provider: data.provider,
+    providerAccountId: data.providerAccountId,
+    thumbnail: data.thumbnail ?? undefined,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  });
+}
+
 // DDD Repository implementation
 export class AccountRepositoryImpl implements AccountRepository {
   async findById(id: string): Promise<DomainAccount | null> {
@@ -17,18 +34,7 @@ export class AccountRepositoryImpl implements AccountRepository {
       return null;
     }
 
-    return new DomainAccount({
-      id: data.id,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: data.role,
-      provider: data.provider,
-      providerAccountId: data.providerAccountId,
-      thumbnail: data.thumbnail ?? undefined,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    });
+    return mapToDomainAccount(data);
   }
 
   async findByEmail(email: string): Promise<DomainAccount | null> {
@@ -39,18 +45,7 @@ export class AccountRepositoryImpl implements AccountRepository {
       return null;
     }
 
-    return new DomainAccount({
-      id: data.id,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: data.role,
-      provider: data.provider,
-      providerAccountId: data.providerAccountId,
-      thumbnail: data.thumbnail ?? undefined,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    });
+    return mapToDomainAccount(data);
   }
 
   async findByProvider(provider: string, providerAccountId: string): Promise<DomainAccount | null> {
@@ -67,18 +62,7 @@ export class AccountRepositoryImpl implements AccountRepository {
       return null;
     }
 
-    return new DomainAccount({
-      id: data.id,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: data.role,
-      provider: data.provider,
-      providerAccountId: data.providerAccountId,
-      thumbnail: data.thumbnail ?? undefined,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-    });
+    return mapToDomainAccount(data);
   }
 
   async save(account: DomainAccount): Promise<DomainAccount> {
@@ -87,9 +71,11 @@ export class AccountRepositoryImpl implements AccountRepository {
       .values({
         id: account.id,
         email: account.email,
-        firstName: account.firstName,
-        lastName: account.lastName,
+        firstName: account.firstName ?? null,
+        lastName: account.lastName ?? null,
         role: account.role,
+        isActive: account.isActive,
+        lastLoginAt: account.lastLoginAt,
         provider: account.provider,
         providerAccountId: account.providerAccountId,
         thumbnail: account.thumbnail ?? null,
@@ -100,9 +86,11 @@ export class AccountRepositoryImpl implements AccountRepository {
         target: accounts.id,
         set: {
           email: account.email,
-          firstName: account.firstName,
-          lastName: account.lastName,
+          firstName: account.firstName ?? null,
+          lastName: account.lastName ?? null,
           role: account.role,
+          isActive: account.isActive,
+          lastLoginAt: account.lastLoginAt,
           thumbnail: account.thumbnail ?? null,
           updatedAt: new Date(),
         },
@@ -113,18 +101,7 @@ export class AccountRepositoryImpl implements AccountRepository {
       throw new Error("Failed to save account");
     }
 
-    return new DomainAccount({
-      id: result.id,
-      email: result.email,
-      firstName: result.firstName,
-      lastName: result.lastName,
-      role: result.role,
-      provider: result.provider,
-      providerAccountId: result.providerAccountId,
-      thumbnail: result.thumbnail ?? undefined,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-    });
+    return mapToDomainAccount(result);
   }
 
   async delete(id: string): Promise<void> {

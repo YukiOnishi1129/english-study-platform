@@ -1,5 +1,12 @@
 export type { AccountParams, Role } from "./Account";
 export { Account } from "./Account";
+export type { AccountRoleHistoryParams } from "./AccountRoleHistory";
+export { AccountRoleHistory } from "./AccountRoleHistory";
+export type {
+  AccountStatus,
+  AccountStatusHistoryParams,
+} from "./AccountStatusHistory";
+export { AccountStatusHistory } from "./AccountStatusHistory";
 export type { ChapterParams } from "./Chapter";
 export { Chapter } from "./Chapter";
 export type { ContentTypeParams } from "./ContentType";
