@@ -24,6 +24,9 @@ steps:
         "--project",
         "$PROJECT_ID",
         "--allow-unauthenticated",
+        "--service-account",
+        "${_RUN_SERVICE_ACCOUNT}",
+        "--quiet",
         "--set-env-vars=DB_DRIVER=neon",
         "--set-secrets=DATABASE_URL=projects/$PROJECT_ID/secrets/${_DATABASE_URL_SECRET}:latest,NEXTAUTH_URL=projects/$PROJECT_ID/secrets/${_NEXTAUTH_URL_SECRET}:latest,NEXTAUTH_SECRET=projects/$PROJECT_ID/secrets/${_NEXTAUTH_SECRET_SECRET}:latest,GOOGLE_CLIENT_ID=projects/$PROJECT_ID/secrets/${_GOOGLE_CLIENT_ID_SECRET}:latest,GOOGLE_CLIENT_SECRET=projects/$PROJECT_ID/secrets/${_GOOGLE_CLIENT_SECRET_SECRET}:latest",
       ]
@@ -37,6 +40,7 @@ options:
 substitutions:
   _SERVICE_NAME: "web-client-application"
   _REGION: "asia-northeast1"
+  _RUN_SERVICE_ACCOUNT: "cloud-run-web-client@${PROJECT_ID}.iam.gserviceaccount.com"
   _DATABASE_URL_SECRET: "DATABASE_URL"
   _NEXTAUTH_URL_SECRET: "NEXTAUTH_URL"
   _NEXTAUTH_SECRET_SECRET: "NEXTAUTH_SECRET"
