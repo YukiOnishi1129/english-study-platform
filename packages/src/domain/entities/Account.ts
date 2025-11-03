@@ -106,4 +106,19 @@ export class Account {
       updatedAt: new Date(),
     });
   }
+
+  withProfile(profile: {
+    firstName?: string;
+    lastName?: string;
+    thumbnail?: string | null;
+  }): Account {
+    return new Account({
+      ...this,
+      firstName: profile.firstName ?? this.firstName,
+      lastName: profile.lastName ?? this.lastName,
+      thumbnail:
+        profile.thumbnail !== undefined ? profile.thumbnail ?? undefined : this.thumbnail,
+      updatedAt: new Date(),
+    });
+  }
 }

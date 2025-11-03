@@ -9,6 +9,12 @@ export interface CreateAccountInput {
   thumbnail?: string;
 }
 
+interface NormalizedProfile {
+  firstName: string;
+  lastName: string;
+  thumbnail?: string;
+}
+
 export class AccountService {
   private accountRepository: AccountRepositoryImpl;
 
@@ -23,20 +29,40 @@ export class AccountService {
     return this.accountRepository.findByProvider(provider, providerAccountId);
   }
 
-  async create(input: CreateAccountInput): Promise<Account> {
-    // Split name into firstName and lastName
-    const nameParts = input.name.split(" ");
-    const firstName = nameParts[0] || "";
-    const lastName = nameParts.slice(1).join(" ") || "";
+  private normalizeProfile(input: CreateAccountInput): NormalizedProfile {
+    const fallbackName = input.email.split("@")[0] ?? input.email;
+    const trimmedName = input.name.trim();
+    const parts = trimmedName.split(/\s+/).filter((part) => part.length > 0);
 
-    const newAccount = Account.create({
-      email: input.email,
+    let firstName = parts[0] ?? "";
+    const lastName = parts.slice(1).join(" ");
+
+    if (!firstName) {
+      firstName = fallbackName;
+    }
+
+    return {
       firstName,
       lastName,
+      thumbnail: input.thumbnail,
+    };
+  }
+
+  async create(
+    input: CreateAccountInput,
+    normalizedProfile?: NormalizedProfile,
+  ): Promise<Account> {
+    const profile = normalizedProfile ?? this.normalizeProfile(input);
+    const now = new Date();
+    const newAccount = Account.create({
+      email: input.email,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
       role: "user", // Default role for regular users
       provider: input.provider,
       providerAccountId: input.providerAccountId,
-      thumbnail: input.thumbnail,
+      thumbnail: profile.thumbnail,
+      lastLoginAt: now,
     });
 
     return await this.accountRepository.save(newAccount);
@@ -47,14 +73,25 @@ export class AccountService {
     providerAccountId: string,
     createInput: CreateAccountInput,
   ): Promise<Account> {
+    const normalizedProfile = this.normalizeProfile(createInput);
+    const now = new Date();
+
     const existingAccount = await this.findByProvider(
       provider,
       providerAccountId,
     );
     if (existingAccount) {
-      return existingAccount;
+      const updatedAccount = existingAccount
+        .withProfile({
+          firstName: normalizedProfile.firstName,
+          lastName: normalizedProfile.lastName,
+          thumbnail: normalizedProfile.thumbnail,
+        })
+        .withLastLogin(now);
+
+      return await this.accountRepository.save(updatedAccount);
     }
 
-    return this.create(createInput);
+    return this.create(createInput, normalizedProfile);
   }
 }
