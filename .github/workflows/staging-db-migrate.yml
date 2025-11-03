@@ -1,0 +1,57 @@
+name: Staging DB Migration
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "packages/migrations/**"
+      - ".github/workflows/staging-db-migrate.yml"
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Apply migrations to Neon staging
+    runs-on: ubuntu-latest
+    environment: staging
+    defaults:
+      run:
+        working-directory: packages
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Detect migration changes
+        id: changed
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            packages/migrations/**
+
+      - name: Run migrations
+        if: steps.changed.outputs.any_changed == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          DB_DRIVER: neon
+          DB_SSL: "true"
+        run: pnpm db:migrate
+
+      - name: Skip notice
+        if: steps.changed.outputs.any_changed != 'true'
+        run: echo "No migration changes detected. Skipping database migration."

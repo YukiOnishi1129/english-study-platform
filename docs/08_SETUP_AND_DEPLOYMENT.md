@@ -219,6 +219,7 @@ gcloud iam service-accounts keys create key.json \
         DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
     ```
   - Neon はマイグレーション専用ユーザーで接続し、アプリ本番用ユーザーとは分離する。
+  - develop ブランチへの push 時は staging 用ワークフロー（`staging-db-migrate.yml`）が走り、`packages/migrations/**` に変更がある場合のみ Neon staging DB に `pnpm db:migrate` を適用する。`NEON_STAGING_DATABASE_URL`（TLS 付き接続文字列）を GitHub Secrets に登録しておく。
 
 - **Cloud Build + Cloud Run (CD)**  
   - main への push をトリガに Cloud Build を起動し、ビルド → Artifact Registry push → Cloud Run Deploy を自動化。  
