@@ -117,7 +117,7 @@ export class Account {
       firstName: profile.firstName ?? this.firstName,
       lastName: profile.lastName ?? this.lastName,
       thumbnail:
-        profile.thumbnail !== undefined ? profile.thumbnail ?? undefined : this.thumbnail,
+        profile.thumbnail !== undefined ? (profile.thumbnail ?? undefined) : this.thumbnail,
       updatedAt: new Date(),
     });
   }
