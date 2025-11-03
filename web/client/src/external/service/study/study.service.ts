@@ -12,8 +12,15 @@ import {
   NextStudyTargetSchema,
 } from "@/external/dto/study/next-study-target.dto";
 
+function normalizeLatinPunctuation(value: string): string {
+  return value
+    .replace(/[’‘‛]/g, "'")
+    .replace(/[“”„‟]/g, '"')
+    .replace(/[‐‑‒–—―]/g, "-");
+}
+
 function normalizeAnswer(value: string): string {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
+  return normalizeLatinPunctuation(value).trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 function normalizeJapanese(value: string): string {
@@ -25,7 +32,7 @@ function normalizeJapanese(value: string): string {
 }
 
 function normalizeSentence(value: string): string {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
+  return normalizeLatinPunctuation(value).trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 interface QuestionReference {
