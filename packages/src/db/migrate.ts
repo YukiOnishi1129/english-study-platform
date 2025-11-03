@@ -12,19 +12,47 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function runMigrations() {
-  const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = process.env;
+  const {
+    DB_HOST,
+    DB_PORT,
+    DB_NAME,
+    DB_USER,
+    DB_PASSWORD,
+    DB_DRIVER,
+    DATABASE_URL,
+    DB_SSL,
+  } = process.env;
 
-  if (!DB_HOST || !DB_PORT || !DB_NAME || !DB_USER || !DB_PASSWORD) {
-    throw new Error("Database connection parameters are required");
+  let pool: Pool;
+  const shouldUseSsl = DB_DRIVER === "neon" || (DB_SSL ?? "").toLowerCase() === "true";
+
+  if (DB_DRIVER === "neon" && DATABASE_URL) {
+    pool = new Pool({
+      connectionString: DATABASE_URL,
+      ssl: shouldUseSsl
+        ? {
+            rejectUnauthorized: false,
+          }
+        : undefined,
+    });
+  } else {
+    if (!DB_HOST || !DB_PORT || !DB_NAME || !DB_USER || !DB_PASSWORD) {
+      throw new Error("Database connection parameters are required");
+    }
+
+    pool = new Pool({
+      host: DB_HOST,
+      port: parseInt(DB_PORT, 10),
+      database: DB_NAME,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      ssl: shouldUseSsl
+        ? {
+            rejectUnauthorized: false,
+          }
+        : undefined,
+    });
   }
-
-  const pool = new Pool({
-    host: DB_HOST,
-    port: parseInt(DB_PORT, 10),
-    database: DB_NAME,
-    user: DB_USER,
-    password: DB_PASSWORD,
-  });
 
   const db = drizzle(pool);
 
