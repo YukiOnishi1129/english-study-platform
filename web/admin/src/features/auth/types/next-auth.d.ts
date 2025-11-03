@@ -1,4 +1,4 @@
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 
 declare module "next-auth" {
   interface Session {

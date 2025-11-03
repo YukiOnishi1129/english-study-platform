@@ -18,8 +18,11 @@
 |---------|-------|-------|-------|
 | id | UUID | PRIMARY KEY | アカウントID |
 | email | VARCHAR(255) | NOT NULL, UNIQUE | メールアドレス |
-| name | VARCHAR(255) | NOT NULL | ユーザー名 |
+| first_name | VARCHAR(100) | NULL | 名（Googleプロフィールから取得） |
+| last_name | VARCHAR(100) | NULL | 姓（Googleプロフィールから取得） |
 | role | VARCHAR(20) | NOT NULL, DEFAULT 'user' | ロール (admin/user) |
+| is_active | BOOLEAN | NOT NULL, DEFAULT TRUE | 利用可否（FALSEでログイン禁止） |
+| last_login_at | TIMESTAMP | NULL | 最終ログイン日時 |
 | provider | VARCHAR(50) | NOT NULL | 認証プロバイダー (google) |
 | provider_account_id | VARCHAR(255) | NOT NULL | プロバイダーのアカウントID |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 作成日時 |
@@ -30,16 +33,71 @@
 - `idx_accounts_email` ON (email)
 - `idx_accounts_provider` ON (provider, provider_account_id)
 - `idx_accounts_role` ON (role)
+- `idx_accounts_is_active` ON (is_active)
+- `idx_accounts_last_login` ON (last_login_at DESC)
 
 **制約:**
 
 - UNIQUE (provider, provider_account_id)
 - CHECK (role IN ('admin', 'user'))
+- is_active = TRUE のアカウントのみ学習・管理機能へログイン可能
 
 **補足:**
 
 - next-authはJWT戦略を使用し、セッション情報はcookieで管理
 - token情報（accessToken, idToken, refreshToken）もcookieで管理し、DBには保存しない
+
+---
+
+### account_role_histories テーブル
+
+アカウントのロール変更履歴を保持。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 履歴ID |
+| account_id | UUID | NOT NULL, FOREIGN KEY | 対象アカウントID |
+| previous_role | VARCHAR(20) | NOT NULL | 変更前ロール |
+| next_role | VARCHAR(20) | NOT NULL | 変更後ロール |
+| changed_by_account_id | UUID | NOT NULL, FOREIGN KEY | 操作した管理者アカウント |
+| changed_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 変更日時 |
+
+**インデックス:**
+
+- `idx_account_role_histories_account` ON (account_id, changed_at DESC)
+- `idx_account_role_histories_changed_by` ON (changed_by_account_id)
+
+**制約:**
+
+- CHECK (previous_role IN ('admin', 'user') AND next_role IN ('admin', 'user'))
+- FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+- FOREIGN KEY (changed_by_account_id) REFERENCES accounts(id) ON DELETE RESTRICT
+
+---
+
+### account_status_histories テーブル
+
+アカウントの利用可否変更履歴を保持。
+
+| カラム名 | 型 | 制約 | 説明 |
+|---------|-------|-------|-------|
+| id | UUID | PRIMARY KEY | 履歴ID |
+| account_id | UUID | NOT NULL, FOREIGN KEY | 対象アカウントID |
+| previous_status | VARCHAR(10) | NOT NULL | 変更前ステータス ('active' / 'inactive') |
+| next_status | VARCHAR(10) | NOT NULL | 変更後ステータス |
+| changed_by_account_id | UUID | NOT NULL, FOREIGN KEY | 操作した管理者アカウント |
+| changed_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | 変更日時 |
+
+**インデックス:**
+
+- `idx_account_status_histories_account` ON (account_id, changed_at DESC)
+- `idx_account_status_histories_changed_by` ON (changed_by_account_id)
+
+**制約:**
+
+- CHECK (previous_status IN ('active', 'inactive') AND next_status IN ('active', 'inactive'))
+- FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE
+- FOREIGN KEY (changed_by_account_id) REFERENCES accounts(id) ON DELETE RESTRICT
 
 ---
 
@@ -476,9 +534,11 @@
 
 ## テーブル一覧まとめ
 
-### 1. ユーザー・認証関連（1テーブル）
+### 1. ユーザー・認証関連（3テーブル）
 
 - **accounts** - ユーザーアカウント情報
+- **account_role_histories** - ロール変更履歴
+- **account_status_histories** - 利用可否変更履歴
 
 ### 2. タイプ・モード関連（3テーブル）
 
@@ -526,6 +586,8 @@ content_types (1) ----< (N) content_type_study_modes
 accounts (1) ----< (N) user_answers
 accounts (1) ----< (N) question_statistics
 accounts (1) ----< (N) daily_study_logs
+accounts (1) ----< (N) account_role_histories (account_id)
+accounts (1) ----< (N) account_status_histories (account_id)
 
 materials (1) ----< (N) chapters
 chapters (1) ----< (N) chapters (自己参照: parent_chapter_id)

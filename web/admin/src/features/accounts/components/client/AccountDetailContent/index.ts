@@ -1,0 +1,1 @@
+export { AccountDetailContent } from "./AccountDetailContentContainer";

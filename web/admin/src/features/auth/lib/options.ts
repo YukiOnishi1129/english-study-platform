@@ -6,7 +6,7 @@ import {
   getAccountByProvider,
 } from "@/external/handler/account/account.query.server";
 import { refreshGoogleTokens } from "@/external/handler/auth/token.command.server";
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 import type { GoogleProfile } from "@/features/auth/types/next-auth";
 
 function toFeatureAccount(
@@ -18,13 +18,29 @@ function toFeatureAccount(
     email: account.email,
     firstName: account.firstName,
     lastName: account.lastName,
+    fullName: account.fullName,
     role: account.role,
+    isActive: account.isActive,
+    lastLoginAt: account.lastLoginAt,
     provider: account.provider,
     providerAccountId: account.providerAccountId,
     thumbnail: thumbnail ?? account.thumbnail,
     createdAt: account.createdAt,
     updatedAt: account.updatedAt,
   };
+}
+
+function buildProfileName(profile: GoogleProfile): string {
+  const parts = [profile.given_name, profile.family_name]
+    .map((value) => (value ?? "").trim())
+    .filter((value) => value.length > 0);
+  if (parts.length > 0) {
+    return parts.join(" ");
+  }
+  if (profile.name && profile.name.trim().length > 0) {
+    return profile.name.trim();
+  }
+  return profile.email ?? profile.sub;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -40,20 +56,12 @@ export const authOptions: NextAuthOptions = {
         },
       },
       profile(profile) {
+        const googleProfile = profile as GoogleProfile;
         return {
-          id: profile.sub,
-          account: {
-            id: profile.sub,
-            email: profile.email,
-            firstName: profile.given_name || "",
-            lastName: profile.family_name || "",
-            role: "user" as const,
-            provider: "google",
-            providerAccountId: profile.sub,
-            thumbnail: profile.picture,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
+          id: googleProfile.sub,
+          email: googleProfile.email,
+          name: buildProfileName(googleProfile),
+          image: googleProfile.picture,
         };
       },
     }),
@@ -86,6 +94,11 @@ export const authOptions: NextAuthOptions = {
 
         if (existingAccount.role !== "admin") {
           console.log("Access denied: User is not an admin");
+          return false;
+        }
+
+        if (!existingAccount.isActive) {
+          console.log("Access denied: Account is inactive");
           return false;
         }
 

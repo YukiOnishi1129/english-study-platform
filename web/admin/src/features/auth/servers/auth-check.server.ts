@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 import { authOptions } from "@/features/auth/lib/options";
 
 export async function getAuthenticatedAdmin(): Promise<Account | null> {

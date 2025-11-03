@@ -1,3 +1,5 @@
+export * from "./account-role-histories";
+export * from "./account-status-histories";
 export * from "./accounts";
 export * from "./chapters";
 export * from "./content-type-study-modes";

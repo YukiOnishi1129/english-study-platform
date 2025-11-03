@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 
 import { getNextStudyTargetAction } from "@/external/handler/study/next-study-target.query.action";
-import type { Account } from "@/features/account/types/account";
+import type { Account } from "@/features/accounts/types";
 
 export interface UseAppShellOptions {
   account: Account;

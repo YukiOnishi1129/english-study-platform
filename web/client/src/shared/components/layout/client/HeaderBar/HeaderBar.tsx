@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { LogoutButton } from "@/features/auth/components/client/LogoutButton";
 import {
   Avatar,
@@ -91,11 +92,10 @@ export function HeaderBar({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled className="justify-between">
-                プロフィール
-                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-600">
-                  Soon
-                </span>
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="w-full">
+                  プロフィール
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem disabled className="justify-between">
                 通知設定
