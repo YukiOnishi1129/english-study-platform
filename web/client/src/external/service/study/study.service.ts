@@ -20,7 +20,10 @@ function normalizeLatinPunctuation(value: string): string {
 }
 
 function normalizeAnswer(value: string): string {
-  return normalizeLatinPunctuation(value).trim().replace(/\s+/g, " ").toLowerCase();
+  return normalizeLatinPunctuation(value)
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 }
 
 function normalizeJapanese(value: string): string {
@@ -32,7 +35,10 @@ function normalizeJapanese(value: string): string {
 }
 
 function normalizeSentence(value: string): string {
-  return normalizeLatinPunctuation(value).trim().replace(/\s+/g, " ").toLowerCase();
+  return normalizeLatinPunctuation(value)
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 }
 
 interface QuestionReference {
