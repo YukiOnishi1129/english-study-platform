@@ -27,7 +27,7 @@ COPY --from=deps /app/node_modules /app/node_modules
 COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
 COPY . .
 
-RUN pnpm run build
+RUN pnpm --filter client... build
 
 FROM base AS runner
 
