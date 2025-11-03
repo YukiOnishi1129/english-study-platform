@@ -12,16 +12,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function runMigrations() {
-  const {
-    DB_HOST,
-    DB_PORT,
-    DB_NAME,
-    DB_USER,
-    DB_PASSWORD,
-    DB_DRIVER,
-    DATABASE_URL,
-    DB_SSL,
-  } = process.env;
+  const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DB_DRIVER, DATABASE_URL, DB_SSL } =
+    process.env;
 
   let pool: Pool;
   const shouldUseSsl = DB_DRIVER === "neon" || (DB_SSL ?? "").toLowerCase() === "true";
