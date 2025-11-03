@@ -198,6 +198,36 @@ gcloud iam service-accounts keys create key.json \
   --iam-account=github-actions@PROJECT_ID.iam.gserviceaccount.com
 ```
 
+### 3. CI/CD 方針（推奨構成）
+
+- **GitHub Actions (CI)**  
+  - Pull Request 時: `pnpm lint`, `pnpm test` など読み取り系チェックのみ。Neon には接続しない。  
+  - main ブランチへの push 時: `pnpm db:migrate` を実行し本番 Neon を更新。`packages/migrations/**` に変更がある場合のみ実行するため、`tj-actions/changed-files` などで差分チェックを挿入する。
+    ```yaml
+    - uses: pnpm/action-setup@v3
+      with:
+        version: 9
+    - uses: tj-actions/changed-files@v45
+      id: changed
+      with:
+        files: |
+          packages/migrations/**
+    - name: Run migrations
+      if: steps.changed.outputs.any_changed == 'true'
+      run: pnpm db:migrate
+      env:
+        DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+    ```
+  - Neon はマイグレーション専用ユーザーで接続し、アプリ本番用ユーザーとは分離する。
+
+- **Cloud Build + Cloud Run (CD)**  
+  - main への push をトリガに Cloud Build を起動し、ビルド → Artifact Registry push → Cloud Run Deploy を自動化。  
+  - `NEON_DATABASE_URL` や NextAuth 関連シークレットは Secret Manager に登録し、Cloud Run 側で参照。
+
+- **補足**  
+  - 初回のみローカルから `DATABASE_URL=<Neon URL> pnpm db:migrate` を実行してテーブル作成しても良いが、運用はできるだけ CI 経由に寄せる。  
+  - GitHub Actions から Cloud Build を起動したい場合は、Actions でテスト→OKなら Cloud Build Trigger を起動する構成も選択可能。
+
 ### 3. GitHub Secrets の設定
 
 以下のシークレットをGitHubリポジトリに追加：
