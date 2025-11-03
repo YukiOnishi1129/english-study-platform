@@ -28,8 +28,6 @@ steps:
         "$_REGION",
       ]
 
-
-
 images:
   - $_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE
 
