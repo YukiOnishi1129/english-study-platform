@@ -161,6 +161,9 @@ http://localhost:3000 でアクセス可能
 
 #### 必要なAPIを有効化
 
+- **コンソールで有効化する場合**: 「APIとサービス」→「APIとサービスの有効化」を開き、`Cloud Build`, `Cloud Run Admin`, `Artifact Registry`（Secret Manager を使う場合は `Secret Manager` も）を個別に有効化する。  
+- **CLI を使う場合**: 以下のコマンドでまとめて有効化できる。Secret Manager を使わない場合は最後の行を省略しても問題ない。
+
 ```bash
 gcloud services enable \
   cloudbuild.googleapis.com \
@@ -223,9 +226,20 @@ gcloud iam service-accounts keys create key.json \
 
 - **Cloud Build + Cloud Run (CD)**  
   - main への push をトリガに Cloud Build を起動し、ビルド → Artifact Registry push → Cloud Run Deploy を自動化。  
-  - `NEON_DATABASE_URL` や NextAuth 関連シークレットは Secret Manager に登録し、Cloud Run 側で参照。
+  - Secret Manager を使う場合は `NEON_DATABASE_URL` や NextAuth 関連値を登録し、Cloud Run 側で参照できるようにする（使わない場合は Cloud Run の環境変数に直接設定）。
 - `web/client/Dockerfile` は Next.js の standalone 出力を前提にしたマルチステージ構成。Cloud Build では `web/client/cloudbuild.yaml` を利用し、`asia-northeast1-docker.pkg.dev/$PROJECT_ID/web-client/web-client` イメージを生成して Cloud Run へデプロイする。
 - 管理画面についても同様に `web/admin/Dockerfile` と `web/admin/cloudbuild.yaml` を用意しており、Artifact Registry の `web-admin/web-admin` イメージをビルド → Cloud Run へデプロイする。
+- Cloud Build / Cloud Run でのデプロイ前準備（各環境共通）
+  1. **サービスアカウントの作成**: `cloud-build-web-client` など Cloud Build 用のサービスアカウントを作成する（Cloud Run はデフォルトのコンピュート SA を使ってもよい）。  
+     - Cloud Build 用 SA に付与するロール例  
+       `roles/cloudbuild.builds.builder` / `roles/artifactregistry.writer` / `roles/run.admin`  
+  2. **Artifact Registry のリポジトリ作成**: 例) `asia-northeast1` リージョンに `web-client` / `web-admin` の 2 リポジトリを作成。  
+  3. **Dockerfile と cloudbuild.yaml の配置**: `web/client` / `web/admin` 配下にそれぞれ配置済みの Dockerfile と Cloud Build 定義を使用。  
+  4. **GitHub へマージ後**、Cloud Build のトリガーを作成。対象 branch/repo を設定し、  
+     - 置換 `_REGION` を設定（例: `asia-northeast1`）  
+     - **サービスアカウントには必ず 1. で作成した Cloud Build 用 SA を指定する（指定し忘れるとデプロイに必要な権限が不足する）。**  
+  5. **トリガー実行 → Cloud Run サービスを確認**。Cloud Run で作成された `web-client-application` 等のサービスに対し、PORT=3000 と必要な環境変数（`NEXTAUTH_URL`, `NEXTAUTH_SECRET`, Google OAuth の Client ID/Secret など）を設定する。  
+  6. **Google OAuth のリダイレクト URI 登録**: Cloud Run のドメイン（例: `https://web-client-application-xxx.a.run.app`）を Google Cloud Console の OAuth 同意画面に追加し、ログインが成功することを確認。
 
 - **補足**  
   - 初回のみローカルから `DATABASE_URL=<Neon URL> pnpm db:migrate` を実行してテーブル作成しても良いが、運用はできるだけ CI 経由に寄せる。  
