@@ -1,39 +1,41 @@
 # Build stage
-FROM node:22-alpine AS builder
-RUN corepack enable pnpm
+FROM node:22-slim AS base
+
+ENV PNPM_HOME=/root/.local/share/pnpm
+ENV PATH="${PNPM_HOME}:${PATH}"
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/* \
+  && corepack enable
+
+WORKDIR /app
+
+FROM base AS deps
 
 WORKDIR /app
 
 # Copy monorepo files
-COPY pnpm-workspace.yaml ./
-COPY pnpm-lock.yaml ./
-COPY tsconfig.base.json ./
+# root lockfiles / monorepo metadata
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json ./
+COPY packages/package.json packages/
+COPY web/admin/package.json web/admin/
+COPY web/client/package.json web/client/
 
-# Copy packages
-COPY packages ./packages
-
-# Copy admin app
-COPY web/admin ./web/admin
-
-# Install all dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build packages first
-WORKDIR /app/packages/domain
-RUN pnpm run type-check || true
-
-WORKDIR /app/packages/db
-RUN pnpm run type-check || true
-
-# Build admin app
-WORKDIR /app/web/admin
-RUN pnpm run build
-
-# Production stage
-FROM node:22-alpine AS runner
-RUN corepack enable pnpm
+FROM base AS builder
 
 WORKDIR /app
+
+COPY --from=deps /app/node_modules /app/node_modules
+COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
+COPY . .
+
+RUN pnpm install --frozen-lockfile --offline \
+  && pnpm --filter admin... build
+
+FROM base AS runner
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -53,4 +55,5 @@ EXPOSE 3000
 
 ENV PORT 3000
 
+ENV HOSTNAME="0.0.0.0"
 CMD ["node", "web/admin/server.js"]
