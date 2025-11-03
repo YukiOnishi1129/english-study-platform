@@ -44,13 +44,13 @@ export const mainNavigation: NavigationItem[] = [
 
 export const secondaryNavigation: NavigationItem[] = [
   {
-    label: "ヘルプセンター",
-    icon: HelpCircle,
-    comingSoon: true,
+    label: "プロフィール",
+    href: "/profile",
+    icon: Settings,
   },
   {
-    label: "設定",
-    icon: Settings,
+    label: "ヘルプセンター",
+    icon: HelpCircle,
     comingSoon: true,
   },
 ];
