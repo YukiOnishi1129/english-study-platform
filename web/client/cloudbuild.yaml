@@ -1,0 +1,48 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      [
+        "build",
+        "-f",
+        "web/client/Dockerfile",
+        "-t",
+        "${_IMAGE_NAME}:${SHORT_SHA}",
+        ".",
+      ]
+
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      [
+        "run",
+        "deploy",
+        "${_SERVICE_NAME}",
+        "--image",
+        "${_IMAGE_NAME}:${SHORT_SHA}",
+        "--region",
+        "${_REGION}",
+        "--project",
+        "$PROJECT_ID",
+        "--allow-unauthenticated",
+        "--set-env-vars",
+        "DB_DRIVER=neon",
+        "--set-secrets",
+        "DATABASE_URL=projects/${_SECRET_PROJECT}/secrets/${_DATABASE_URL_SECRET}:latest",
+        "NEXTAUTH_URL=projects/${_SECRET_PROJECT}/secrets/${_NEXTAUTH_URL_SECRET}:latest",
+        "NEXTAUTH_SECRET=projects/${_SECRET_PROJECT}/secrets/${_NEXTAUTH_SECRET_SECRET}:latest",
+        "GOOGLE_CLIENT_ID=projects/${_SECRET_PROJECT}/secrets/${_GOOGLE_CLIENT_ID_SECRET}:latest",
+        "GOOGLE_CLIENT_SECRET=projects/${_SECRET_PROJECT}/secrets/${_GOOGLE_CLIENT_SECRET_SECRET}:latest",
+      ]
+
+images:
+  - "${_IMAGE_NAME}:${SHORT_SHA}"
+
+substitutions:
+  _IMAGE_NAME: "gcr.io/$PROJECT_ID/web-client"
+  _SERVICE_NAME: "web-client-application"
+  _REGION: "asia-northeast1"
+  _SECRET_PROJECT: "$PROJECT_ID"
+  _DATABASE_URL_SECRET: "DATABASE_URL"
+  _NEXTAUTH_URL_SECRET: "NEXTAUTH_URL"
+  _NEXTAUTH_SECRET_SECRET: "NEXTAUTH_SECRET"
+  _GOOGLE_CLIENT_ID_SECRET: "GOOGLE_CLIENT_ID"
+  _GOOGLE_CLIENT_SECRET_SECRET: "GOOGLE_CLIENT_SECRET"
