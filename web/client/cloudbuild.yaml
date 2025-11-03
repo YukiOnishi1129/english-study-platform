@@ -1,48 +1,81 @@
-steps:
-  - name: gcr.io/cloud-builders/docker
-    args:
-      [
-        "build",
-        "-f",
-        "web/client/Dockerfile",
-        "-t",
-        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/web-client/web-client:${SHORT_SHA}",
-        ".",
-      ]
+substitutions:
+  _IMAGE: "web-client/latest"
+  _SERVICE_NAME: "web-client-application"
+  # _DATABASE_URL_SECRET: "database-url"
+  # _NEXTAUTH_URL_SECRET: "nextauth-url"
+  # _NEXTAUTH_SECRET_SECRET: "nextauth-secret"
+  # _GOOGLE_CLIENT_ID_SECRET: "google-client-id"
+  # _GOOGLE_CLIENT_SECRET_SECRET: "google-client-secret"
 
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        docker build \
+        --build-arg DATABASE_URL=$$DATABASE_URL \
+        --build-arg NEXTAUTH_URL=$$NEXTAUTH_URL \
+        --build-arg NEXTAUTH_SECRET=$$NEXTAUTH_SECRET \
+        --build-arg GOOGLE_CLIENT_ID=$$GOOGLE_CLIENT_ID \
+        --build-arg GOOGLE_CLIENT_SECRET=$$GOOGLE_CLIENT_SECRET \
+        -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE -f web/client/Dockerfile .
+
+    # Push the container image to Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "$_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE"]
+    # Deploy container image to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
       [
         "run",
         "deploy",
-        "${_SERVICE_NAME}",
+        "$_SERVICE_NAME",
         "--image",
-        "asia-northeast1-docker.pkg.dev/$PROJECT_ID/web-client/web-client:${SHORT_SHA}",
+        "$_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE",
         "--region",
-        "${_REGION}",
-        "--project",
-        "$PROJECT_ID",
-        "--allow-unauthenticated",
-        "--service-account",
-        "${_RUN_SERVICE_ACCOUNT}",
-        "--quiet",
-        "--set-env-vars=DB_DRIVER=neon",
-        "--set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,NEXTAUTH_URL=${_NEXTAUTH_URL_SECRET}:latest,NEXTAUTH_SECRET=${_NEXTAUTH_SECRET_SECRET}:latest,GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID_SECRET}:latest,GOOGLE_CLIENT_SECRET=${_GOOGLE_CLIENT_SECRET_SECRET}:latest",
+        "$_REGION",
       ]
 
+  # - name: "gcr.io/cloud-builders/docker"
+  #   args:
+  #     ["push", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_IMAGE}:${SHORT_SHA}"]
+
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+  #   entrypoint: gcloud
+  #   args:
+  #     [
+  #       "run",
+  #       "deploy",
+  #       "${_SERVICE_NAME}",
+  #       "--image",
+  #       "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_IMAGE}:${SHORT_SHA}",
+  #       "--region",
+  #       "${_REGION}",
+  #       "--project",
+  #       "$PROJECT_ID",
+  #       "--allow-unauthenticated",
+  #       "--quiet",
+  #       "--set-env-vars=DB_DRIVER=neon",
+  #       "--set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,NEXTAUTH_URL=${_NEXTAUTH_URL_SECRET}:latest,NEXTAUTH_SECRET=${_NEXTAUTH_SECRET_SECRET}:latest,GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID_SECRET}:latest,GOOGLE_CLIENT_SECRET=${_GOOGLE_CLIENT_SECRET_SECRET}:latest",
+  #     ]
+
 images:
-  - "asia-northeast1-docker.pkg.dev/$PROJECT_ID/web-client/web-client:${SHORT_SHA}"
+  - $_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/DATABASE_URL/versions/latest
+      env: DATABASE_URL
+    - versionName: projects/$PROJECT_ID/secrets/NEXTAUTH_URL/versions/latest
+      env: NEXTAUTH_URL
+    - versionName: projects/$PROJECT_ID/secrets/NEXTAUTH_SECRET/versions/latest
+      env: NEXTAUTH_SECRET
+    - versionName: projects/$PROJECT_ID/secrets/GOOGLE_CLIENT_ID/versions/latest
+      env: GOOGLE_CLIENT_ID
+    - versionName: projects/$PROJECT_ID/secrets/GOOGLE_CLIENT_SECRET/versions/latest
+      env: GOOGLE_CLIENT_SECRET
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
-substitutions:
-  _SERVICE_NAME: "web-client-application"
-  _REGION: "asia-northeast1"
-  _RUN_SERVICE_ACCOUNT: "cloud-run-web-client@english-study-platform-staging.iam.gserviceaccount.com"
-  _DATABASE_URL_SECRET: "database-url"
-  _NEXTAUTH_URL_SECRET: "nextauth-url"
-  _NEXTAUTH_SECRET_SECRET: "nextauth-secret"
-  _GOOGLE_CLIENT_ID_SECRET: "google-client-id"
-  _GOOGLE_CLIENT_SECRET_SECRET: "google-client-secret"

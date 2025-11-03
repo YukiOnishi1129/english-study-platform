@@ -224,7 +224,7 @@ gcloud iam service-accounts keys create key.json \
 - **Cloud Build + Cloud Run (CD)**  
   - main への push をトリガに Cloud Build を起動し、ビルド → Artifact Registry push → Cloud Run Deploy を自動化。  
   - `NEON_DATABASE_URL` や NextAuth 関連シークレットは Secret Manager に登録し、Cloud Run 側で参照。
-  - `web/client/Dockerfile` は Next.js の standalone 出力を前提にしたマルチステージ構成。Cloud Build では `web/client/cloudbuild.yaml` を利用し、`gcr.io/$PROJECT_ID/web-client` イメージを生成する。
+- `web/client/Dockerfile` は Next.js の standalone 出力を前提にしたマルチステージ構成。Cloud Build では `web/client/cloudbuild.yaml` を利用し、`asia-northeast1-docker.pkg.dev/$PROJECT_ID/web-client/web-client` イメージを生成して Cloud Run へデプロイする。
 
 - **補足**  
   - 初回のみローカルから `DATABASE_URL=<Neon URL> pnpm db:migrate` を実行してテーブル作成しても良いが、運用はできるだけ CI 経由に寄せる。  
