@@ -36,6 +36,9 @@ steps:
 images:
   - "${_IMAGE_NAME}:${SHORT_SHA}"
 
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 substitutions:
   _IMAGE_NAME: "gcr.io/$PROJECT_ID/web-client"
   _SERVICE_NAME: "web-client-application"
