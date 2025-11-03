@@ -1,5 +1,3 @@
-import { neon } from "@neondatabase/serverless";
-import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
@@ -13,11 +11,12 @@ type DbConfig = {
   DB_PASSWORD: string;
   DB_DRIVER?: "local" | "neon";
   DATABASE_URL?: string;
+  DB_SSL?: string;
 };
 
 // シングルトンパターンでデータベース接続を管理
 const globalForDb = globalThis as unknown as {
-  db: ReturnType<typeof drizzlePg> | ReturnType<typeof drizzleNeon> | undefined;
+  db: ReturnType<typeof drizzlePg> | undefined;
 };
 
 function createDbConnection() {
@@ -29,33 +28,36 @@ function createDbConnection() {
     DB_PASSWORD: process.env.DB_PASSWORD || "",
     DB_DRIVER: process.env.DB_DRIVER as "local" | "neon" | undefined,
     DATABASE_URL: process.env.DATABASE_URL,
+    DB_SSL: process.env.DB_SSL,
   };
 
-  // ローカル環境の場合はpgドライバを使用
-  if (config.DB_DRIVER === "local" || !config.DATABASE_URL) {
-    if (
-      !config.DB_HOST ||
-      !config.DB_PORT ||
-      !config.DB_NAME ||
-      !config.DB_USER ||
-      !config.DB_PASSWORD
-    ) {
-      throw new Error("Database connection parameters are required");
-    }
+  const shouldUseSsl =
+    config.DB_DRIVER === "neon" || (config.DB_SSL ?? "").toLowerCase() === "true";
 
-    const pool = new Pool({
-      host: config.DB_HOST,
-      port: parseInt(config.DB_PORT, 10),
-      database: config.DB_NAME,
-      user: config.DB_USER,
-      password: config.DB_PASSWORD,
-    });
-    return drizzlePg(pool, { schema });
-  }
+  const pool =
+    config.DATABASE_URL && config.DATABASE_URL.length > 0
+      ? new Pool({
+          connectionString: config.DATABASE_URL,
+          ssl: shouldUseSsl
+            ? {
+                rejectUnauthorized: false,
+              }
+            : undefined,
+        })
+      : new Pool({
+          host: config.DB_HOST || undefined,
+          port: config.DB_PORT ? parseInt(config.DB_PORT, 10) : undefined,
+          database: config.DB_NAME || undefined,
+          user: config.DB_USER || undefined,
+          password: config.DB_PASSWORD || undefined,
+          ssl: shouldUseSsl
+            ? {
+                rejectUnauthorized: false,
+              }
+            : undefined,
+        });
 
-  // 本番環境（Neon）の場合
-  const sql = neon(config.DATABASE_URL);
-  return drizzleNeon(sql, { schema });
+  return drizzlePg(pool, { schema });
 }
 
 export const db = globalForDb.db ?? createDbConnection();
