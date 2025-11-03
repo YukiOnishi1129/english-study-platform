@@ -1,11 +1,6 @@
 substitutions:
   _IMAGE: "web-client/latest"
   _SERVICE_NAME: "web-client-application"
-  # _DATABASE_URL_SECRET: "database-url"
-  # _NEXTAUTH_URL_SECRET: "nextauth-url"
-  # _NEXTAUTH_SECRET_SECRET: "nextauth-secret"
-  # _GOOGLE_CLIENT_ID_SECRET: "google-client-id"
-  # _GOOGLE_CLIENT_SECRET_SECRET: "google-client-secret"
 
 steps:
   - name: "gcr.io/cloud-builders/docker"
@@ -14,11 +9,6 @@ steps:
       - "-c"
       - |
         docker build \
-        --build-arg DATABASE_URL=$$DATABASE_URL\
-        --build-arg NEXTAUTH_URL=$$NEXTAUTH_URL \
-        --build-arg NEXTAUTH_SECRET=$$NEXTAUTH_SECRET \
-        --build-arg APP_GOOGLE_CLIENT_ID=$$APP_GOOGLE_CLIENT_ID \
-        --build-arg APP_GOOGLE_CLIENT_SECRET=$$APP_GOOGLE_CLIENT_SECRET \
         -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE -f web/client/Dockerfile .
 
     # Push the container image to Artifact Registry
@@ -38,44 +28,10 @@ steps:
         "$_REGION",
       ]
 
-  # - name: "gcr.io/cloud-builders/docker"
-  #   args:
-  #     ["push", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_IMAGE}:${SHORT_SHA}"]
 
-  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
-  #   entrypoint: gcloud
-  #   args:
-  #     [
-  #       "run",
-  #       "deploy",
-  #       "${_SERVICE_NAME}",
-  #       "--image",
-  #       "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_IMAGE}:${SHORT_SHA}",
-  #       "--region",
-  #       "${_REGION}",
-  #       "--project",
-  #       "$PROJECT_ID",
-  #       "--allow-unauthenticated",
-  #       "--quiet",
-  #       "--set-env-vars=DB_DRIVER=neon",
-  #       "--set-secrets=DATABASE_URL=${_DATABASE_URL_SECRET}:latest,NEXTAUTH_URL=${_NEXTAUTH_URL_SECRET}:latest,NEXTAUTH_SECRET=${_NEXTAUTH_SECRET_SECRET}:latest,GOOGLE_CLIENT_ID=${_GOOGLE_CLIENT_ID_SECRET}:latest,GOOGLE_CLIENT_SECRET=${_GOOGLE_CLIENT_SECRET_SECRET}:latest",
-  #     ]
 
 images:
   - $_REGION-docker.pkg.dev/$PROJECT_ID/$_IMAGE
-
-availableSecrets:
-  secretManager:
-    - versionName: projects/$PROJECT_ID/secrets/neon_database_url/versions/latest
-      env: DATABASE_URL
-    - versionName: projects/$PROJECT_ID/secrets/web-client-next-auth-url/versions/latest
-      env: NEXTAUTH_URL
-    - versionName: projects/$PROJECT_ID/secrets/web-client-next-auth-secret/versions/latest
-      env: NEXTAUTH_SECRET
-    - versionName: projects/$PROJECT_ID/secrets/app-google-client-id/versions/latest
-      env: APP_GOOGLE_CLIENT_ID
-    - versionName: projects/$PROJECT_ID/secrets/app-google-client-secret/versions/latest
-      env: APP_GOOGLE_CLIENT_SECRET
 
 options:
   logging: CLOUD_LOGGING_ONLY
