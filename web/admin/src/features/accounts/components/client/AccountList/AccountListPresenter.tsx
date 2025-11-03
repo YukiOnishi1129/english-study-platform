@@ -12,6 +12,11 @@ import {
   mergeAccountListParams,
 } from "@/features/accounts/lib/accountListParams";
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shared/components/ui/avatar";
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -132,6 +137,13 @@ function AccountTableRow({ account }: AccountTableRowProps) {
   const fullName =
     account.fullName || `${account.firstName} ${account.lastName}`.trim();
   const statusLabel = account.isActive ? "有効" : "利用停止";
+  const avatarImage = account.thumbnail ?? undefined;
+  const avatarFallback = (() => {
+    const source = fullName || account.email;
+    const normalized = source.replaceAll(/[^A-Za-z0-9一-龠ぁ-んァ-ン]/g, "");
+    if (!normalized) return "AC";
+    return normalized.slice(0, 2).toUpperCase();
+  })();
 
   const statusColor = account.isActive
     ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -140,12 +152,21 @@ function AccountTableRow({ account }: AccountTableRowProps) {
   return (
     <tr>
       <td className="px-4 py-4 align-top">
-        <div className="flex flex-col gap-1">
-          <span className="font-semibold text-gray-900">{fullName}</span>
-          <span className="text-xs text-gray-500">{account.email}</span>
-          <span className="text-xs text-gray-400">
-            登録日: {new Date(account.createdAt).toLocaleString("ja-JP")}
-          </span>
+        <div className="flex items-start gap-3">
+          <Avatar className="size-10">
+            {avatarImage ? (
+              <AvatarImage src={avatarImage} alt={fullName || account.email} />
+            ) : (
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
+            )}
+          </Avatar>
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold text-gray-900">{fullName}</span>
+            <span className="text-xs text-gray-500">{account.email}</span>
+            <span className="text-xs text-gray-400">
+              登録日: {new Date(account.createdAt).toLocaleString("ja-JP")}
+            </span>
+          </div>
         </div>
       </td>
       <td className="px-4 py-4 align-top">
