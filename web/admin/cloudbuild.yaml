@@ -1,5 +1,5 @@
 substitutions:
-  _IMAGE: "web-admin:latest"
+  _IMAGE: "web-admin/latest"
   _SERVICE_NAME: "web-admin-application"
 
 steps:
