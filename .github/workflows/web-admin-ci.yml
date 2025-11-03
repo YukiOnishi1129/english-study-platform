@@ -1,61 +1,64 @@
 name: Web Admin CI
 
 on:
-    push:
-        branches:
-            - main
-        paths:
-            - 'web/admin/**'
-            - '.github/workflows/web-admin-ci.yml'
-    pull_request:
-        branches:
-            - main
-        paths:
-            - 'web/admin/**'
-            - '.github/workflows/web-admin-ci.yml'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "web/admin/**"
+      - ".github/workflows/web-admin-ci.yml"
+      - "packages/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "web/admin/**"
+      - ".github/workflows/web-admin-ci.yml"
 
 jobs:
-    frontend:
-        runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: web/admin
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/admin
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/admin/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run Biome
+        run: pnpm run lint
+
+      # - name: Run tests
+      #   run: pnpm run test:run
+
+      - name: Build
+        run: pnpm run build
         env:
-            NEXT_TELEMETRY_DISABLED: 1
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
-
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  run_install: false
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: pnpm
-                  cache-dependency-path: web/admin/pnpm-lock.yaml
-
-            - name: Install dependencies
-              run: pnpm install --no-frozen-lockfile
-
-            - name: Run Biome
-              run: pnpm run lint
-
-            # - name: Run tests
-            #   run: pnpm run test:run
-
-            - name: Build
-              run: pnpm run build
-              env:
-                DB_HOST: localhost
-                DB_PORT: "5432"
-                DB_NAME: test_db
-                DB_USER: test_user
-                DB_PASSWORD: test_password
-                NEXTAUTH_URL: http://localhost:3000
-                NEXTAUTH_SECRET: test_secret_for_ci_only
-                GOOGLE_CLIENT_ID: test_client_id
-                GOOGLE_CLIENT_SECRET: test_client_secret
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: test_secret_for_ci_only
+          GOOGLE_CLIENT_ID: test_client_id
+          GOOGLE_CLIENT_SECRET: test_client_secret
