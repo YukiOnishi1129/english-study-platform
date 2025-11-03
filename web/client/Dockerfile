@@ -15,6 +15,7 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json turbo.json ./
 COPY packages/package.json packages/
 COPY web/client/package.json web/client/
+COPY web/admin/package.json web/admin/
 
 RUN pnpm install --frozen-lockfile
 
@@ -26,7 +27,8 @@ COPY --from=deps /app/node_modules /app/node_modules
 COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
 COPY . .
 
-RUN pnpm --filter client... build
+RUN pnpm install --frozen-lockfile --offline \
+  && pnpm --filter client... build
 
 FROM node:22-slim AS runner
 
