@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "English Study Platform",
   description:
     "英語学習の教材管理と学習に特化した English Study Platform の学習アプリ",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout(props: LayoutProps<"/">) {
