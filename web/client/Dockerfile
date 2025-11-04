@@ -41,7 +41,7 @@ WORKDIR /app
 
 COPY --from=builder /app/web/client/.next/standalone ./
 COPY --from=builder /app/web/client/.next/static ./web/client/.next/static
-COPY --from=builder /app/web/client/public ./public
+COPY --from=builder /app/web/client/public ./web/client/public
 
 USER nextjs
 
