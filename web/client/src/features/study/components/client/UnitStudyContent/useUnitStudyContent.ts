@@ -30,6 +30,8 @@ import {
   mapStatistics,
 } from "./utils";
 
+const JAPANESE_CHAR_PATTERN = /[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]/u;
+
 const FALLBACK_STUDY_MODE: StudyMode = "jp_to_en";
 
 interface UseUnitStudyContentOptions {
@@ -135,7 +137,7 @@ function resolveQuestionView(
   let navigatorLabel = data.japanese;
   let answerLabel = "回答を入力してみよう";
   let answerPlaceholder = "例: 回答を入力";
-  const promptNote =
+  let promptNote =
     data.prompt && data.prompt.trim().length > 0 ? data.prompt.trim() : null;
   let sentencePromptJa: string | null = null;
   let sentenceTargetWord: string | null = null;
@@ -157,6 +159,9 @@ function resolveQuestionView(
     answerLabel = vocabulary ? "英単語で答えてみよう" : "英語で答えてみよう";
     answerPlaceholder = "例: 英単語を入力";
     acceptableAnswers = baseAcceptableAnswers;
+    if (promptNote && !JAPANESE_CHAR_PATTERN.test(promptNote)) {
+      promptNote = null;
+    }
   } else if (effectiveMode === "en_to_jp") {
     promptText = data.headword ?? baseAcceptableAnswers[0] ?? data.japanese;
     navigatorLabel = promptText;
